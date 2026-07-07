@@ -369,11 +369,15 @@ export function WelcomeSection() {
 
     const localSettings = localStorage.getItem("berakit_settings");
     if (localSettings) {
-      const settings = JSON.parse(localSettings);
-      bumdesName = settings.name || bumdesName;
-      bumdesEmail = settings.email || bumdesEmail;
-      bumdesPhone = settings.phone || bumdesPhone;
-      bumdesAddress = settings.address || bumdesAddress;
+      try {
+        const settings = JSON.parse(localSettings);
+        bumdesName = settings.name || bumdesName;
+        bumdesEmail = settings.email || bumdesEmail;
+        bumdesPhone = settings.phone || bumdesPhone;
+        bumdesAddress = settings.address || bumdesAddress;
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     // Calculations
@@ -388,255 +392,268 @@ export function WelcomeSection() {
       maximumFractionDigits: 0,
     });
 
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) {
-      alert("Bloker pop-up aktif. Harap izinkan pembukaan jendela pop-up di browser Anda.");
-      return;
+    // Create a temporary print container inside the main document body
+    const printContainerId = "bumdes-pdf-print-container";
+    let printEl = document.getElementById(printContainerId);
+    if (printEl) {
+      printEl.remove();
     }
 
+    printEl = document.createElement("div");
+    printEl.id = printContainerId;
+
     const htmlContent = `
-      <html>
-        <head>
-          <title>Laporan Bulanan BUMDes Berakit</title>
-          <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-            body {
-              font-family: 'Inter', sans-serif;
-              color: #1f2937;
-              padding: 40px;
-              margin: 0;
-              font-size: 13px;
-              line-height: 1.5;
-            }
-            .header-table {
-              width: 100%;
-              border-collapse: collapse;
-              border-bottom: 3px double #374151;
-              padding-bottom: 16px;
-              margin-bottom: 24px;
-            }
-            .header-logo {
-              width: 60px;
-              height: 60px;
-              background: linear-gradient(135deg, #6e3ff3, #aa8ef9);
-              border-radius: 12px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: white;
-              font-size: 30px;
-              font-weight: bold;
-              margin-right: 16px;
-            }
-            .header-info h1 {
-              margin: 0 0 4px 0;
-              font-size: 22px;
-              font-weight: 700;
-              color: #111827;
-              letter-spacing: -0.025em;
-            }
-            .header-info p {
-              margin: 0 0 2px 0;
-              font-size: 12px;
-              color: #4b5563;
-            }
-            .report-title {
-              text-align: center;
-              font-size: 15px;
-              font-weight: 700;
-              text-transform: uppercase;
-              letter-spacing: 0.05em;
-              margin: 24px 0;
-              color: #111827;
-            }
-            .stats-grid {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 16px;
-              margin-bottom: 32px;
-            }
-            .stat-card {
-              border: 1px solid #e5e7eb;
-              border-radius: 8px;
-              padding: 16px;
-              background-color: #f9fafb;
-            }
-            .stat-label {
-              font-size: 10px;
-              font-weight: 600;
-              text-transform: uppercase;
-              color: #6b7280;
-              letter-spacing: 0.05em;
-            }
-            .stat-value {
-              font-size: 18px;
-              font-weight: 700;
-              color: #111827;
-              margin-top: 4px;
-            }
-            .table-title {
-              font-size: 13px;
-              font-weight: 600;
-              margin-bottom: 12px;
-              color: #111827;
-              border-left: 3px solid #6e3ff3;
-              padding-left: 8px;
-            }
-            table.data-table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 40px;
-            }
-            table.data-table th {
-              background-color: #f3f4f6;
-              border-bottom: 2px solid #e5e7eb;
-              padding: 10px 12px;
-              text-align: left;
-              font-weight: 600;
-              color: #374151;
-              font-size: 10px;
-              text-transform: uppercase;
-            }
-            table.data-table td {
-              padding: 10px 12px;
-              border-bottom: 1px solid #f3f4f6;
-              color: #4b5563;
-            }
-            table.data-table tr:last-child td {
-              border-bottom: 2px solid #e5e7eb;
-            }
-            .badge {
-              display: inline-block;
-              padding: 2px 6px;
-              border-radius: 9999px;
-              font-size: 9px;
-              font-weight: 600;
-              text-transform: uppercase;
-            }
-            .badge-selesai { background-color: #d1fae5; color: #065f46; }
-            .badge-diproses { background-color: #dbeafe; color: #1e40af; }
-            .badge-pending { background-color: #fef3c7; color: #92400e; }
-            .badge-dibatalkan { background-color: #fee2e2; color: #991b1b; }
-            
-            .signature-area {
-              margin-top: 50px;
-              width: 100%;
-              page-break-inside: avoid;
-            }
-            .signature-box {
-              float: right;
-              width: 220px;
-              text-align: center;
-            }
-            .signature-line {
-              margin-top: 70px;
-              border-bottom: 1px solid #4b5563;
-              margin-bottom: 4px;
-            }
-            
-            @media print {
-              body { padding: 0; }
-            }
-          </style>
-        </head>
-        <body>
-          <table class="header-table">
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        #bumdes-pdf-print-container {
+          font-family: 'Inter', sans-serif;
+          color: #1f2937;
+          padding: 40px;
+          background: white !important;
+          min-height: 100vh;
+        }
+        .header-table {
+          width: 100%;
+          border-collapse: collapse;
+          border-bottom: 3px double #374151;
+          padding-bottom: 16px;
+          margin-bottom: 24px;
+        }
+        .header-logo {
+          width: 60px;
+          height: 60px;
+          background: linear-gradient(135deg, #6e3ff3, #aa8ef9);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 30px;
+          font-weight: bold;
+          margin-right: 16px;
+        }
+        .header-info h1 {
+          margin: 0 0 4px 0;
+          font-size: 22px;
+          font-weight: 700;
+          color: #111827;
+          letter-spacing: -0.025em;
+        }
+        .header-info p {
+          margin: 0 0 2px 0;
+          font-size: 12px;
+          color: #4b5563;
+        }
+        .report-title {
+          text-align: center;
+          font-size: 15px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin: 24px 0;
+          color: #111827;
+        }
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 16px;
+          margin-bottom: 32px;
+        }
+        .stat-card {
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 16px;
+          background-color: #f9fafb;
+        }
+        .stat-label {
+          font-size: 10px;
+          font-weight: 600;
+          text-transform: uppercase;
+          color: #6b7280;
+          letter-spacing: 0.05em;
+        }
+        .stat-value {
+          font-size: 18px;
+          font-weight: 700;
+          color: #111827;
+          margin-top: 4px;
+        }
+        .table-title {
+          font-size: 13px;
+          font-weight: 600;
+          margin-bottom: 12px;
+          color: #111827;
+          border-left: 3px solid #6e3ff3;
+          padding-left: 8px;
+        }
+        table.data-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 40px;
+        }
+        table.data-table th {
+          background-color: #f3f4f6;
+          border-bottom: 2px solid #e5e7eb;
+          padding: 10px 12px;
+          text-align: left;
+          font-weight: 600;
+          color: #374151;
+          font-size: 10px;
+          text-transform: uppercase;
+        }
+        table.data-table td {
+          padding: 10px 12px;
+          border-bottom: 1px solid #f3f4f6;
+          color: #4b5563;
+        }
+        table.data-table tr:last-child td {
+          border-bottom: 2px solid #e5e7eb;
+        }
+        .badge {
+          display: inline-block;
+          padding: 2px 6px;
+          border-radius: 9999px;
+          font-size: 9px;
+          font-weight: 600;
+          text-transform: uppercase;
+        }
+        .badge-selesai { background-color: #d1fae5; color: #065f46; }
+        .badge-diproses { background-color: #dbeafe; color: #1e40af; }
+        .badge-pending { background-color: #fef3c7; color: #92400e; }
+        .badge-dibatalkan { background-color: #fee2e2; color: #991b1b; }
+        
+        .signature-area {
+          margin-top: 50px;
+          width: 100%;
+          page-break-inside: avoid;
+        }
+        .signature-box {
+          float: right;
+          width: 220px;
+          text-align: center;
+        }
+        .signature-line {
+          margin-top: 70px;
+          border-bottom: 1px solid #4b5563;
+          margin-bottom: 4px;
+        }
+        
+        @media print {
+          body > *:not(#bumdes-pdf-print-container) {
+            display: none !important;
+          }
+          #bumdes-pdf-print-container {
+            display: block !important;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+          }
+        }
+        @media screen {
+          #bumdes-pdf-print-container {
+            display: none !important;
+          }
+        }
+      </style>
+
+      <table class="header-table">
+        <tr>
+          <td style="width: 76px;">
+            <div class="header-logo">B</div>
+          </td>
+          <td class="header-info">
+            <h1>${bumdesName}</h1>
+            <p>${bumdesAddress}</p>
+            <p>Email: ${bumdesEmail} | Telp: ${bumdesPhone}</p>
+          </td>
+        </tr>
+      </table>
+
+      <div class="report-title">Laporan Keuangan & Kinerja Usaha BUMDes</div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Pendapatan Bersih</div>
+          <div class="stat-value" style="color: #059669;">${formatter.format(totalRevenue)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Transaksi Berhasil</div>
+          <div class="stat-value">${completedCount} Penjualan</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Jenis Produk</div>
+          <div class="stat-value">${products.length} Item</div>
+        </div>
+      </div>
+
+      <div class="table-title">Daftar Transaksi BUMDes</div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Tanggal</th>
+            <th>Nama Pelanggan</th>
+            <th>Alamat Pengiriman</th>
+            <th>Pembayaran</th>
+            <th>Status</th>
+            <th style="text-align: right;">Total Belanja</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${
+            transactions.length === 0
+              ? '<tr><td colspan="6" style="text-align: center;">Belum ada data transaksi masuk.</td></tr>'
+              : transactions
+                  .map(
+                    (t: any) => `
             <tr>
-              <td style="width: 76px;">
-                <div class="header-logo">B</div>
-              </td>
-              <td class="header-info">
-                <h1>${bumdesName}</h1>
-                <p>${bumdesAddress}</p>
-                <p>Email: ${bumdesEmail} | Telp: ${bumdesPhone}</p>
-              </td>
-            </tr>
-          </table>
-
-          <div class="report-title">Laporan Keuangan & Kinerja Usaha BUMDes</div>
-
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-label">Total Pendapatan Bersih</div>
-              <div class="stat-value" style="color: #059669;">${formatter.format(totalRevenue)}</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Transaksi Berhasil</div>
-              <div class="stat-value">${completedCount} Penjualan</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-label">Total Jenis Produk</div>
-              <div class="stat-value">${products.length} Item</div>
-            </div>
-          </div>
-
-          <div class="table-title">Daftar Transaksi BUMDes</div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Tanggal</th>
-                <th>Nama Pelanggan</th>
-                <th>Alamat Pengiriman</th>
-                <th>Pembayaran</th>
-                <th>Status</th>
-                <th style="text-align: right;">Total Belanja</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${
-                transactions.length === 0
-                  ? '<tr><td colspan="6" style="text-align: center;">Belum ada data transaksi masuk.</td></tr>'
-                  : transactions
-                      .map(
-                        (t: any) => `
-                <tr>
-                  <td>${new Date(t.created_at || Date.now()).toLocaleDateString("id-ID", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}</td>
-                  <td style="font-weight: 500; color: #111827;">${t.customer_name}</td>
-                  <td>${t.address || "Desa Berakit"}</td>
-                  <td style="text-transform: uppercase; font-size: 10px;">${t.payment_method || "COD"}</td>
-                  <td>
-                    <span class="badge badge-${(t.status || "Pending").toLowerCase()}">${t.status || "Pending"}</span>
-                  </td>
-                  <td style="text-align: right; font-weight: 600; color: #111827;">${formatter.format(t.total_amount || 0)}</td>
-                </tr>
-              `
-                      )
-                      .join("")
-              }
-            </tbody>
-          </table>
-
-          <div class="signature-area">
-            <div class="signature-box">
-              <p>Desa Berakit, ${new Date().toLocaleDateString("id-ID", {
+              <td>${new Date(t.created_at || Date.now()).toLocaleDateString("id-ID", {
                 day: "numeric",
-                month: "long",
+                month: "short",
                 year: "numeric",
-              })}</p>
-              <p style="font-weight: 600; margin-top: 4px;">Kepala BUMDes Berakit</p>
-              <div class="signature-line"></div>
-              <p style="font-size: 11px; color: #6b7280;">NIP: ${new Date().getFullYear()}-BRKT-01</p>
-            </div>
-            <div style="clear: both;"></div>
-          </div>
+              })}</td>
+              <td style="font-weight: 500; color: #111827;">${t.customer_name}</td>
+              <td>${t.address || "Desa Berakit"}</td>
+              <td style="text-transform: uppercase; font-size: 10px;">${t.payment_method || "COD"}</td>
+              <td>
+                <span class="badge badge-${(t.status || "Pending").toLowerCase()}">${t.status || "Pending"}</span>
+              </td>
+              <td style="text-align: right; font-weight: 600; color: #111827;">${formatter.format(t.total_amount || 0)}</td>
+            </tr>
+          `
+                  )
+                  .join("")
+          }
+        </tbody>
+      </table>
 
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-              }, 400);
-            };
-          </script>
-        </body>
-      </html>
+      <div class="signature-area">
+        <div class="signature-box">
+          <p>Desa Berakit, ${new Date().toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}</p>
+          <p style="font-weight: 600; margin-top: 4px;">Kepala BUMDes Berakit</p>
+          <div class="signature-line"></div>
+          <p style="font-size: 11px; color: #6b7280;">NIP: ${new Date().getFullYear()}-BRKT-01</p>
+        </div>
+        <div style="clear: both;"></div>
+      </div>
     `;
 
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
+    printEl.innerHTML = htmlContent;
+    document.body.appendChild(printEl);
+
+    // Give browser a short tick to parse stylesheets and then trigger printing
+    setTimeout(() => {
+      window.print();
+      
+      // Cleanup after print dialog is closed
+      setTimeout(() => {
+        if (printEl) printEl.remove();
+      }, 1000);
+    }, 100);
   };
 
   return (
