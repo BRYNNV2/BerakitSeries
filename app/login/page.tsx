@@ -47,19 +47,19 @@ export default function LoginPage() {
           // If Supabase auth fails, check if the input matches fallback credentials
           if (email === "admin@berakit.desa.id" && password === "adminberakit") {
             localStorage.setItem("berakit_admin_auth", "true");
-            router.push("/");
+            router.push("/admin");
           } else {
             setError(authError.message);
           }
         } else {
           localStorage.removeItem("berakit_admin_auth"); // Clear fallback just in case
-          router.push("/");
+          router.push("/admin");
         }
       } catch (err) {
         console.error("Supabase auth error:", err);
         if (email === "admin@berakit.desa.id" && password === "adminberakit") {
           localStorage.setItem("berakit_admin_auth", "true");
-          router.push("/");
+          router.push("/admin");
         } else {
           setError("Terjadi kesalahan sistem saat menghubungi server Auth.");
         }
@@ -69,7 +69,7 @@ export default function LoginPage() {
       await new Promise((r) => setTimeout(r, 600));
       if (email === "admin@berakit.desa.id" && password === "adminberakit") {
         localStorage.setItem("berakit_admin_auth", "true");
-        router.push("/");
+        router.push("/admin");
       } else {
         setError("Email atau password admin salah!");
       }
