@@ -44,13 +44,25 @@ export default function LoginPage() {
         });
 
         if (authError) {
-          setError(authError.message);
+          // If Supabase auth fails, check if the input matches fallback credentials
+          if (email === "admin@berakit.desa.id" && password === "adminberakit") {
+            localStorage.setItem("berakit_admin_auth", "true");
+            router.push("/");
+          } else {
+            setError(authError.message);
+          }
         } else {
+          localStorage.removeItem("berakit_admin_auth"); // Clear fallback just in case
           router.push("/");
         }
       } catch (err) {
         console.error("Supabase auth error:", err);
-        setError("Terjadi kesalahan sistem saat menghubungi server Auth.");
+        if (email === "admin@berakit.desa.id" && password === "adminberakit") {
+          localStorage.setItem("berakit_admin_auth", "true");
+          router.push("/");
+        } else {
+          setError("Terjadi kesalahan sistem saat menghubungi server Auth.");
+        }
       }
     } else {
       // Local storage fallback authentication

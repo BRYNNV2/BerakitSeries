@@ -1,64 +1,90 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu";
-import {
-  ChartLine,
-  MoreHorizontal,
-  ArrowRight,
-  Download,
-  Share2,
-  Maximize2,
-  RefreshCw,
-  Settings2,
-} from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from "recharts";
+import { ShoppingBag, Loader2, RefreshCw } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
-const allData = {
-  "7days": [
-    { name: "Website", value: 312, color: "#35b9e9" },
-    { name: "Paid Ads", value: 198, color: "#6e3ff3" },
-    { name: "Emails", value: 156, color: "#375dfb" },
-    { name: "Referral", value: 98, color: "#e255f2" },
-  ],
-  "30days": [
-    { name: "Website", value: 1445, color: "#35b9e9" },
-    { name: "Paid Ads", value: 903, color: "#6e3ff3" },
-    { name: "Emails", value: 722, color: "#375dfb" },
-    { name: "Referral", value: 451, color: "#e255f2" },
-  ],
-  "90days": [
-    { name: "Website", value: 4235, color: "#35b9e9" },
-    { name: "Paid Ads", value: 2709, color: "#6e3ff3" },
-    { name: "Emails", value: 2166, color: "#375dfb" },
-    { name: "Referral", value: 1353, color: "#e255f2" },
-  ],
-};
+interface Product {
+  id: string;
+  category: string;
+}
 
-type TimeRange = "7days" | "30days" | "90days";
-
-const timeRangeLabels: Record<TimeRange, string> = {
-  "7days": "Last 7 days",
-  "30days": "Last 30 days",
-  "90days": "Last 90 days",
+const CATEGORY_COLORS: Record<string, string> = {
+  "Kuliner": "#6e3ff3",
+  "Kerajinan": "#e255f2",
+  "Hasil Laut": "#35b9e9",
+  "Jasa Wisata": "#375dfb",
 };
 
 export function LeadSourcesChart() {
-  const [timeRange, setTimeRange] = useState<TimeRange>("30days");
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [showLabels, setShowLabels] = useState(true);
+  const [loading, setLoading] = React.useState(true);
+  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
+  const [data, setData] = React.useState<{ name: string; value: number; color: string }[]>([]);
 
-  const data = allData[timeRange];
-  const totalLeads = data.reduce((acc, item) => acc + item.value, 0);
+  const loadData = React.useCallback(async () => {
+    setLoading(true);
+    const hasCredentials = !!supabase;
+    let productsList: Product[] = [];
+
+    if (hasCredentials) {
+      try {
+        const { data: pData, error } = await supabase
+          .from("products")
+          .select("id, category");
+        if (error) throw error;
+        productsList = pData || [];
+      } catch (err) {
+        console.error("Failed to load products for categories chart from Supabase, fallback to localStorage:", err);
+        productsList = loadLocalStorage();
+      }
+    } else {
+      productsList = loadLocalStorage();
+    }
+
+    // Process categories
+    const counts: Record<string, number> = {
+      "Kuliner": 0,
+      "Kerajinan": 0,
+      "Hasil Laut": 0,
+      "Jasa Wisata": 0,
+    };
+
+    productsList.forEach((p) => {
+      const cat = p.category || "Kuliner";
+      if (counts[cat] !== undefined) {
+        counts[cat]++;
+      } else {
+        counts["Kuliner"]++;
+      }
+    });
+
+    const chartData = Object.keys(counts).map((key) => ({
+      name: key,
+      value: counts[key],
+      color: CATEGORY_COLORS[key] || "#6e3ff3",
+    }));
+
+    setData(chartData);
+    setLoading(false);
+  }, []);
+
+  const loadLocalStorage = () => {
+    const products = localStorage.getItem("berakit_products");
+    if (products) {
+      return JSON.parse(products);
+    }
+    return [];
+  };
+
+  React.useEffect(() => {
+    loadData();
+    window.addEventListener("focus", loadData);
+    return () => window.removeEventListener("focus", loadData);
+  }, [loadData]);
+
+  const totalProducts = data.reduce((acc, item) => acc + item.value, 0);
 
   const onPieEnter = (_: unknown, index: number) => {
     setActiveIndex(index);
@@ -100,123 +126,90 @@ export function LeadSourcesChart() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-2.5">
           <Button variant="outline" size="icon" className="size-7 sm:size-8">
-            <ChartLine className="size-4 sm:size-[18px] text-muted-foreground" />
+            <ShoppingBag className="size-4 sm:size-[18px] text-muted-foreground" />
           </Button>
-          <span className="text-sm sm:text-base font-medium">Lead Sources</span>
+          <span className="text-sm sm:text-base font-semibold">Kategori Produk</span>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-7 sm:size-8">
-              <MoreHorizontal className="size-4 text-muted-foreground" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[180px]">
-            <DropdownMenuLabel>Time Range</DropdownMenuLabel>
-            {(Object.keys(timeRangeLabels) as TimeRange[]).map((range) => (
-              <DropdownMenuCheckboxItem
-                key={range}
-                checked={timeRange === range}
-                onCheckedChange={() => setTimeRange(range)}
-              >
-                {timeRangeLabels[range]}
-              </DropdownMenuCheckboxItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel>Display Options</DropdownMenuLabel>
-            <DropdownMenuCheckboxItem
-              checked={showLabels}
-              onCheckedChange={setShowLabels}
-            >
-              Show labels
-            </DropdownMenuCheckboxItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Download className="size-4 mr-2" />
-              Export as PNG
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Share2 className="size-4 mr-2" />
-              Share
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Maximize2 className="size-4 mr-2" />
-              Full Screen
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <RefreshCw className="size-4 mr-2" />
-              Refresh Data
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Button variant="ghost" size="icon" className="size-7 sm:size-8" onClick={loadData}>
+          <RefreshCw className="size-4 text-muted-foreground" />
+        </Button>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-        <div className="relative shrink-0 size-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius="42%"
-                outerRadius="70%"
-                paddingAngle={2}
-                dataKey="value"
-                strokeWidth={0}
-                activeIndex={activeIndex !== null ? activeIndex : undefined}
-                activeShape={renderActiveShape}
-                onMouseEnter={onPieEnter}
-                onMouseLeave={onPieLeave}
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-lg sm:text-xl font-semibold">
-              {totalLeads.toLocaleString()}
-            </span>
-            <span className="text-[10px] sm:text-xs text-muted-foreground">
-              Total Leads
-            </span>
-          </div>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center h-[220px] gap-2">
+          <Loader2 className="size-6 text-primary animate-spin" />
+          <span className="text-xs text-muted-foreground font-medium">Memuat kategori...</span>
         </div>
+      ) : totalProducts === 0 ? (
+        <div className="flex flex-col items-center justify-center h-[220px] text-center text-muted-foreground">
+          <span className="text-sm">Tidak ada data produk</span>
+          <span className="text-xs mt-1">Tambahkan produk di tab Produk Desa</span>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+          <div className="relative shrink-0 size-[200px] mx-auto sm:mx-0">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius="50%"
+                  outerRadius="78%"
+                  paddingAngle={3}
+                  dataKey="value"
+                  strokeWidth={0}
+                  activeIndex={activeIndex !== null ? activeIndex : undefined}
+                  activeShape={renderActiveShape}
+                  onMouseEnter={onPieEnter}
+                  onMouseLeave={onPieLeave}
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-lg sm:text-xl font-bold">
+                {totalProducts}
+              </span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">
+                Total Produk
+              </span>
+            </div>
+          </div>
 
-        {showLabels && (
-          <div className="flex-1 w-full grid grid-cols-2 sm:grid-cols-1 gap-2 sm:gap-4">
-            {data.map((item, index) => (
-              <div
-                key={item.name}
-                className={`flex items-center gap-2 sm:gap-2.5 cursor-pointer transition-opacity ${
-                  activeIndex !== null && activeIndex !== index
-                    ? "opacity-50"
-                    : ""
-                }`}
-                onMouseEnter={() => setActiveIndex(index)}
-                onMouseLeave={() => setActiveIndex(null)}
-              >
+          <div className="flex-1 w-full flex flex-col gap-2.5 sm:gap-3">
+            {data.map((item, index) => {
+              if (item.value === 0) return null;
+              return (
                 <div
-                  className="w-1 h-4 sm:h-5 rounded-sm shrink-0"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="flex-1 text-xs sm:text-sm text-muted-foreground truncate">
-                  {item.name}
-                </span>
-                <span className="text-xs sm:text-sm font-semibold tabular-nums">
-                  {item.value.toLocaleString()}
-                </span>
-              </div>
-            ))}
+                  key={item.name}
+                  className={`flex items-center gap-2 cursor-pointer transition-opacity ${
+                    activeIndex !== null && activeIndex !== index
+                      ? "opacity-50"
+                      : ""
+                  }`}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onMouseLeave={() => setActiveIndex(null)}
+                >
+                  <div
+                    className="w-1.5 h-3.5 rounded-xs shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="flex-1 text-xs sm:text-sm text-muted-foreground truncate">
+                    {item.name}
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold tabular-nums">
+                    {item.value} item
+                  </span>
+                </div>
+              );
+            })}
           </div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <Settings2 className="size-3" />
-        <span>{timeRangeLabels[timeRange]}</span>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -113,7 +113,24 @@ export function TransactionsList() {
 
         if (error) throw error;
 
-        setTransactions(data || []);
+        if (data && data.length === 0) {
+          // Auto-seed default transactions to make the database instantly alive
+          const seedData = DEFAULT_TRANSACTIONS.map(({ customer_name, customer_phone, address, total_amount, status, payment_method, created_at }) => ({
+            customer_name, customer_phone, address, total_amount, status, payment_method, created_at
+          }));
+          const { error: seedError } = await supabase.from("orders").insert(seedData);
+          if (!seedError) {
+            const { data: refetched } = await supabase
+              .from("orders")
+              .select("*")
+              .order("created_at", { ascending: false });
+            setTransactions(refetched || []);
+          } else {
+            setTransactions([]);
+          }
+        } else {
+          setTransactions(data || []);
+        }
         setIsUsingSupabase(true);
       } catch (err) {
         console.error("Supabase fetch failed, falling back to LocalStorage:", err);

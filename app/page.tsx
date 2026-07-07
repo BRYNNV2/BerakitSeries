@@ -16,7 +16,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkUser = async () => {
-      // 1. Check if Supabase client is initialized
+      // Check local storage fallback first
+      const localAuth = localStorage.getItem("berakit_admin_auth");
+      if (localAuth === "true") {
+        setAuthenticated(true);
+        setLoading(false);
+        return;
+      }
+
       if (supabase) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
@@ -31,8 +38,12 @@ export default function DashboardPage() {
             if (session) {
               setAuthenticated(true);
             } else {
-              setAuthenticated(false);
-              router.push("/login");
+              // Only redirect if local auth is also missing
+              const currentLocalAuth = localStorage.getItem("berakit_admin_auth");
+              if (currentLocalAuth !== "true") {
+                setAuthenticated(false);
+                router.push("/login");
+              }
             }
             setLoading(false);
           });

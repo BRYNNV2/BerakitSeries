@@ -4,7 +4,6 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Table,
   TableBody,
@@ -17,488 +16,307 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   ClipboardList,
   Search,
-  Filter,
-  FileInput,
   MoreHorizontal,
-  X,
-  Eye,
-  Pencil,
-  Trash2,
-  Copy,
-  FileSpreadsheet,
-  FileText,
-  Database,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
+  CheckCircle2,
+  Clock,
+  Ban,
+  TrendingUp,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
-import { useDashboardStore } from "@/store/dashboard-store";
-import { deals } from "@/mock-data/deals";
+import { supabase } from "@/lib/supabase";
 
-const stages = ["Negotiation", "Proposal Sent", "Qualified", "Discovery"];
-const owners = ["Alex Ray", "Mina Swan", "John Kim", "Sarah Lee"];
-const valueRanges = [
-  { label: "All Values", value: "all" },
-  { label: "< $10,000", value: "under10k" },
-  { label: "$10,000 - $20,000", value: "10k-20k" },
-  { label: "> $20,000", value: "over20k" },
+interface Transaction {
+  id: string;
+  customer_name: string;
+  customer_phone: string;
+  address: string;
+  total_amount: number;
+  status: "Pending" | "Diproses" | "Selesai" | "Dibatalkan";
+  payment_method: string;
+  created_at: string;
+}
+
+const DEFAULT_TRANSACTIONS: Transaction[] = [
+  {
+    id: "tx-1",
+    customer_name: "Budi Santoso",
+    customer_phone: "081234567890",
+    address: "Jl. Raya Berakit No. 12, Desa Berakit",
+    total_amount: 170000,
+    status: "Selesai",
+    payment_method: "Transfer Bank",
+    created_at: "2026-07-06T10:30:00Z",
+  },
+  {
+    id: "tx-2",
+    customer_name: "Siti Rahma",
+    customer_phone: "089876543210",
+    address: "RT 02 / RW 01, Dusun 2 Desa Berakit",
+    total_amount: 35000,
+    status: "Pending",
+    payment_method: "COD",
+    created_at: "2026-07-07T03:15:00Z",
+  },
+  {
+    id: "tx-3",
+    customer_name: "Andi Wijaya",
+    customer_phone: "085299887766",
+    address: "Penginapan Berakit Indah, RT 01",
+    total_amount: 250000,
+    status: "Diproses",
+    payment_method: "Transfer Bank",
+    created_at: "2026-07-07T05:40:00Z",
+  },
+  {
+    id: "tx-4",
+    customer_name: "Rina Kartika",
+    customer_phone: "087711223344",
+    address: "Kavling Nelayan, Desa Berakit",
+    total_amount: 65000,
+    status: "Dibatalkan",
+    payment_method: "COD",
+    created_at: "2026-07-05T08:20:00Z",
+  },
 ];
 
-const PAGE_SIZE_OPTIONS = [10, 20, 30, 50];
-
 export function DealsTable() {
-  const searchQuery = useDashboardStore((state) => state.searchQuery);
-  const stageFilter = useDashboardStore((state) => state.stageFilter);
-  const ownerFilter = useDashboardStore((state) => state.ownerFilter);
-  const valueFilter = useDashboardStore((state) => state.valueFilter);
-  const setSearchQuery = useDashboardStore((state) => state.setSearchQuery);
-  const setStageFilter = useDashboardStore((state) => state.setStageFilter);
-  const setOwnerFilter = useDashboardStore((state) => state.setOwnerFilter);
-  const setValueFilter = useDashboardStore((state) => state.setValueFilter);
-  const clearFilters = useDashboardStore((state) => state.clearFilters);
+  const [orders, setOrders] = React.useState<Transaction[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [isUsingSupabase, setIsUsingSupabase] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
-  const [currentPage, setCurrentPage] = React.useState(1);
-  const [pageSize, setPageSize] = React.useState(10);
+  const loadData = React.useCallback(async () => {
+    setLoading(true);
+    const hasCredentials = !!supabase;
 
-  const hasActiveFilters =
-    stageFilter !== "all" || ownerFilter !== "all" || valueFilter !== "all";
+    if (hasCredentials) {
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(10);
 
-  const filteredDeals = React.useMemo(() => {
-    return deals.filter((deal) => {
-      const matchesSearch =
-        deal.dealName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        deal.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        deal.owner.toLowerCase().includes(searchQuery.toLowerCase());
+        if (error) throw error;
 
-      const matchesStage =
-        stageFilter === "all" || deal.stage === stageFilter;
-
-      const matchesOwner =
-        ownerFilter === "all" || deal.owner === ownerFilter;
-
-      let matchesValue = true;
-      if (valueFilter === "under10k") {
-        matchesValue = deal.value < 10000;
-      } else if (valueFilter === "10k-20k") {
-        matchesValue = deal.value >= 10000 && deal.value <= 20000;
-      } else if (valueFilter === "over20k") {
-        matchesValue = deal.value > 20000;
+        setOrders(data || []);
+        setIsUsingSupabase(true);
+      } catch (err) {
+        console.error("Supabase load failed in DealsTable, falling back to LocalStorage:", err);
+        loadLocalStorage();
       }
+    } else {
+      loadLocalStorage();
+    }
+    setLoading(false);
+  }, []);
 
-      return matchesSearch && matchesStage && matchesOwner && matchesValue;
-    });
-  }, [searchQuery, stageFilter, ownerFilter, valueFilter]);
-
-  const totalPages = Math.ceil(filteredDeals.length / pageSize);
-
-  const paginatedDeals = React.useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return filteredDeals.slice(startIndex, endIndex);
-  }, [filteredDeals, currentPage, pageSize]);
+  const loadLocalStorage = () => {
+    setIsUsingSupabase(false);
+    const local = localStorage.getItem("berakit_transactions");
+    if (local) {
+      setOrders(JSON.parse(local).slice(0, 10));
+    } else {
+      localStorage.setItem("berakit_transactions", JSON.stringify(DEFAULT_TRANSACTIONS));
+      setOrders(DEFAULT_TRANSACTIONS.slice(0, 10));
+    }
+  };
 
   React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, stageFilter, ownerFilter, valueFilter, pageSize]);
+    loadData();
+    window.addEventListener("focus", loadData);
+    return () => window.removeEventListener("focus", loadData);
+  }, [loadData]);
 
-  const goToPage = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  const handleUpdateStatus = async (id: string, newStatus: Transaction["status"]) => {
+    if (isUsingSupabase) {
+      try {
+        const { error } = await supabase
+          .from("orders")
+          .update({ status: newStatus })
+          .eq("id", id);
+
+        if (error) throw error;
+        await loadData();
+      } catch (err) {
+        console.error("Gagal update status di Supabase:", err);
+        alert("Gagal memperbarui status transaksi.");
+      }
+    } else {
+      // Local fallbacks
+      const local = localStorage.getItem("berakit_transactions");
+      let allTx: Transaction[] = [];
+      if (local) {
+        allTx = JSON.parse(local);
+      } else {
+        allTx = DEFAULT_TRANSACTIONS;
+      }
+
+      const updated = allTx.map((t) =>
+        t.id === id ? { ...t, status: newStatus } : t
+      );
+      localStorage.setItem("berakit_transactions", JSON.stringify(updated));
+      setOrders(updated.slice(0, 10));
+    }
+  };
+
+  const filteredOrders = React.useMemo(() => {
+    return orders.filter((o) =>
+      o.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.payment_method.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [orders, searchQuery]);
+
+  const getStatusBadge = (status: Transaction["status"]) => {
+    switch (status) {
+      case "Selesai":
+        return (
+          <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 gap-1 border-emerald-500/20 font-medium">
+            <CheckCircle2 className="size-3" />
+            Selesai
+          </Badge>
+        );
+      case "Diproses":
+        return (
+          <Badge className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 gap-1 border-blue-500/20 font-medium">
+            <TrendingUp className="size-3" />
+            Diproses
+          </Badge>
+        );
+      case "Pending":
+        return (
+          <Badge className="bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 gap-1 border-amber-500/20 font-medium">
+            <Clock className="size-3" />
+            Pending
+          </Badge>
+        );
+      case "Dibatalkan":
+        return (
+          <Badge className="bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 gap-1 border-rose-500/20 font-medium">
+            <Ban className="size-3" />
+            Batal
+          </Badge>
+        );
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
     <div className="rounded-xl border bg-card">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:px-6 sm:py-3.5">
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-1">
-          <Button variant="outline" size="icon" className="size-7 sm:size-8 shrink-0">
-            <ClipboardList className="size-4 sm:size-[18px] text-muted-foreground" />
-          </Button>
-          <span className="text-sm sm:text-base font-medium">Active Deals</span>
-          <Badge variant="secondary" className="ml-1 text-[10px] sm:text-xs">
-            {filteredDeals.length}
-          </Badge>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-4 border-b">
+        <div className="flex items-center gap-2 flex-1">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <ClipboardList className="size-4 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold">Pesanan Terbaru</h2>
+            <p className="text-[11px] text-muted-foreground">Menampilkan hingga 10 transaksi teranyar</p>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 sm:flex-none">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 sm:size-5 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
-              placeholder="Search..."
+              placeholder="Cari pembeli..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 sm:pl-10 w-full sm:w-[160px] lg:w-[200px] h-8 sm:h-9 text-sm"
+              className="pl-9 h-8 sm:h-9 text-sm"
             />
           </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className={`h-8 sm:h-9 gap-1.5 sm:gap-2 ${hasActiveFilters ? "border-primary" : ""}`}
-              >
-                <Filter className="size-3.5 sm:size-4" />
-                <span className="hidden sm:inline">Filter</span>
-                {hasActiveFilters && (
-                  <span className="size-1.5 sm:size-2 rounded-full bg-primary" />
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[220px]">
-              <DropdownMenuLabel>Filter by Stage</DropdownMenuLabel>
-              <DropdownMenuCheckboxItem
-                checked={stageFilter === "all"}
-                onCheckedChange={() => setStageFilter("all")}
-              >
-                All Stages
-              </DropdownMenuCheckboxItem>
-              {stages.map((stage) => (
-                <DropdownMenuCheckboxItem
-                  key={stage}
-                  checked={stageFilter === stage}
-                  onCheckedChange={() => setStageFilter(stage)}
-                >
-                  {stage}
-                </DropdownMenuCheckboxItem>
-              ))}
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuLabel>Filter by Owner</DropdownMenuLabel>
-              <DropdownMenuCheckboxItem
-                checked={ownerFilter === "all"}
-                onCheckedChange={() => setOwnerFilter("all")}
-              >
-                All Owners
-              </DropdownMenuCheckboxItem>
-              {owners.map((owner) => (
-                <DropdownMenuCheckboxItem
-                  key={owner}
-                  checked={ownerFilter === owner}
-                  onCheckedChange={() => setOwnerFilter(owner)}
-                >
-                  {owner}
-                </DropdownMenuCheckboxItem>
-              ))}
-
-              <DropdownMenuSeparator />
-
-              <DropdownMenuLabel>Filter by Value</DropdownMenuLabel>
-              {valueRanges.map((range) => (
-                <DropdownMenuCheckboxItem
-                  key={range.value}
-                  checked={valueFilter === range.value}
-                  onCheckedChange={() => setValueFilter(range.value)}
-                >
-                  {range.label}
-                </DropdownMenuCheckboxItem>
-              ))}
-
-              {hasActiveFilters && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={clearFilters}
-                    className="text-destructive"
-                  >
-                    <X className="size-4 mr-2" />
-                    Clear all filters
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <div className="hidden sm:block w-px h-[22px] bg-border" />
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 sm:h-9 gap-1.5 sm:gap-2">
-                <FileInput className="size-3.5 sm:size-4" />
-                <span className="hidden sm:inline">Import</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <FileSpreadsheet className="size-4 mr-2" />
-                Import from CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <FileText className="size-4 mr-2" />
-                Import from Excel
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Database className="size-4 mr-2" />
-                Import from CRM
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button variant="ghost" size="icon" className="size-8" onClick={loadData}>
+            <RefreshCw className="size-4 text-muted-foreground" />
+          </Button>
         </div>
       </div>
 
-      {hasActiveFilters && (
-        <div className="flex flex-wrap items-center gap-2 px-3 sm:px-6 pb-3">
-          <span className="text-[10px] sm:text-xs text-muted-foreground">Filters:</span>
-          {stageFilter !== "all" && (
-            <Badge
-              variant="secondary"
-              className="gap-1 cursor-pointer text-[10px] sm:text-xs h-5 sm:h-6"
-              onClick={() => setStageFilter("all")}
-            >
-              {stageFilter}
-              <X className="size-2.5 sm:size-3" />
-            </Badge>
-          )}
-          {ownerFilter !== "all" && (
-            <Badge
-              variant="secondary"
-              className="gap-1 cursor-pointer text-[10px] sm:text-xs h-5 sm:h-6"
-              onClick={() => setOwnerFilter("all")}
-            >
-              {ownerFilter}
-              <X className="size-2.5 sm:size-3" />
-            </Badge>
-          )}
-          {valueFilter !== "all" && (
-            <Badge
-              variant="secondary"
-              className="gap-1 cursor-pointer text-[10px] sm:text-xs h-5 sm:h-6"
-              onClick={() => setValueFilter("all")}
-            >
-              {valueRanges.find((r) => r.value === valueFilter)?.label}
-              <X className="size-2.5 sm:size-3" />
-            </Badge>
-          )}
-        </div>
-      )}
-
-      <div className="px-3 sm:px-6 pb-3 sm:pb-4 overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50 hover:bg-muted/50">
-              <TableHead className="w-[40px] font-medium text-muted-foreground text-xs sm:text-sm">
-                #
-              </TableHead>
-              <TableHead className="min-w-[180px] font-medium text-muted-foreground text-xs sm:text-sm">
-                Deal Name
-              </TableHead>
-              <TableHead className="hidden md:table-cell min-w-[140px] font-medium text-muted-foreground text-xs sm:text-sm">
-                Client
-              </TableHead>
-              <TableHead className="min-w-[100px] font-medium text-muted-foreground text-xs sm:text-sm">
-                Stage
-              </TableHead>
-              <TableHead className="min-w-[90px] font-medium text-muted-foreground text-xs sm:text-sm">
-                Value
-              </TableHead>
-              <TableHead className="hidden lg:table-cell min-w-[150px] font-medium text-muted-foreground text-xs sm:text-sm">
-                Owner
-              </TableHead>
-              <TableHead className="hidden sm:table-cell font-medium text-muted-foreground text-xs sm:text-sm">
-                Expected Close
-              </TableHead>
-              <TableHead className="w-[40px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedDeals.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="h-24 text-center text-muted-foreground text-sm"
-                >
-                  No deals found matching your filters.
-                </TableCell>
+      <div className="overflow-x-auto p-2 sm:p-4">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-10 gap-2">
+            <Loader2 className="size-8 text-primary animate-spin" />
+            <span className="text-sm text-muted-foreground">Memuat pesanan terbaru...</span>
+          </div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="text-center py-10 text-sm text-muted-foreground">
+            Tidak ada pesanan masuk.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead>Pembeli</TableHead>
+                <TableHead className="hidden md:table-cell">Alamat Kirim</TableHead>
+                <TableHead>Metode</TableHead>
+                <TableHead>Total Belanja</TableHead>
+                <TableHead>Tanggal</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
-            ) : (
-              paginatedDeals.map((deal, index) => (
-                <TableRow key={deal.id}>
-                  <TableCell className="font-medium text-xs sm:text-sm">
-                    {(currentPage - 1) * pageSize + index + 1}
-                  </TableCell>
+            </TableHeader>
+            <TableBody>
+              {filteredOrders.map((order) => (
+                <TableRow key={order.id}>
                   <TableCell>
-                    <div className="flex items-center gap-2 sm:gap-2.5">
-                      <div
-                        className={`flex items-center justify-center size-5 sm:size-[26px] rounded-md sm:rounded-lg text-white text-[10px] sm:text-sm font-extrabold shrink-0 ${deal.dealColor}`}
-                      >
-                        {deal.dealInitial}
-                      </div>
-                      <div className="min-w-0">
-                        <span className="font-medium text-xs sm:text-sm block truncate">{deal.dealName}</span>
-                        <span className="text-[10px] text-muted-foreground md:hidden">{deal.client}</span>
-                      </div>
-                    </div>
+                    <span className="font-semibold text-xs sm:text-sm block">{order.customer_name}</span>
+                    <span className="text-[10px] text-muted-foreground block">{order.customer_phone}</span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground text-xs sm:text-sm">
-                    {deal.client}
+                  <TableCell className="hidden md:table-cell max-w-[200px] text-xs text-muted-foreground truncate">
+                    {order.address}
                   </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className="bg-muted/80 text-muted-foreground font-medium text-[10px] sm:text-xs"
-                    >
-                      {deal.stage}
-                    </Badge>
+                  <TableCell className="text-xs text-muted-foreground font-medium">
+                    {order.payment_method}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs sm:text-sm tabular-nums">
-                    ${deal.value.toLocaleString()}
+                  <TableCell className="font-medium text-xs sm:text-sm tabular-nums">
+                    Rp {order.total_amount.toLocaleString("id-ID")}
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="size-5 sm:size-6 bg-muted">
-                        <AvatarFallback className="text-[8px] sm:text-[10px] font-extrabold text-muted-foreground uppercase">
-                          {deal.ownerInitials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-muted-foreground text-xs sm:text-sm">{deal.owner}</span>
-                    </div>
+                  <TableCell className="text-[11px] text-muted-foreground">
+                    {formatDate(order.created_at)}
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell text-muted-foreground text-xs sm:text-sm">
-                    {deal.expectedClose}
-                  </TableCell>
-                  <TableCell>
+                  <TableCell>{getStatusBadge(order.status)}</TableCell>
+                  <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 sm:size-8 text-muted-foreground hover:text-foreground"
-                        >
-                          <MoreHorizontal className="size-3.5 sm:size-4" />
+                        <Button variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-foreground">
+                          <MoreHorizontal className="size-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="size-4 mr-2" />
-                          View Details
+                        <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, "Diproses")}>
+                          <TrendingUp className="size-4 mr-2 text-blue-500" />
+                          Tandai Diproses
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Pencil className="size-4 mr-2" />
-                          Edit Deal
+                        <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, "Selesai")}>
+                          <CheckCircle2 className="size-4 mr-2 text-emerald-500" />
+                          Tandai Selesai
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Copy className="size-4 mr-2" />
-                          Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          <Trash2 className="size-4 mr-2" />
-                          Delete
+                        <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, "Dibatalkan")}>
+                          <Ban className="size-4 mr-2 text-rose-500" />
+                          Tandai Batal
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-3 sm:px-6 py-3 border-t">
-        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-          <span className="hidden sm:inline">Rows per page:</span>
-          <Select
-            value={pageSize.toString()}
-            onValueChange={(value) => setPageSize(Number(value))}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PAGE_SIZE_OPTIONS.map((size) => (
-                <SelectItem key={size} value={size.toString()}>
-                  {size}
-                </SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-          <span className="text-muted-foreground">
-            {(currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredDeals.length)} of {filteredDeals.length}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8"
-            onClick={() => goToPage(1)}
-            disabled={currentPage === 1}
-          >
-            <ChevronsLeft className="size-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8"
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            <ChevronLeft className="size-4" />
-          </Button>
-          
-          <div className="flex items-center gap-1 mx-1">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum: number;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-              
-              return (
-                <Button
-                  key={pageNum}
-                  variant={currentPage === pageNum ? "default" : "outline"}
-                  size="icon"
-                  className="size-8"
-                  onClick={() => goToPage(pageNum)}
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-          </div>
-
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8"
-            onClick={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            <ChevronRight className="size-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8"
-            onClick={() => goToPage(totalPages)}
-            disabled={currentPage === totalPages}
-          >
-            <ChevronsRight className="size-4" />
-          </Button>
-        </div>
+            </TableBody>
+          </Table>
+        )}
       </div>
     </div>
   );

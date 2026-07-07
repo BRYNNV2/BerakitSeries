@@ -125,7 +125,24 @@ export function ProductsCrud() {
 
         if (error) throw error;
 
-        setProducts(data || []);
+        if (data && data.length === 0) {
+          // Auto-seed default products to make the database instantly alive
+          const seedData = DEFAULT_PRODUCTS.map(({ name, description, price, stock, image_url, category }) => ({
+            name, description, price, stock, image_url, category
+          }));
+          const { error: seedError } = await supabase.from("products").insert(seedData);
+          if (!seedError) {
+            const { data: refetched } = await supabase
+              .from("products")
+              .select("*")
+              .order("created_at", { ascending: false });
+            setProducts(refetched || []);
+          } else {
+            setProducts([]);
+          }
+        } else {
+          setProducts(data || []);
+        }
         setIsUsingSupabase(true);
       } catch (err) {
         console.error("Supabase fetch failed, falling back to LocalStorage:", err);
