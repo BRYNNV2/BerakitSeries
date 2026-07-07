@@ -31,7 +31,9 @@ import {
   RefreshCw,
   MessageSquare,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
+import { LoadingLottie } from "@/components/ui/loading-lottie";
+import { toast } from "sonner";
 
 interface Transaction {
   id: string;
@@ -99,18 +101,20 @@ export function DealsTable() {
 
     if (hasCredentials) {
       try {
-        const { data, error } = await supabase
-          .from("orders")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(10);
+        const { data, error } = await withTimeout(
+          supabase
+            .from("orders")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(10)
+        );
 
         if (error) throw error;
 
         setOrders(data || []);
         setIsUsingSupabase(true);
       } catch (err) {
-        console.error("Supabase load failed in DealsTable, falling back to LocalStorage:", err);
+        console.warn("Supabase load failed in DealsTable, falling back to LocalStorage:", err);
         loadLocalStorage();
       }
     } else {
@@ -132,8 +136,6 @@ export function DealsTable() {
 
   React.useEffect(() => {
     loadData();
-    window.addEventListener("focus", loadData);
-    return () => window.removeEventListener("focus", loadData);
   }, [loadData]);
 
   const handleUpdateStatus = async (id: string, newStatus: Transaction["status"]) => {
@@ -145,10 +147,11 @@ export function DealsTable() {
           .eq("id", id);
 
         if (error) throw error;
+        toast.success(`Status transaksi #${id} berhasil diubah menjadi '${newStatus}'`);
         await loadData();
       } catch (err) {
         console.error("Gagal update status di Supabase:", err);
-        alert("Gagal memperbarui status transaksi.");
+        toast.error("Gagal memperbarui status transaksi.");
       }
     } else {
       // Local fallbacks
@@ -165,13 +168,14 @@ export function DealsTable() {
       );
       localStorage.setItem("berakit_transactions", JSON.stringify(updated));
       setOrders(updated.slice(0, 10));
+      toast.success(`Status transaksi #${id} berhasil diubah menjadi '${newStatus}' (Lokal)`);
     }
   };
 
   const handleWhatsAppContact = (order: Transaction) => {
     let phone = (order.customer_phone || "").replace(/\D/g, "");
     if (!phone) {
-      alert("Nomor telepon tidak valid.");
+      toast.error("Nomor telepon tidak valid.");
       return;
     }
     if (phone.startsWith("0")) {
@@ -267,10 +271,7 @@ export function DealsTable() {
 
       <div className="overflow-x-auto p-2 sm:p-4">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-10 gap-2">
-            <Loader2 className="size-8 text-primary animate-spin" />
-            <span className="text-sm text-muted-foreground">Memuat pesanan terbaru...</span>
-          </div>
+          <LoadingLottie size={100} label="Memuat pesanan terbaru..." />
         ) : filteredOrders.length === 0 ? (
           <div className="text-center py-10 text-sm text-muted-foreground">
             Tidak ada pesanan masuk.

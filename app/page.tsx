@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface Product {
   id: string;
@@ -215,7 +216,7 @@ export default function StorefrontPage() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customerName || !customerPhone || !customerAddress) {
-      alert("Harap lengkapi semua kolom formulir.");
+      toast.error("Harap lengkapi semua kolom formulir.");
       return;
     }
 

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { TrendingUp, ArrowUpRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
 
 interface Product {
   id: string;
@@ -34,12 +34,12 @@ export function RecentSales() {
     // 1. Fetch Products
     if (supabase) {
       try {
-        const { data, error } = await supabase.from("products").select("id, name, price, image_url, category").limit(4);
+        const { data, error } = await withTimeout(supabase.from("products").select("id, name, price, image_url, category").limit(4));
         if (!error && data && data.length > 0) {
           dbProducts = data;
         }
       } catch (err) {
-        console.error("Supabase failed in RecentSales products fetch:", err);
+        console.warn("Supabase failed in RecentSales products fetch:", err);
       }
     }
 
@@ -85,12 +85,12 @@ export function RecentSales() {
     // 2. Fetch Orders
     if (supabase) {
       try {
-        const { data, error } = await supabase.from("orders").select("created_at, status").order("created_at", { ascending: false });
+        const { data, error } = await withTimeout(supabase.from("orders").select("created_at, status").order("created_at", { ascending: false }));
         if (!error && data) {
           dbOrders = data;
         }
       } catch (err) {
-        console.error("Supabase failed in RecentSales orders fetch:", err);
+        console.warn("Supabase failed in RecentSales orders fetch:", err);
       }
     }
 
@@ -161,8 +161,6 @@ export function RecentSales() {
 
   React.useEffect(() => {
     loadRecentSales();
-    window.addEventListener("focus", loadRecentSales);
-    return () => window.removeEventListener("focus", loadRecentSales);
   }, [loadRecentSales]);
 
   return (

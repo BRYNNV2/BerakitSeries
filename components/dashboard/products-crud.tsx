@@ -37,7 +37,10 @@ import {
   PackageX,
   AlertTriangle,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
+import { addActivityLog } from "@/lib/logger";
+import { LoadingLottie } from "@/components/ui/loading-lottie";
+import { toast } from "sonner";
 
 interface Product {
   id: string;
@@ -118,10 +121,12 @@ export function ProductsCrud() {
 
     if (hasCredentials) {
       try {
-        const { data, error } = await supabase
-          .from("products")
-          .select("*")
-          .order("created_at", { ascending: false });
+        const { data, error } = await withTimeout(
+          supabase
+            .from("products")
+            .select("*")
+            .order("created_at", { ascending: false })
+        );
 
         if (error) throw error;
 
@@ -132,10 +137,12 @@ export function ProductsCrud() {
           }));
           const { error: seedError } = await supabase.from("products").insert(seedData);
           if (!seedError) {
-            const { data: refetched } = await supabase
-              .from("products")
-              .select("*")
-              .order("created_at", { ascending: false });
+            const { data: refetched } = await withTimeout(
+              supabase
+                .from("products")
+                .select("*")
+                .order("created_at", { ascending: false })
+            );
             setProducts(refetched || []);
           } else {
             setProducts([]);
@@ -145,7 +152,7 @@ export function ProductsCrud() {
         }
         setIsUsingSupabase(true);
       } catch (err) {
-        console.error("Supabase fetch failed, falling back to LocalStorage:", err);
+        console.warn("Supabase fetch failed, falling back to LocalStorage:", err);
         loadLocalStorage();
       }
     } else {
@@ -224,15 +231,27 @@ export function ProductsCrud() {
             .update(newProductData)
             .eq("id", editingProduct.id);
           if (error) throw error;
+          addActivityLog(
+            "Edit Produk",
+            `Mengubah data produk '${newProductData.name}' (Supabase)`,
+            "product"
+          );
+          toast.success(`Produk '${newProductData.name}' berhasil diperbarui.`);
         } else {
           // Insert Supabase
           const { error } = await supabase.from("products").insert([newProductData]);
           if (error) throw error;
+          addActivityLog(
+            "Tambah Produk",
+            `Menambahkan produk baru '${newProductData.name}' dengan harga Rp ${newProductData.price.toLocaleString("id-ID")} dan stok ${newProductData.stock} (Supabase)`,
+            "product"
+          );
+          toast.success(`Produk baru '${newProductData.name}' berhasil ditambahkan.`);
         }
         await loadData();
         setIsFormOpen(false);
       } catch (err) {
-        alert("Gagal menyimpan ke Supabase. Menggunakan penyimpanan lokal sementara.");
+        toast.warning("Gagal menyimpan ke Supabase. Menggunakan penyimpanan lokal sementara.");
         console.error(err);
       }
     } else {
@@ -242,12 +261,24 @@ export function ProductsCrud() {
           p.id === editingProduct.id ? { ...p, ...newProductData } : p
         );
         saveProducts(updated);
+        addActivityLog(
+          "Edit Produk",
+          `Mengubah data produk '${newProductData.name}' (Lokal)`,
+          "product"
+        );
+        toast.success(`Produk '${newProductData.name}' berhasil diperbarui secara lokal.`);
       } else {
         const newItem: Product = {
           id: "prod-" + Date.now(),
           ...newProductData,
         };
         saveProducts([newItem, ...products]);
+        addActivityLog(
+          "Tambah Produk",
+          `Menambahkan produk baru '${newProductData.name}' dengan harga Rp ${newProductData.price.toLocaleString("id-ID")} dan stok ${newProductData.stock} (Lokal)`,
+          "product"
+        );
+        toast.success(`Produk baru '${newProductData.name}' berhasil ditambahkan secara lokal.`);
       }
       setIsFormOpen(false);
     }
@@ -272,14 +303,26 @@ export function ProductsCrud() {
           .delete()
           .eq("id", deletingProduct.id);
         if (error) throw error;
+        addActivityLog(
+          "Hapus Produk",
+          `Menghapus produk '${deletingProduct.name}' (Supabase)`,
+          "product"
+        );
+        toast.success(`Produk '${deletingProduct.name}' berhasil dihapus.`);
         await loadData();
       } catch (err) {
         console.error(err);
-        alert("Gagal menghapus produk dari Supabase.");
+        toast.error("Gagal menghapus produk dari Supabase.");
       }
     } else {
       const updated = products.filter((p) => p.id !== deletingProduct.id);
       saveProducts(updated);
+      addActivityLog(
+        "Hapus Produk",
+        `Menghapus produk '${deletingProduct.name}' (Lokal)`,
+        "product"
+      );
+      toast.success(`Produk '${deletingProduct.name}' berhasil dihapus secara lokal.`);
     }
     setIsDeleteOpen(false);
     setSubmitting(false);
@@ -368,10 +411,7 @@ export function ProductsCrud() {
         {/* Table Content */}
         <div className="overflow-x-auto p-2 sm:p-4">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-10 gap-2">
-              <Loader2 className="size-8 text-primary animate-spin" />
-              <span className="text-sm text-muted-foreground">Memuat data produk...</span>
-            </div>
+            <LoadingLottie size={100} label="Memuat data produk..." />
           ) : filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
               <PackageX className="size-12 text-muted-foreground/60" />

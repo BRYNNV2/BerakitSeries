@@ -37,7 +37,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
+import { useDashboardStore } from "@/store/dashboard-store";
 
 interface Transaction {
   id: string;
@@ -108,6 +109,8 @@ function CustomTooltip({
 }
 
 export function RevenueFlowChart() {
+  const activeTab = useDashboardStore((state) => state.activeTab);
+  const isActive = activeTab === "dashboard";
   const { resolvedTheme } = useTheme();
   const [chartType, setChartType] = React.useState<"bar" | "line" | "area">("bar");
   const [loading, setLoading] = React.useState(true);
@@ -125,13 +128,15 @@ export function RevenueFlowChart() {
 
     if (hasCredentials) {
       try {
-        const { data, error } = await supabase
-          .from("orders")
-          .select("id, total_amount, status, created_at");
+        const { data, error } = await withTimeout(
+          supabase
+            .from("orders")
+            .select("id, total_amount, status, created_at")
+        );
         if (error) throw error;
         transactionsList = data || [];
       } catch (err) {
-        console.error("Failed to load revenue data from Supabase, fallback to localStorage:", err);
+        console.warn("Failed to load revenue data from Supabase, fallback to localStorage:", err);
         transactionsList = loadLocalStorage();
       }
     } else {
@@ -183,8 +188,6 @@ export function RevenueFlowChart() {
 
   React.useEffect(() => {
     loadData();
-    window.addEventListener("focus", loadData);
-    return () => window.removeEventListener("focus", loadData);
   }, [loadData]);
 
   const totalThisPeriod = chartData.reduce((acc, item) => acc + item.thisYear, 0);
@@ -307,7 +310,8 @@ export function RevenueFlowChart() {
 
           {/* Chart Container */}
           <div className="flex-1 h-[200px] lg:h-[240px] min-w-0">
-            <ResponsiveContainer width="100%" height="100%">
+            {isActive ? (
+              <ResponsiveContainer width="100%" height="100%">
               {chartType === "bar" ? (
                 <BarChart data={chartData} barGap={3}>
                   <defs>
@@ -422,6 +426,7 @@ export function RevenueFlowChart() {
                 </AreaChart>
               )}
             </ResponsiveContainer>
+            ) : null}
           </div>
         </div>
       )}

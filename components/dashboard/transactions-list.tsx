@@ -38,7 +38,10 @@ import {
   TrendingUp,
   MessageSquare,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
+import { addActivityLog } from "@/lib/logger";
+import { LoadingLottie } from "@/components/ui/loading-lottie";
+import { toast } from "sonner";
 
 interface Transaction {
   id: string;
@@ -108,10 +111,12 @@ export function TransactionsList() {
 
     if (hasCredentials) {
       try {
-        const { data, error } = await supabase
-          .from("orders")
-          .select("*")
-          .order("created_at", { ascending: false });
+        const { data, error } = await withTimeout(
+          supabase
+            .from("orders")
+            .select("*")
+            .order("created_at", { ascending: false })
+        );
 
         if (error) throw error;
 
@@ -122,10 +127,12 @@ export function TransactionsList() {
           }));
           const { error: seedError } = await supabase.from("orders").insert(seedData);
           if (!seedError) {
-            const { data: refetched } = await supabase
-              .from("orders")
-              .select("*")
-              .order("created_at", { ascending: false });
+            const { data: refetched } = await withTimeout(
+              supabase
+                .from("orders")
+                .select("*")
+                .order("created_at", { ascending: false })
+            );
             setTransactions(refetched || []);
           } else {
             setTransactions([]);
@@ -135,7 +142,7 @@ export function TransactionsList() {
         }
         setIsUsingSupabase(true);
       } catch (err) {
-        console.error("Supabase fetch failed, falling back to LocalStorage:", err);
+        console.warn("Supabase fetch failed, falling back to LocalStorage:", err);
         loadLocalStorage();
       }
     } else {
@@ -169,10 +176,16 @@ export function TransactionsList() {
           .eq("id", id);
 
         if (error) throw error;
+        addActivityLog(
+          "Update Status Transaksi",
+          `Mengubah status transaksi #${id} menjadi '${newStatus}' (Supabase)`,
+          "transaction"
+        );
+        toast.success(`Status transaksi #${id} berhasil diubah menjadi '${newStatus}'`);
         await loadData();
       } catch (err) {
         console.error("Gagal update status di Supabase:", err);
-        alert("Gagal memperbarui status transaksi.");
+        toast.error("Gagal memperbarui status transaksi.");
       }
     } else {
       const updated = transactions.map((t) =>
@@ -180,13 +193,19 @@ export function TransactionsList() {
       );
       setTransactions(updated);
       localStorage.setItem("berakit_transactions", JSON.stringify(updated));
+      addActivityLog(
+        "Update Status Transaksi",
+        `Mengubah status transaksi #${id} menjadi '${newStatus}' (Lokal)`,
+        "transaction"
+      );
+      toast.success(`Status transaksi #${id} berhasil diubah menjadi '${newStatus}' (Lokal)`);
     }
   };
 
   const handleWhatsAppContact = (order: Transaction) => {
     let phone = (order.customer_phone || "").replace(/\D/g, "");
     if (!phone) {
-      alert("Nomor telepon tidak valid.");
+      toast.error("Nomor telepon tidak valid.");
       return;
     }
     if (phone.startsWith("0")) {
@@ -197,6 +216,11 @@ export function TransactionsList() {
 
     const message = `Halo ${order.customer_name},\n\nKami dari *BUMDes Berakit Maju*. Mengonfirmasi pesanan Anda:\n- Status: *${order.status}*\n- Total Belanja: *Rp ${order.total_amount.toLocaleString("id-ID")}*\n- Alamat: ${order.address}\n\nTerima kasih telah berbelanja produk desa kami!`;
     const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+    addActivityLog(
+      "Hubungi Pelanggan",
+      `Mengirim pesan WhatsApp konfirmasi ke pelanggan '${order.customer_name}' untuk transaksi #${order.id}`,
+      "transaction"
+    );
     window.open(url, "_blank");
   };
 
@@ -331,10 +355,7 @@ export function TransactionsList() {
 
         <div className="overflow-x-auto p-2 sm:p-4">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-10 gap-2">
-              <Loader2 className="size-8 text-primary animate-spin" />
-              <span className="text-sm text-muted-foreground">Memuat data transaksi...</span>
-            </div>
+            <LoadingLottie size={100} label="Memuat data transaksi..." />
           ) : filteredTransactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
               <ClipboardList className="size-12 text-muted-foreground/60" />

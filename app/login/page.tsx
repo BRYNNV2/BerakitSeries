@@ -15,7 +15,7 @@ import {
   EyeOff,
   CheckCircle2,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,10 +38,12 @@ export default function LoginPage() {
 
     if (isUsingSupabase) {
       try {
-        const { error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { error: authError } = await withTimeout(
+          supabase.auth.signInWithPassword({
+            email,
+            password,
+          })
+        );
 
         if (authError) {
           // If Supabase auth fails, check if the input matches fallback credentials
@@ -56,7 +58,7 @@ export default function LoginPage() {
           router.push("/admin");
         }
       } catch (err) {
-        console.error("Supabase auth error:", err);
+        console.warn("Supabase auth error:", err);
         if (email === "admin@berakit.desa.id" && password === "adminberakit") {
           localStorage.setItem("berakit_admin_auth", "true");
           router.push("/admin");

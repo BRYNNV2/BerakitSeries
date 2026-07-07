@@ -30,10 +30,11 @@ import {
   UserCircle,
   ChevronsUpDown,
   Store,
+  History,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/dashboard-store";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
 
 const menuItems = [
   {
@@ -50,6 +51,11 @@ const menuItems = [
     title: "Transaksi",
     icon: CreditCard,
     tab: "transactions" as const,
+  },
+  {
+    title: "Riwayat Aktivitas",
+    icon: History,
+    tab: "logs" as const,
   },
   {
     title: "Pengaturan",
@@ -71,15 +77,26 @@ export function DashboardSidebar({
 
   React.useEffect(() => {
     const fetchUser = async () => {
-      if (supabase) {
+      // Check local profile first — skip network call if already available
+      const localProfileStr = localStorage.getItem("berakit_admin_profile");
+      if (localProfileStr) {
         try {
-          const response = await supabase.auth.getUser();
+          const localProfile = JSON.parse(localProfileStr);
+          setAdminProfile(localProfile);
+        } catch (e) {
+          console.warn("Failed to parse local profile:", e);
+        }
+      }
+
+      // Only attempt Supabase auth if client exists AND we're NOT using local-only auth
+      const isLocalAuth = localStorage.getItem("berakit_admin_auth") === "true";
+      if (supabase && !isLocalAuth) {
+        try {
+          const response = await withTimeout(supabase.auth.getUser());
           const user = response?.data?.user;
           if (user) {
             const dbName = user.user_metadata?.full_name;
             const dbAvatar = user.user_metadata?.avatar_url;
-
-            const localProfileStr = localStorage.getItem("berakit_admin_profile");
             const localProfile = localProfileStr ? JSON.parse(localProfileStr) : null;
 
             const name = dbName || localProfile?.name || "Admin BUMDes";
@@ -88,20 +105,9 @@ export function DashboardSidebar({
 
             setAdminProfile({ name, email, avatar });
             localStorage.setItem("berakit_admin_profile", JSON.stringify({ name, email, avatar }));
-            return;
           }
         } catch (err) {
-          console.error("Failed to fetch Supabase user:", err);
-        }
-      }
-
-      // Local fallback
-      const localProfile = localStorage.getItem("berakit_admin_profile");
-      if (localProfile) {
-        try {
-          setAdminProfile(JSON.parse(localProfile));
-        } catch (e) {
-          console.error("Failed to parse local profile:", e);
+          // Silently ignore — local profile already loaded above
         }
       }
     };

@@ -4,7 +4,8 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from "recharts";
 import { ShoppingBag, Loader2, RefreshCw } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
+import { useDashboardStore } from "@/store/dashboard-store";
 
 interface Product {
   id: string;
@@ -19,6 +20,8 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 export function LeadSourcesChart() {
+  const activeTab = useDashboardStore((state) => state.activeTab);
+  const isActive = activeTab === "dashboard";
   const [loading, setLoading] = React.useState(true);
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
   const [data, setData] = React.useState<{ name: string; value: number; color: string }[]>([]);
@@ -30,13 +33,15 @@ export function LeadSourcesChart() {
 
     if (hasCredentials) {
       try {
-        const { data: pData, error } = await supabase
-          .from("products")
-          .select("id, category");
+        const { data: pData, error } = await withTimeout(
+          supabase
+            .from("products")
+            .select("id, category")
+        );
         if (error) throw error;
         productsList = pData || [];
       } catch (err) {
-        console.error("Failed to load products for categories chart from Supabase, fallback to localStorage:", err);
+        console.warn("Failed to load products for categories chart from Supabase, fallback to localStorage:", err);
         productsList = loadLocalStorage();
       }
     } else {
@@ -80,8 +85,6 @@ export function LeadSourcesChart() {
 
   React.useEffect(() => {
     loadData();
-    window.addEventListener("focus", loadData);
-    return () => window.removeEventListener("focus", loadData);
   }, [loadData]);
 
   const totalProducts = data.reduce((acc, item) => acc + item.value, 0);
@@ -148,28 +151,30 @@ export function LeadSourcesChart() {
       ) : (
         <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
           <div className="relative shrink-0 size-[200px] mx-auto sm:mx-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="50%"
-                  outerRadius="78%"
-                  paddingAngle={3}
-                  dataKey="value"
-                  strokeWidth={0}
-                  activeIndex={activeIndex !== null ? activeIndex : undefined}
-                  activeShape={renderActiveShape}
-                  onMouseEnter={onPieEnter}
-                  onMouseLeave={onPieLeave}
-                >
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
+            {isActive ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={data}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="50%"
+                    outerRadius="78%"
+                    paddingAngle={3}
+                    dataKey="value"
+                    strokeWidth={0}
+                    activeIndex={activeIndex !== null ? activeIndex : undefined}
+                    activeShape={renderActiveShape}
+                    onMouseEnter={onPieEnter}
+                    onMouseLeave={onPieLeave}
+                  >
+                    {data.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            ) : null}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-lg sm:text-xl font-bold">
                 {totalProducts}

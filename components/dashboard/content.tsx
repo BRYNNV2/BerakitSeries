@@ -10,33 +10,45 @@ import { RecentSales } from "./recent-sales";
 import { ProductsCrud } from "./products-crud";
 import { TransactionsList } from "./transactions-list";
 import { SettingsPanel } from "./settings-panel";
+import { ActivityLogs } from "./activity-logs";
 
 export function DashboardContent() {
   const activeTab = useDashboardStore((state) => state.activeTab);
 
   return (
-    <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 bg-background w-full">
-      {activeTab === "dashboard" && (
-        <>
-          <WelcomeSection />
-          <StatsCards />
-          <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
-            <LeadSourcesChart />
-            <RevenueFlowChart />
+    <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 bg-background w-full">
+      <div className={activeTab === "dashboard" ? "space-y-4 sm:space-y-6" : "hidden"}>
+        <WelcomeSection />
+        <StatsCards />
+        <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
+          <LeadSourcesChart />
+          <RevenueFlowChart />
+        </div>
+        <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
+          <div className="flex-1 xl:max-w-[65%] min-w-0">
+            <DealsTable />
           </div>
-          <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
-            <div className="flex-1 xl:max-w-[65%] min-w-0">
-              <DealsTable />
-            </div>
-            <div className="w-full xl:max-w-[35%] shrink-0 min-w-0">
-              <RecentSales />
-            </div>
+          <div className="w-full xl:max-w-[35%] shrink-0 min-w-0">
+            <RecentSales />
           </div>
-        </>
-      )}
-      {activeTab === "products" && <ProductsCrud />}
-      {activeTab === "transactions" && <TransactionsList />}
-      {activeTab === "settings" && <SettingsPanel />}
+        </div>
+      </div>
+      
+      <div className={activeTab === "products" ? "" : "hidden"}>
+        <ProductsCrud />
+      </div>
+      
+      <div className={activeTab === "transactions" ? "" : "hidden"}>
+        <TransactionsList />
+      </div>
+
+      <div className={activeTab === "logs" ? "" : "hidden"}>
+        <ActivityLogs />
+      </div>
+      
+      <div className={activeTab === "settings" ? "" : "hidden"}>
+        <SettingsPanel />
+      </div>
     </main>
   );
 }

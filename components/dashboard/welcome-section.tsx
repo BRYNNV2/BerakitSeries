@@ -28,7 +28,7 @@ import {
   AlertCircle,
   FileSpreadsheet,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
 
 interface Transaction {
   status: string;
@@ -68,17 +68,19 @@ export function WelcomeSection() {
 
     if (hasCredentials) {
       try {
-        const { data, error } = await supabase
-          .from("orders")
-          .select("status")
-          .eq("status", "Pending");
+        const { data, error } = await withTimeout(
+          supabase
+            .from("orders")
+            .select("status")
+            .eq("status", "Pending")
+        );
 
         if (error) throw error;
         setPendingCount(data?.length || 0);
         setLoading(false);
         return;
       } catch (err) {
-        console.error("Failed to load pending count from Supabase:", err);
+        console.warn("Failed to load pending count from Supabase:", err);
       }
     }
 
@@ -95,8 +97,6 @@ export function WelcomeSection() {
 
   React.useEffect(() => {
     loadPendingCount();
-    window.addEventListener("focus", loadPendingCount);
-    return () => window.removeEventListener("focus", loadPendingCount);
   }, [loadPendingCount]);
 
   // Fetch all products and transactions utility
@@ -107,12 +107,12 @@ export function WelcomeSection() {
     // Fetch Products
     if (supabase) {
       try {
-        const { data, error } = await supabase.from("products").select("*");
+        const { data, error } = await withTimeout(supabase.from("products").select("*"));
         if (!error && data) {
           products = data;
         }
       } catch (err) {
-        console.error("Supabase product fetch error:", err);
+        console.warn("Supabase product fetch error:", err);
       }
     }
     if (products.length === 0) {
@@ -123,15 +123,17 @@ export function WelcomeSection() {
     // Fetch Transactions
     if (supabase) {
       try {
-        const { data, error } = await supabase
-          .from("orders")
-          .select("*")
-          .order("created_at", { ascending: false });
+        const { data, error } = await withTimeout(
+          supabase
+            .from("orders")
+            .select("*")
+            .order("created_at", { ascending: false })
+        );
         if (!error && data) {
           transactions = data;
         }
       } catch (err) {
-        console.error("Supabase orders fetch error:", err);
+        console.warn("Supabase orders fetch error:", err);
       }
     }
     if (transactions.length === 0) {
@@ -347,7 +349,7 @@ export function WelcomeSection() {
           window.location.reload();
         }, 1500);
       } catch (err: any) {
-        console.error(err);
+        console.warn(err);
         setImportError(err.message || "Gagal mengolah berkas CSV.");
       } finally {
         setImportLoading(false);
@@ -376,7 +378,7 @@ export function WelcomeSection() {
         bumdesPhone = settings.phone || bumdesPhone;
         bumdesAddress = settings.address || bumdesAddress;
       } catch (e) {
-        console.error(e);
+        console.warn(e);
       }
     }
 

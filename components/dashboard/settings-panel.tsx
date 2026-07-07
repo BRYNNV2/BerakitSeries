@@ -22,6 +22,16 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useDashboardStore } from "@/store/dashboard-store";
+import { addActivityLog } from "@/lib/logger";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface BumdesSettings {
   name: string;
@@ -64,6 +74,7 @@ export function SettingsPanel() {
   const [settings, setSettings] = React.useState<BumdesSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = React.useState(false);
   const [saveSuccess, setSaveSuccess] = React.useState(false);
+  const [isWipeDialogOpen, setIsWipeDialogOpen] = React.useState(false);
 
   // Zustand Admin Profile bindings
   const adminName = useDashboardStore((state) => state.adminName);
@@ -113,6 +124,11 @@ export function SettingsPanel() {
       };
       setAdminProfile(updatedProfile);
       localStorage.setItem("berakit_admin_profile", JSON.stringify(updatedProfile));
+      addActivityLog(
+        "Update Profil Admin",
+        `Mengubah nama profil admin menjadi '${profileName}' dan email menjadi '${profileEmail}'`,
+        "settings"
+      );
 
       // Persist to Supabase database (Auth User Metadata) if active
       if (isUsingSupabase && supabase) {
@@ -133,6 +149,16 @@ export function SettingsPanel() {
     } else {
       // Save BUMDes cooperative configurations
       localStorage.setItem("berakit_settings", JSON.stringify(settings));
+      
+      let typeLabel = "Umum";
+      if (activeSubTab === "payment") typeLabel = "Metode Pembayaran";
+      else if (activeSubTab === "shipping") typeLabel = "Metode Pengiriman";
+
+      addActivityLog(
+        "Update Konfigurasi",
+        `Memperbarui setelan BUMDes pada bagian '${typeLabel}'`,
+        "settings"
+      );
     }
 
     // Simulate network delay
@@ -140,6 +166,7 @@ export function SettingsPanel() {
 
     setSaveSuccess(true);
     setLoading(false);
+    toast.success("Pengaturan BUMDes berhasil disimpan!");
 
     setTimeout(() => {
       setSaveSuccess(false);
@@ -274,8 +301,7 @@ export function SettingsPanel() {
   };
 
   const handleClearDatabase = async () => {
-    if (!confirm("Apakah Anda yakin ingin menghapus SEMUA data produk dan pesanan? Tindakan ini permanen.")) return;
-
+    setIsWipeDialogOpen(false);
     setDbLoading(true);
     setDbMessage({ text: "", type: "" });
 
@@ -292,18 +318,23 @@ export function SettingsPanel() {
           );
         }
 
+        addActivityLog("Kosongkan Database", "Membersihkan seluruh data produk dan pesanan di Supabase", "system");
         setDbMessage({ text: "Seluruh data produk & pesanan di Supabase berhasil dihapus bersih!", type: "success" });
+        toast.success("Database Supabase berhasil dibersihkan.");
       } catch (err: any) {
         console.error(err);
         setDbMessage({
           text: err.message || "Gagal menghapus data. Periksa konfigurasi RLS Anda.",
           type: "error",
         });
+        toast.error("Gagal membersihkan database Supabase.");
       }
     } else {
       localStorage.removeItem("berakit_products");
       localStorage.removeItem("berakit_transactions");
+      addActivityLog("Kosongkan Database", "Membersihkan seluruh data produk dan pesanan di LocalStorage", "system");
       setDbMessage({ text: "Seluruh data di LocalStorage berhasil dihapus bersih!", type: "success" });
+      toast.success("Penyimpanan lokal berhasil dibersihkan.");
     }
     setDbLoading(false);
   };
@@ -712,7 +743,7 @@ export function SettingsPanel() {
                       <Button
                         type="button"
                         variant="destructive"
-                        onClick={handleClearDatabase}
+                        onClick={() => setIsWipeDialogOpen(true)}
                         disabled={dbLoading}
                         className="w-full h-9 text-xs sm:text-sm font-semibold gap-1.5"
                       >
@@ -761,6 +792,39 @@ export function SettingsPanel() {
           </form>
         </div>
       </div>
+
+      {/* Wipe Confirmation Dialog */}
+      <Dialog open={isWipeDialogOpen} onOpenChange={setIsWipeDialogOpen}>
+        <DialogContent className="max-w-[400px] border-border/80">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold flex items-center gap-2 text-rose-500">
+              <AlertTriangle className="h-4 w-4" />
+              Kosongkan Database BUMDes
+            </DialogTitle>
+            <DialogDescription className="text-xs mt-2 text-muted-foreground leading-relaxed">
+              Apakah Anda yakin ingin menghapus SEMUA data produk dan data pesanan? Tindakan ini bersifat permanen dan tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsWipeDialogOpen(false)}
+              className="text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleClearDatabase}
+              className="text-xs"
+            >
+              Ya, Kosongkan Data
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -23,7 +23,42 @@ if (!hasValidCredentials) {
   );
 }
 
+// Custom fetch wrapper that converts network errors into 503 responses
+// instead of throwing TypeError: Failed to fetch. This prevents the
+// Supabase SDK's internal auth initialization from crashing when offline.
+const safeFetch: typeof fetch = async (input, init) => {
+  try {
+    return await fetch(input, init);
+  } catch {
+    return new Response(
+      JSON.stringify({ message: "Network unavailable", error: "network_error" }),
+      { status: 503, headers: { "Content-Type": "application/json" } }
+    );
+  }
+};
+
 export const supabase = hasValidCredentials
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
+      global: {
+        fetch: safeFetch,
+      },
+    })
   : (null as any);
 
+export const withTimeout = (promise: Promise<any>, timeoutMs: number = 1500): Promise<any> => {
+  // Prevent unhandled promise rejection warnings in the browser if the
+  // promise rejects in the background after the timeout has already resolved.
+  promise.catch(() => {});
+
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Request timeout")), timeoutMs)
+    ),
+  ]);
+};

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Coins, Package, ClipboardList, AlertTriangle, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
 
 interface Product {
   id: string;
@@ -34,20 +34,24 @@ export function StatsCards() {
     if (hasCredentials) {
       try {
         // Fetch products
-        const { data: pData, error: pError } = await supabase
-          .from("products")
-          .select("id, stock");
+        const { data: pData, error: pError } = await withTimeout(
+          supabase
+            .from("products")
+            .select("id, stock")
+        );
         if (pError) throw pError;
         productsList = pData || [];
 
         // Fetch orders
-        const { data: oData, error: oError } = await supabase
-          .from("orders")
-          .select("id, total_amount, status");
+        const { data: oData, error: oError } = await withTimeout(
+          supabase
+            .from("orders")
+            .select("id, total_amount, status")
+        );
         if (oError) throw oError;
         transactionsList = oData || [];
       } catch (err) {
-        console.error("Failed to fetch stats from Supabase, fallback to localStorage:", err);
+        console.warn("Failed to fetch stats from Supabase, fallback to localStorage:", err);
         const { localProducts, localTransactions } = loadLocalStorage();
         productsList = localProducts;
         transactionsList = localTransactions;
@@ -91,10 +95,6 @@ export function StatsCards() {
 
   React.useEffect(() => {
     loadStats();
-    
-    // Add event listener for local storage changes or tab changes
-    window.addEventListener("focus", loadStats);
-    return () => window.removeEventListener("focus", loadStats);
   }, [loadStats]);
 
   const cards = [

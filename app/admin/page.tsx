@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
 import { DashboardSidebar } from "@/components/dashboard/sidebar";
 import { DashboardHeader } from "@/components/dashboard/header";
 import { DashboardContent } from "@/components/dashboard/content";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { Loader2 } from "lucide-react";
+import { LoadingLottie } from "@/components/ui/loading-lottie";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function DashboardPage() {
 
       if (supabase) {
         try {
-          const sessionRes = await supabase.auth.getSession();
+          const sessionRes = await withTimeout(supabase.auth.getSession());
           const session = sessionRes?.data?.session;
           if (session) {
             setAuthenticated(true);
@@ -57,7 +57,7 @@ export default function DashboardPage() {
             if (subscription) subscription.unsubscribe();
           };
         } catch (err) {
-          console.error("Auth check failed:", err);
+          console.warn("Auth check failed:", err);
           checkLocalFallback();
         }
       } else {
@@ -81,10 +81,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="size-8 text-[#6e3ff3] animate-spin" />
-          <p className="text-xs text-muted-foreground font-medium">Memverifikasi sesi...</p>
-        </div>
+        <LoadingLottie size={140} label="Memverifikasi sesi..." />
       </div>
     );
   }
