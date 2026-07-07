@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Building2,
   CreditCard,
@@ -15,8 +16,12 @@ import {
   Loader2,
   AlertTriangle,
   RefreshCw,
+  UserCircle,
+  Camera,
+  Upload,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useDashboardStore } from "@/store/dashboard-store";
 
 interface BumdesSettings {
   name: string;
@@ -46,20 +51,46 @@ const DEFAULT_SETTINGS: BumdesSettings = {
   minFreeShipping: 150000,
 };
 
+const AVATAR_TEMPLATES = [
+  "https://api.dicebear.com/9.x/glass/svg?seed=Berakit",
+  "https://api.dicebear.com/9.x/glass/svg?seed=Admin",
+  "https://api.dicebear.com/9.x/glass/svg?seed=Melayu",
+  "https://api.dicebear.com/9.x/glass/svg?seed=Kepri",
+  "https://api.dicebear.com/9.x/glass/svg?seed=BUMDes",
+];
+
 export function SettingsPanel() {
-  const [activeSubTab, setActiveSubTab] = React.useState<"profile" | "payment" | "shipping" | "database">("profile");
+  const [activeSubTab, setActiveSubTab] = React.useState<"admin-profile" | "profile" | "payment" | "shipping" | "database">("admin-profile");
   const [settings, setSettings] = React.useState<BumdesSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = React.useState(false);
   const [saveSuccess, setSaveSuccess] = React.useState(false);
+
+  // Zustand Admin Profile bindings
+  const adminName = useDashboardStore((state) => state.adminName);
+  const adminEmail = useDashboardStore((state) => state.adminEmail);
+  const adminAvatar = useDashboardStore((state) => state.adminAvatar);
+  const setAdminProfile = useDashboardStore((state) => state.setAdminProfile);
+
+  // Admin Profile edit states
+  const [profileName, setProfileName] = React.useState("");
+  const [profileEmail, setProfileEmail] = React.useState("");
+  const [profileAvatar, setProfileAvatar] = React.useState("");
 
   // Database tools state
   const [dbLoading, setDbLoading] = React.useState(false);
   const [dbMessage, setDbMessage] = React.useState<{ text: string; type: "success" | "error" | "" }>({ text: "", type: "" });
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(false);
 
+  // Sync edit state with store changes
+  React.useEffect(() => {
+    setProfileName(adminName);
+    setProfileEmail(adminEmail);
+    setProfileAvatar(adminAvatar);
+  }, [adminName, adminEmail, adminAvatar]);
+
   React.useEffect(() => {
     setIsUsingSupabase(!!supabase);
-    // Load settings from localStorage if exist
+    // Load BUMDes settings from localStorage if exist
     const local = localStorage.getItem("berakit_settings");
     if (local) {
       setSettings(JSON.parse(local));
@@ -73,10 +104,38 @@ export function SettingsPanel() {
     setLoading(true);
     setSaveSuccess(false);
 
-    // Save to localStorage
-    localStorage.setItem("berakit_settings", JSON.stringify(settings));
+    if (activeSubTab === "admin-profile") {
+      // Save Admin Profile to Zustand store and localStorage
+      const updatedProfile = {
+        name: profileName,
+        email: profileEmail,
+        avatar: profileAvatar,
+      };
+      setAdminProfile(updatedProfile);
+      localStorage.setItem("berakit_admin_profile", JSON.stringify(updatedProfile));
 
-    // Simulate network latency
+      // Persist to Supabase database (Auth User Metadata) if active
+      if (isUsingSupabase && supabase) {
+        try {
+          const { error: authError } = await supabase.auth.updateUser({
+            data: {
+              full_name: profileName,
+              avatar_url: profileAvatar,
+            },
+          });
+          if (authError) {
+            console.error("Failed to update user profile in Supabase:", authError.message);
+          }
+        } catch (err) {
+          console.error("Error updating profile in Supabase:", err);
+        }
+      }
+    } else {
+      // Save BUMDes cooperative configurations
+      localStorage.setItem("berakit_settings", JSON.stringify(settings));
+    }
+
+    // Simulate network delay
     await new Promise((r) => setTimeout(r, 600));
 
     setSaveSuccess(true);
@@ -87,12 +146,24 @@ export function SettingsPanel() {
     }, 3000);
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === "string") {
+          setProfileAvatar(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // Database utilities: Seed data
   const handleSeedDatabase = async () => {
     setDbLoading(true);
     setDbMessage({ text: "", type: "" });
 
-    // Seed targets
     const defaultProducts = [
       {
         name: "Madu Hutan Asli Berakit",
@@ -169,7 +240,6 @@ export function SettingsPanel() {
 
     if (isUsingSupabase && supabase) {
       try {
-        // Attempt seeding Supabase
         const { error: prodError } = await supabase.from("products").insert(defaultProducts);
         const { error: txError } = await supabase.from("orders").insert(defaultTransactions);
 
@@ -193,7 +263,6 @@ export function SettingsPanel() {
         });
       }
     } else {
-      // Local fallback
       localStorage.setItem("berakit_products", JSON.stringify(defaultProducts));
       localStorage.setItem("berakit_transactions", JSON.stringify(defaultTransactions));
       setDbMessage({
@@ -204,7 +273,6 @@ export function SettingsPanel() {
     setDbLoading(false);
   };
 
-  // Database utilities: Clear data
   const handleClearDatabase = async () => {
     if (!confirm("Apakah Anda yakin ingin menghapus SEMUA data produk dan pesanan? Tindakan ini permanen.")) return;
 
@@ -242,11 +310,23 @@ export function SettingsPanel() {
 
   return (
     <div className="space-y-6">
-      {/* Settings layout split */}
       <div className="flex flex-col md:flex-row gap-6">
         {/* Navigation sidebar */}
         <div className="w-full md:w-[220px] lg:w-[240px] shrink-0 flex flex-row md:flex-col gap-1 overflow-x-auto pb-2 md:pb-0 border-b md:border-b-0 md:border-r pr-0 md:pr-4">
           <button
+            type="button"
+            onClick={() => setActiveSubTab("admin-profile")}
+            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
+              activeSubTab === "admin-profile"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            }`}
+          >
+            <UserCircle className="size-4" />
+            Profil Admin
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveSubTab("profile")}
             className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
               activeSubTab === "profile"
@@ -258,6 +338,7 @@ export function SettingsPanel() {
             Profil BUMDes
           </button>
           <button
+            type="button"
             onClick={() => setActiveSubTab("payment")}
             className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
               activeSubTab === "payment"
@@ -269,6 +350,7 @@ export function SettingsPanel() {
             Pembayaran & COD
           </button>
           <button
+            type="button"
             onClick={() => setActiveSubTab("shipping")}
             className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
               activeSubTab === "shipping"
@@ -280,6 +362,7 @@ export function SettingsPanel() {
             Tarif Ongkos Kirim
           </button>
           <button
+            type="button"
             onClick={() => setActiveSubTab("database")}
             className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
               activeSubTab === "database"
@@ -295,6 +378,127 @@ export function SettingsPanel() {
         {/* Content Area */}
         <div className="flex-1 rounded-xl border bg-card p-4 sm:p-6 shadow-xs min-w-0">
           <form onSubmit={handleSave} className="space-y-6">
+            
+            {/* SUBTAB 0: Admin Profile (NEW) */}
+            {activeSubTab === "admin-profile" && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-base font-semibold">Pengaturan Akun Pengguna</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Kelola foto profil, nama pengguna, dan informasi detail akun login Anda.
+                  </p>
+                </div>
+
+                <div className="space-y-6 pt-2">
+                  {/* Photo Profile Uploader */}
+                  <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-xl border bg-muted/10">
+                    <div className="relative group shrink-0">
+                      <Avatar className="size-20 sm:size-24 border-2 border-primary/20 shadow-md">
+                        <AvatarImage src={profileAvatar} />
+                        <AvatarFallback className="text-xl font-bold">
+                          {profileName.slice(0, 2).toUpperCase() || "AD"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                        <Camera className="size-5" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFileChange}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="space-y-3 flex-1 text-center sm:text-left min-w-0">
+                      <span className="text-sm font-semibold block">Foto Profil Admin</span>
+                      <span className="text-xs text-muted-foreground block leading-normal">
+                        Unggah foto kustom Anda (Maksimal 1MB) atau pilih dari template unik bertema Kepulauan Riau di bawah.
+                      </span>
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1.5 text-xs font-semibold relative"
+                          asChild
+                        >
+                          <label className="cursor-pointer">
+                            <Upload className="size-3.5" />
+                            Unggah Foto
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={handleFileChange}
+                            />
+                          </label>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 text-xs text-rose-500 font-semibold hover:bg-rose-50 hover:text-rose-600"
+                          onClick={() => setProfileAvatar("https://api.dicebear.com/9.x/glass/svg?seed=Berakit")}
+                        >
+                          Reset Default
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Pre-made Templates */}
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Template Avatar Kreatif</span>
+                    <div className="flex flex-wrap gap-3">
+                      {AVATAR_TEMPLATES.map((tmpl, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setProfileAvatar(tmpl)}
+                          className={`relative rounded-xl overflow-hidden border-2 p-0.5 hover:scale-105 active:scale-95 transition-all ${
+                            profileAvatar === tmpl ? "border-[#6e3ff3] shadow-md shadow-[#6e3ff3]/10" : "border-transparent"
+                          }`}
+                        >
+                          <Avatar className="size-11 sm:size-12">
+                            <AvatarImage src={tmpl} />
+                            <AvatarFallback>T{idx}</AvatarFallback>
+                          </Avatar>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Profile inputs */}
+                  <div className="grid gap-4">
+                    <div className="grid gap-1.5">
+                      <label className="text-xs font-semibold">Nama Lengkap *</label>
+                      <Input
+                        required
+                        value={profileName}
+                        onChange={(e) => setProfileName(e.target.value)}
+                        placeholder="Nama Lengkap Admin"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-semibold">Email Pengguna</label>
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground border-muted px-1.5 py-0">
+                          Deteksi Otomatis Akun
+                        </Badge>
+                      </div>
+                      <Input
+                        disabled
+                        value={profileEmail}
+                        placeholder="admin@berakit.desa.id"
+                        className="bg-muted/40 cursor-not-allowed text-muted-foreground"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* SUBTAB 1: BUMDes Profile */}
             {activeSubTab === "profile" && (
               <div className="space-y-4">
@@ -354,7 +558,6 @@ export function SettingsPanel() {
                 </div>
 
                 <div className="space-y-4 pt-2">
-                  {/* COD Option */}
                   <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20">
                     <div className="space-y-0.5 pr-4">
                       <span className="text-sm font-semibold block">Bayar di Tempat (COD)</span>
@@ -368,7 +571,6 @@ export function SettingsPanel() {
                     />
                   </div>
 
-                  {/* Bank Transfer Option */}
                   <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/20">
                     <div className="space-y-0.5 pr-4">
                       <span className="text-sm font-semibold block">Transfer Bank Manual</span>
@@ -382,7 +584,6 @@ export function SettingsPanel() {
                     />
                   </div>
 
-                  {/* Bank Transfer Credentials */}
                   {settings.enableBankTransfer && (
                     <div className="rounded-lg border p-4 space-y-4 bg-muted/5 animate-in fade-in duration-200">
                       <span className="text-xs font-bold text-[#6e3ff3] block uppercase tracking-wider">Detail Rekening Bank</span>
@@ -470,7 +671,6 @@ export function SettingsPanel() {
                 </div>
 
                 <div className="pt-2 space-y-4">
-                  {/* Supabase status banner */}
                   <div className="flex items-center justify-between p-3.5 rounded-lg border bg-muted/20">
                     <div className="space-y-0.5">
                       <span className="text-xs font-semibold block">Tipe Database Terdeteksi</span>
@@ -483,7 +683,6 @@ export function SettingsPanel() {
                     </Badge>
                   </div>
 
-                  {/* Seed and Clean actions */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div className="rounded-lg border p-4 space-y-3 flex flex-col justify-between">
                       <div className="space-y-1">
@@ -523,7 +722,6 @@ export function SettingsPanel() {
                     </div>
                   </div>
 
-                  {/* Log/status messages */}
                   {dbMessage.text && (
                     <div
                       className={`p-3 rounded-lg border text-xs sm:text-sm font-medium animate-in fade-in duration-200 ${

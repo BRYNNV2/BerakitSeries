@@ -12,6 +12,11 @@ interface DashboardState {
   setOwnerFilter: (filter: string) => void;
   setValueFilter: (filter: string) => void;
   clearFilters: () => void;
+  // Profile settings
+  adminName: string;
+  adminEmail: string;
+  adminAvatar: string;
+  setAdminProfile: (profile: { name: string; email: string; avatar: string }) => void;
 }
 
 export const useDashboardStore = create<DashboardState>((set) => ({
@@ -32,5 +37,13 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       ownerFilter: "all",
       valueFilter: "all",
     }),
+  adminName: "Admin BUMDes",
+  adminEmail: "admin@berakit.desa.id",
+  adminAvatar: "https://api.dicebear.com/9.x/glass/svg?seed=Berakit",
+  setAdminProfile: (profile) => set({
+    adminName: profile.name,
+    adminEmail: profile.email,
+    adminAvatar: profile.avatar,
+  }),
 }));
 

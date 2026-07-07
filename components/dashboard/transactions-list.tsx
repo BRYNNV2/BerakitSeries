@@ -24,6 +24,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Search,
@@ -35,6 +36,7 @@ import {
   Clock,
   Ban,
   TrendingUp,
+  MessageSquare,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -179,6 +181,23 @@ export function TransactionsList() {
       setTransactions(updated);
       localStorage.setItem("berakit_transactions", JSON.stringify(updated));
     }
+  };
+
+  const handleWhatsAppContact = (order: Transaction) => {
+    let phone = (order.customer_phone || "").replace(/\D/g, "");
+    if (!phone) {
+      alert("Nomor telepon tidak valid.");
+      return;
+    }
+    if (phone.startsWith("0")) {
+      phone = "62" + phone.slice(1);
+    } else if (!phone.startsWith("62")) {
+      phone = "62" + phone;
+    }
+
+    const message = `Halo ${order.customer_name},\n\nKami dari *BUMDes Berakit Maju*. Mengonfirmasi pesanan Anda:\n- Status: *${order.status}*\n- Total Belanja: *Rp ${order.total_amount.toLocaleString("id-ID")}*\n- Alamat: ${order.address}\n\nTerima kasih telah berbelanja produk desa kami!`;
+    const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
   };
 
   // Filtered transactions
@@ -376,6 +395,11 @@ export function TransactionsList() {
                           <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Dibatalkan")}>
                             <Ban className="size-4 mr-2 text-rose-500" />
                             Tandai Batal / Reject
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleWhatsAppContact(tx)} className="text-emerald-600 hover:text-emerald-600 focus:text-emerald-600 cursor-pointer">
+                            <MessageSquare className="size-4 mr-2 text-emerald-500" />
+                            Hubungi WhatsApp
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

@@ -6,6 +6,7 @@ import { StatsCards } from "./stats-cards";
 import { LeadSourcesChart } from "./lead-sources-chart";
 import { RevenueFlowChart } from "./revenue-flow-chart";
 import { DealsTable } from "./deals-table";
+import { RecentSales } from "./recent-sales";
 import { ProductsCrud } from "./products-crud";
 import { TransactionsList } from "./transactions-list";
 import { SettingsPanel } from "./settings-panel";
@@ -23,7 +24,14 @@ export function DashboardContent() {
             <LeadSourcesChart />
             <RevenueFlowChart />
           </div>
-          <DealsTable />
+          <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
+            <div className="flex-1 xl:max-w-[65%] min-w-0">
+              <DealsTable />
+            </div>
+            <div className="w-full xl:max-w-[35%] shrink-0 min-w-0">
+              <RecentSales />
+            </div>
+          </div>
         </>
       )}
       {activeTab === "products" && <ProductsCrud />}

@@ -64,17 +64,62 @@ export function DashboardSidebar({
   const router = useRouter();
   const activeTab = useDashboardStore((state) => state.activeTab);
   const setActiveTab = useDashboardStore((state) => state.setActiveTab);
+  const adminName = useDashboardStore((state) => state.adminName);
+  const adminEmail = useDashboardStore((state) => state.adminEmail);
+  const adminAvatar = useDashboardStore((state) => state.adminAvatar);
+  const setAdminProfile = useDashboardStore((state) => state.setAdminProfile);
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      if (supabase) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const dbName = user.user_metadata?.full_name;
+            const dbAvatar = user.user_metadata?.avatar_url;
+
+            const localProfileStr = localStorage.getItem("berakit_admin_profile");
+            const localProfile = localProfileStr ? JSON.parse(localProfileStr) : null;
+
+            const name = dbName || localProfile?.name || "Admin BUMDes";
+            const avatar = dbAvatar || localProfile?.avatar || "https://api.dicebear.com/9.x/glass/svg?seed=Berakit";
+            const email = user.email || "admin@berakit.desa.id";
+
+            setAdminProfile({ name, email, avatar });
+            localStorage.setItem("berakit_admin_profile", JSON.stringify({ name, email, avatar }));
+            return;
+          }
+        } catch (err) {
+          console.error("Failed to fetch Supabase user:", err);
+        }
+      }
+
+      // Local fallback
+      const localProfile = localStorage.getItem("berakit_admin_profile");
+      if (localProfile) {
+        try {
+          setAdminProfile(JSON.parse(localProfile));
+        } catch (e) {
+          console.error("Failed to parse local profile:", e);
+        }
+      }
+    };
+    fetchUser();
+  }, [setAdminProfile]);
 
   const handleLogout = async () => {
     if (supabase) {
       try {
         await supabase.auth.signOut();
+        localStorage.removeItem("berakit_admin_auth");
+        localStorage.removeItem("berakit_admin_profile");
         router.push("/login");
       } catch (err) {
         console.error("Sign out error:", err);
       }
     } else {
       localStorage.removeItem("berakit_admin_auth");
+      localStorage.removeItem("berakit_admin_profile");
       router.push("/login");
     }
   };
@@ -107,9 +152,9 @@ export function DashboardSidebar({
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
-                    isActive={activeTab === item.tab}
-                    className="h-9 sm:h-[38px]"
-                    onClick={() => setActiveTab(item.tab)}
+                     isActive={activeTab === item.tab}
+                     className="h-9 sm:h-[38px]"
+                     onClick={() => setActiveTab(item.tab)}
                   >
                     <item.icon className="size-4 sm:size-5" />
                     <span className="text-sm">{item.title}</span>
@@ -129,20 +174,20 @@ export function DashboardSidebar({
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg cursor-pointer hover:bg-accent transition-colors">
               <Avatar className="size-7 sm:size-8">
-                <AvatarImage src="https://api.dicebear.com/9.x/glass/svg?seed=Berakit" />
-                <AvatarFallback className="text-xs">AD</AvatarFallback>
+                <AvatarImage src={adminAvatar} />
+                <AvatarFallback className="text-xs">{adminName.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-xs sm:text-sm">Admin BUMDes</p>
+                <p className="font-semibold text-xs sm:text-sm truncate">{adminName}</p>
                 <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
-                  admin@berakit.desa.id
+                  {adminEmail}
                 </p>
               </div>
               <ChevronsUpDown className="size-4 text-muted-foreground shrink-0" />
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[200px]">
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActiveTab("settings")}>
               <UserCircle className="size-4 mr-2" />
               Profil Admin
             </DropdownMenuItem>
