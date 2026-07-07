@@ -26,7 +26,8 @@ export default function DashboardPage() {
 
       if (supabase) {
         try {
-          const { data: { session } } = await supabase.auth.getSession();
+          const sessionRes = await supabase.auth.getSession();
+          const session = sessionRes?.data?.session;
           if (session) {
             setAuthenticated(true);
             setLoading(false);
@@ -34,7 +35,7 @@ export default function DashboardPage() {
           }
 
           // Listen for auth changes
-          const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+          const authChangeRes = supabase.auth.onAuthStateChange((_event: any, session: any) => {
             if (session) {
               setAuthenticated(true);
             } else {
@@ -47,11 +48,14 @@ export default function DashboardPage() {
             }
             setLoading(false);
           });
+          const subscription = authChangeRes?.data?.subscription;
 
           if (!session) {
             router.push("/login");
           }
-          return () => subscription.unsubscribe();
+          return () => {
+            if (subscription) subscription.unsubscribe();
+          };
         } catch (err) {
           console.error("Auth check failed:", err);
           checkLocalFallback();

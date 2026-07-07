@@ -73,7 +73,8 @@ export function DashboardSidebar({
     const fetchUser = async () => {
       if (supabase) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
+          const response = await supabase.auth.getUser();
+          const user = response?.data?.user;
           if (user) {
             const dbName = user.user_metadata?.full_name;
             const dbAvatar = user.user_metadata?.avatar_url;
