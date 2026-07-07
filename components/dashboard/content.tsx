@@ -8,6 +8,7 @@ import { RevenueFlowChart } from "./revenue-flow-chart";
 import { DealsTable } from "./deals-table";
 import { ProductsCrud } from "./products-crud";
 import { TransactionsList } from "./transactions-list";
+import { SettingsPanel } from "./settings-panel";
 
 export function DashboardContent() {
   const activeTab = useDashboardStore((state) => state.activeTab);
@@ -27,14 +28,7 @@ export function DashboardContent() {
       )}
       {activeTab === "products" && <ProductsCrud />}
       {activeTab === "transactions" && <TransactionsList />}
-      {activeTab === "settings" && (
-        <div className="rounded-xl border bg-card p-6">
-          <h2 className="text-xl font-semibold mb-2">Pengaturan</h2>
-          <p className="text-muted-foreground text-sm">
-            Halaman pengaturan BUMDes Berakit. Di sini Anda dapat mengonfigurasi profil toko desa, alamat pengiriman default, dan integrasi payment gateway.
-          </p>
-        </div>
-      )}
+      {activeTab === "settings" && <SettingsPanel />}
     </main>
   );
 }
