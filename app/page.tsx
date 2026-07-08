@@ -858,31 +858,55 @@ export default function StorefrontPage() {
         <div className="container mx-auto px-4 sm:px-12">
           {/* Header row */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
-            <div className="space-y-2">
-              <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-[#bef264] block">
+            <div className="space-y-2 text-left">
+              <span 
+                className="block uppercase tracking-[0.25em]"
+                style={{
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontWeight: 700,
+                  color: "rgb(212, 249, 49)",
+                  fontSize: "14px",
+                  lineHeight: "20px"
+                }}
+              >
                 Shop By Category
               </span>
-              <h2 className="text-4xl sm:text-5xl font-black tracking-tighter uppercase text-black leading-none">
-                Explore Our <span className="text-zinc-400">Collections</span>
+              <h2 
+                className="uppercase leading-none tracking-tighter"
+                style={{
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontWeight: 900,
+                  fontSize: "88px",
+                  lineHeight: "88px"
+                }}
+              >
+                <span className="text-black">Explore Our</span>{" "}
+                <span style={{ color: "lab(48.496 0 0)" }}>Collections</span>
               </h2>
             </div>
             <div>
               <a 
                 href="#katalog" 
-                className="inline-flex items-center gap-2 text-xs font-bold tracking-[0.2em] text-black hover:opacity-70 transition-opacity uppercase"
+                className="inline-flex items-center gap-2 uppercase select-none transition-all duration-300 tracking-[0.2em] hover:tracking-[0.3em] hover:text-[rgb(212,249,49)] text-black"
+                style={{
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  lineHeight: "20px"
+                }}
               >
-                View All <span className="text-zinc-400">—</span>
+                View All <span className="text-zinc-400 transition-colors">—</span>
               </a>
             </div>
           </div>
 
           {/* Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1: Forest Honey (Tall Left) */}
-            <div className="collection-card-animate h-[500px] sm:h-[600px] rounded-[32px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+          <div className="flex flex-col lg:flex-row gap-8 justify-center items-center lg:items-start max-w-[1800px] mx-auto">
+            {/* Card 1: Forest Honey (Kotak 1) */}
+            <div className="collection-card-animate w-full lg:w-[872.5px] h-[500px] lg:h-[850px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
               {/* Image */}
               <img 
-                src="https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&auto=format&fit=crop&q=80" 
+                src="https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=1000&auto=format&fit=crop&q=80" 
                 alt="Forest Honey Collection" 
                 className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
               />
@@ -906,8 +930,8 @@ export default function StorefrontPage() {
               </div>
             </div>
 
-            {/* Card 2: Local Crafts (Tall Center) */}
-            <div className="collection-card-animate h-[500px] sm:h-[600px] rounded-[32px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+            {/* Card 2: Local Crafts (Kotak 2) */}
+            <div className="collection-card-animate w-full lg:w-[420.25px] h-[500px] lg:h-[850px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
               {/* Image */}
               <img 
                 src="https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?w=800&auto=format&fit=crop&q=80" 
@@ -934,10 +958,10 @@ export default function StorefrontPage() {
               </div>
             </div>
 
-            {/* Column 3: Stacked Cards (Right) */}
-            <div className="flex flex-col gap-6 h-[500px] sm:h-[600px]">
-              {/* Card 3: Marine Products (Top Right) */}
-              <div className="collection-card-animate flex-1 rounded-[32px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+            {/* Column 3: Stacked Cards (Kotak 3 & 4) */}
+            <div className="flex flex-col gap-8 w-full lg:w-[420.25px]">
+              {/* Card 3: Marine Products (Kotak 3) */}
+              <div className="collection-card-animate w-full lg:w-[420.25px] h-[240px] lg:h-[409px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
                 {/* Image */}
                 <img 
                   src="https://images.unsplash.com/photo-1511112513418-4f81014e7a63?w=800&auto=format&fit=crop&q=80" 
@@ -964,8 +988,8 @@ export default function StorefrontPage() {
                 </div>
               </div>
 
-              {/* Card 4: Mangrove Ecotourism (Bottom Right) */}
-              <div className="collection-card-animate flex-1 rounded-[32px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+              {/* Card 4: Mangrove Ecotourism (Kotak 4) */}
+              <div className="collection-card-animate w-full lg:w-[420.25px] h-[240px] lg:h-[409px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
                 {/* Image */}
                 <img 
                   src="https://images.unsplash.com/photo-1500627869374-13ad993b111f?w=800&auto=format&fit=crop&q=80" 
