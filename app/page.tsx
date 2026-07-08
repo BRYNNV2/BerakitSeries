@@ -872,16 +872,16 @@ export default function StorefrontPage() {
                 Shop By Category
               </span>
               <h2 
-                className="uppercase text-left flex flex-col sm:flex-row sm:items-end gap-x-4 gap-y-1"
+                className="uppercase text-left flex flex-col lg:flex-row lg:items-end gap-x-4 leading-none"
               >
                 <span 
-                  className="block"
+                  className="block tracking-tighter"
                   style={{
                     fontFamily: "'Oswald', Impact, sans-serif",
                     fontWeight: 400,
                     color: "lab(2.75381 0 0)",
-                    fontSize: "16px",
-                    lineHeight: "24px"
+                    fontSize: "88px",
+                    lineHeight: "88px"
                   }}
                 >
                   Explore Our
