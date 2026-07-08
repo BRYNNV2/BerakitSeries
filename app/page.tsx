@@ -2,7 +2,12 @@
 
 import * as React from "react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
 import { useRouter } from "next/navigation";
 import {
   ShoppingBag,
@@ -386,6 +391,27 @@ export default function StorefrontPage() {
       { opacity: 0, y: 25 },
       { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: "power2.out" },
       "-=0.4"
+    );
+
+    // 8. Collections ScrollTrigger Animation
+    gsap.fromTo(
+      ".collection-card-animate",
+      {
+        y: 100,
+        opacity: 0
+      },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 1.1,
+        stagger: 0.15,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: "#collections-section",
+          start: "top 82%",
+          toggleActions: "play none none none"
+        }
+      }
     );
   }, []);
 
@@ -824,7 +850,153 @@ export default function StorefrontPage() {
         </div>
       </div>
 
-      {/* Section 2: Group Profile (KUEP Melati) */}
+      {/* Section 2: Explore Our Collections */}
+      <section 
+        id="collections-section" 
+        className="w-full bg-[#fbfcfb] py-16 sm:py-24 border-b border-zinc-200/50"
+      >
+        <div className="container mx-auto px-4 sm:px-12">
+          {/* Header row */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
+            <div className="space-y-2">
+              <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-[#bef264] block">
+                Shop By Category
+              </span>
+              <h2 className="text-4xl sm:text-5xl font-black tracking-tighter uppercase text-black leading-none">
+                Explore Our <span className="text-zinc-400">Collections</span>
+              </h2>
+            </div>
+            <div>
+              <a 
+                href="#katalog" 
+                className="inline-flex items-center gap-2 text-xs font-bold tracking-[0.2em] text-black hover:opacity-70 transition-opacity uppercase"
+              >
+                View All <span className="text-zinc-400">—</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Card 1: Forest Honey (Tall Left) */}
+            <div className="collection-card-animate h-[500px] sm:h-[600px] rounded-[32px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+              {/* Image */}
+              <img 
+                src="https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&auto=format&fit=crop&q=80" 
+                alt="Forest Honey Collection" 
+                className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
+              />
+              {/* Bottom gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+              
+              {/* Card content info */}
+              <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
+                <div className="space-y-1.5 text-left">
+                  <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
+                    124 Items
+                  </span>
+                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">
+                    Forest Honey
+                  </h3>
+                </div>
+                {/* Arrow Button */}
+                <div className="size-12 rounded-full border border-white/20 bg-white/10 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-[#bef264] group-hover:text-black group-hover:border-[#bef264] transition-all duration-300 transform group-hover:rotate-45">
+                  <ArrowRight className="size-5 transform -rotate-45" />
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Local Crafts (Tall Center) */}
+            <div className="collection-card-animate h-[500px] sm:h-[600px] rounded-[32px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+              {/* Image */}
+              <img 
+                src="https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?w=800&auto=format&fit=crop&q=80" 
+                alt="Local Crafts Collection" 
+                className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
+              />
+              {/* Bottom gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+              
+              {/* Card content info */}
+              <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
+                <div className="space-y-1.5 text-left">
+                  <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
+                    86 Items
+                  </span>
+                  <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">
+                    Local Crafts
+                  </h3>
+                </div>
+                {/* Arrow Button */}
+                <div className="size-12 rounded-full border border-white/20 bg-white/10 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-[#bef264] group-hover:text-black group-hover:border-[#bef264] transition-all duration-300 transform group-hover:rotate-45">
+                  <ArrowRight className="size-5 transform -rotate-45" />
+                </div>
+              </div>
+            </div>
+
+            {/* Column 3: Stacked Cards (Right) */}
+            <div className="flex flex-col gap-6 h-[500px] sm:h-[600px]">
+              {/* Card 3: Marine Products (Top Right) */}
+              <div className="collection-card-animate flex-1 rounded-[32px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+                {/* Image */}
+                <img 
+                  src="https://images.unsplash.com/photo-1511112513418-4f81014e7a63?w=800&auto=format&fit=crop&q=80" 
+                  alt="Marine Products Collection" 
+                  className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
+                />
+                {/* Bottom gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+                
+                {/* Card content info */}
+                <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
+                  <div className="space-y-1.5 text-left">
+                    <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
+                      215 Items
+                    </span>
+                    <h3 className="text-2xl font-black tracking-tight text-white uppercase leading-none">
+                      Marine Products
+                    </h3>
+                  </div>
+                  {/* Arrow Button */}
+                  <div className="size-12 rounded-full border border-white/20 bg-white/10 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-[#bef264] group-hover:text-black group-hover:border-[#bef264] transition-all duration-300 transform group-hover:rotate-45">
+                    <ArrowRight className="size-5 transform -rotate-45" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 4: Mangrove Ecotourism (Bottom Right) */}
+              <div className="collection-card-animate flex-1 rounded-[32px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+                {/* Image */}
+                <img 
+                  src="https://images.unsplash.com/photo-1500627869374-13ad993b111f?w=800&auto=format&fit=crop&q=80" 
+                  alt="Mangrove Ecotourism" 
+                  className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
+                />
+                {/* Bottom gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
+                
+                {/* Card content info */}
+                <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
+                  <div className="space-y-1.5 text-left">
+                    <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
+                      92 Items
+                    </span>
+                    <h3 className="text-2xl font-black tracking-tight text-white uppercase leading-none">
+                      Eco Ecotourism
+                    </h3>
+                  </div>
+                  {/* Arrow Button */}
+                  <div className="size-12 rounded-full border border-white/20 bg-white/10 backdrop-blur-md flex items-center justify-center text-white group-hover:bg-[#bef264] group-hover:text-black group-hover:border-[#bef264] transition-all duration-300 transform group-hover:rotate-45">
+                    <ArrowRight className="size-5 transform -rotate-45" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 3: Group Profile (KUEP Melati) */}
       <section id="profil" className="container mx-auto px-4 py-16 sm:py-24 space-y-10 border-b border-white/10">
         {/* Title area */}
         <div className="space-y-3 text-left">
