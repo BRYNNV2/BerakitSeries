@@ -872,16 +872,32 @@ export default function StorefrontPage() {
                 Shop By Category
               </span>
               <h2 
-                className="uppercase leading-none tracking-tighter"
-                style={{
-                  fontFamily: "'Oswald', Impact, sans-serif",
-                  fontWeight: 900,
-                  fontSize: "88px",
-                  lineHeight: "88px"
-                }}
+                className="uppercase text-left flex flex-col sm:flex-row sm:items-end gap-x-4 gap-y-1"
               >
-                <span className="text-black">Explore Our</span>{" "}
-                <span style={{ color: "lab(48.496 0 0)" }}>Collections</span>
+                <span 
+                  className="block"
+                  style={{
+                    fontFamily: "'Oswald', Impact, sans-serif",
+                    fontWeight: 400,
+                    color: "lab(2.75381 0 0)",
+                    fontSize: "16px",
+                    lineHeight: "24px"
+                  }}
+                >
+                  Explore Our
+                </span>
+                <span 
+                  className="block leading-none tracking-tighter"
+                  style={{
+                    fontFamily: "'Oswald', Impact, sans-serif",
+                    fontWeight: 900,
+                    color: "lab(48.496 0 0)",
+                    fontSize: "88px",
+                    lineHeight: "88px"
+                  }}
+                >
+                  Collections
+                </span>
               </h2>
             </div>
             <div>
