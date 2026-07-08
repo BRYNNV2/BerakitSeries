@@ -333,38 +333,52 @@ export default function StorefrontPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans">
       
       {/* Top Banner Navigation */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-slate-950/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/80 backdrop-blur-md">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
-            <div className="flex size-7 items-center justify-center rounded bg-linear-to-b from-[#6e3ff3] to-[#aa8ef9] text-white">
-              <ShoppingBag className="size-4" />
-            </div>
-            <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => router.push("/")}>
+            <svg viewBox="0 0 24 24" className="size-5 text-white stroke-current fill-none stroke-[2]" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4z" />
+            </svg>
+            <span className="font-bold text-sm tracking-widest text-white uppercase">
               BUMDes Berakit
             </span>
           </div>
+
+          {/* Center Navigation Pill (visible on desktop) */}
+          <nav className="hidden md:flex items-center bg-zinc-900/60 border border-white/10 rounded-full px-5 py-1.5 gap-6 text-[10px] font-bold uppercase tracking-wider text-zinc-300">
+            <a href="#" className="hover:text-white transition-colors">Overview</a>
+            <a href="#katalog" className="hover:text-white transition-colors">Katalog Produk</a>
+            <a href="#tentang-kami" className="hover:text-white transition-colors">Tentang Kami</a>
+            <a href="#hubungi-kami" className="hover:text-white transition-colors">Kontak</a>
+          </nav>
 
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
-              className="hidden sm:flex text-xs border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+              className="text-[10px] h-8 font-bold border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white uppercase tracking-wider"
               onClick={() => router.push("/login")}
             >
-              Portal Admin
+              Masuk
+            </Button>
+            <Button
+              className="hidden sm:flex text-[10px] h-8 font-bold bg-white text-black hover:bg-zinc-200 uppercase tracking-wider gap-1 px-3.5 rounded-md"
+              onClick={() => router.push("/login")}
+            >
+              Portal Admin <ChevronRight className="size-3" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="relative border border-white/10 bg-white/5 size-9 text-slate-200 hover:text-white hover:bg-white/10"
+              className="relative border border-white/10 bg-white/5 size-8 text-zinc-200 hover:text-white hover:bg-white/10"
               onClick={() => setIsCartOpen(true)}
             >
               <ShoppingCart className="size-4" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-[#6e3ff3] text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center animate-pulse">
+                <span className="absolute -top-1 -right-1 bg-[#6e3ff3] text-white text-[9px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center animate-pulse">
                   {cartItemCount}
                 </span>
               )}
@@ -374,28 +388,54 @@ export default function StorefrontPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden border-b border-white/5 py-12 sm:py-20 bg-linear-to-b from-[#6e3ff3]/10 via-transparent to-transparent">
-        <div className="container mx-auto px-4 relative z-10 flex flex-col items-center text-center gap-4 sm:gap-6">
-          <Badge className="bg-[#6e3ff3]/20 text-[#b59dfb] hover:bg-[#6e3ff3]/30 border-[#6e3ff3]/40 px-3 py-1 text-xs">
-            🌊 Potensi Maritim & Produk Unggul Desa Berakit
-          </Badge>
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight max-w-[800px] leading-tight text-white">
-            Mendukung Ekonomi Desa Kreatif & Pesisir
-          </h1>
-          <p className="text-sm sm:text-lg text-slate-400 max-w-[620px] leading-relaxed">
-            Belanja ragam kuliner khas gonggong, madu hutan segar asli, hingga kerajinan miniatur tradisional buatan tangan pengrajin lokal Desa Berakit.
-          </p>
-          <div className="flex gap-3 mt-2">
-            <a href="#katalog">
-              <Button className="bg-[#6e3ff3] hover:bg-[#5b2fe0] text-white text-xs sm:text-sm px-6 py-4.5 rounded-lg font-semibold gap-2 shadow-lg shadow-[#6e3ff3]/30">
-                Jelajahi Katalog <ArrowRight className="size-4" />
+      <section 
+        className="relative overflow-hidden min-h-[85vh] sm:min-h-[90vh] flex flex-col justify-between bg-cover bg-center pt-24 pb-12 sm:pb-20 px-4 sm:px-12 border-b border-white/10"
+        style={{ backgroundImage: "url('/hero-bg.png')" }}
+      >
+        {/* Semi-transparent dark overlay for premium high contrast readability */}
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] -z-10" />
+
+        <div className="container mx-auto px-4 relative z-10 flex flex-col justify-end h-full flex-1 gap-6 text-left">
+          <div className="max-w-[850px] space-y-6">
+            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] text-white">
+              The Complete Stack for Smarter Desa Berakit Products
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-200 max-w-[550px] leading-relaxed">
+              Mulai dari madu hutan alami murni, kuliner keripik siput gonggong khas Melayu, hingga miniatur kapal kayu tradisional buatan tangan pengrajin lokal Desa Berakit.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <a href="#katalog">
+                <Button className="bg-white hover:bg-zinc-200 text-black text-[10px] sm:text-xs px-5 py-4.5 rounded-lg font-bold gap-1 uppercase tracking-wider transition-all">
+                  Mulai Belanja <ChevronRight className="size-3.5" />
+                </Button>
+              </a>
+              <Button 
+                variant="outline" 
+                className="border-white/20 bg-white/5 hover:bg-white/10 text-white text-[10px] sm:text-xs px-5 py-4.5 rounded-lg font-bold uppercase tracking-wider transition-all"
+                onClick={() => {
+                  const el = document.getElementById("tentang-kami");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+              >
+                Tentang Kami &gt;
               </Button>
-            </a>
+            </div>
           </div>
         </div>
 
-        {/* Decorative Grid Lines */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-30 -z-10" />
+        {/* Partners Footer Row */}
+        <div className="container mx-auto px-4 relative z-10 pt-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-12 sm:mt-0">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[9px] sm:text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">
+            <span className="text-zinc-500 font-bold">Mitra Resmi BUMDes:</span>
+            <span>Kementerian Desa PDTT</span>
+            <span className="text-slate-600">/</span>
+            <span>Pemerintah Kabupaten Bintan</span>
+            <span className="text-slate-600">/</span>
+            <span>Dinas Koperasi & UMKM</span>
+            <span className="text-slate-600">/</span>
+            <span>Kepulauan Riau</span>
+          </div>
+        </div>
       </section>
 
       {/* Features summary */}
@@ -406,7 +446,7 @@ export default function StorefrontPage() {
           </div>
           <div>
             <h3 className="font-semibold text-sm">100% Bahan Alami & Lokal</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Semua produk didatangkan langsung dari alam & pengrajin Desa Berakit.</p>
+            <p className="text-xs text-zinc-400 mt-0.5">Semua produk didatangkan langsung dari alam & pengrajin Desa Berakit.</p>
           </div>
         </div>
         <div className="bg-white/5 border border-white/5 p-4 rounded-xl flex items-start gap-3">
@@ -415,7 +455,7 @@ export default function StorefrontPage() {
           </div>
           <div>
             <h3 className="font-semibold text-sm">Menyokong Nelayan & UMKM</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Keuntungan penjualan kembali sepenuhnya untuk memajukan perekonomian desa.</p>
+            <p className="text-xs text-zinc-400 mt-0.5">Keuntungan penjualan kembali sepenuhnya untuk memajukan perekonomian desa.</p>
           </div>
         </div>
         <div className="bg-white/5 border border-white/5 p-4 rounded-xl flex items-start gap-3">
@@ -424,7 +464,7 @@ export default function StorefrontPage() {
           </div>
           <div>
             <h3 className="font-semibold text-sm">Bayar Aman COD / Transfer</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Mendukung pembayaran tunai di tempat saat barang sampai atau transfer bank.</p>
+            <p className="text-xs text-zinc-400 mt-0.5">Mendukung pembayaran tunai di tempat saat barang sampai atau transfer bank.</p>
           </div>
         </div>
       </section>
@@ -436,17 +476,17 @@ export default function StorefrontPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold text-white">Katalog Produk Desa</h2>
-            <p className="text-xs text-slate-400">Temukan produk kuliner dan kerajinan terbaik</p>
+            <p className="text-xs text-zinc-400">Temukan produk kuliner dan kerajinan terbaik</p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="relative w-full sm:w-[240px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
               <Input
                 placeholder="Cari produk..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-xs bg-slate-900 border-white/10 text-slate-200 focus-visible:ring-[#6e3ff3]"
+                className="pl-9 h-9 text-xs bg-zinc-900 border-white/10 text-zinc-200 focus-visible:ring-[#6e3ff3]"
               />
             </div>
 
@@ -460,7 +500,7 @@ export default function StorefrontPage() {
                   className={`h-8 text-[11px] px-3.5 rounded-full ${
                     selectedCategory === cat
                       ? "bg-[#6e3ff3] text-white hover:bg-[#5b2fe0]"
-                      : "border-white/10 bg-slate-900/40 text-slate-300 hover:bg-white/5"
+                      : "border-white/10 bg-zinc-900/40 text-zinc-300 hover:bg-white/5"
                   }`}
                 >
                   {cat}
@@ -474,10 +514,10 @@ export default function StorefrontPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-2">
             <Loader2 className="size-8 text-[#6e3ff3] animate-spin" />
-            <span className="text-sm text-slate-400">Memuat produk khas Berakit...</span>
+            <span className="text-sm text-zinc-400">Memuat produk khas Berakit...</span>
           </div>
         ) : filteredProducts.length === 0 ? (
-          <div className="text-center py-20 text-slate-450 border border-dashed border-white/10 rounded-2xl bg-white/2">
+          <div className="text-center py-20 text-zinc-400 border border-dashed border-white/10 rounded-2xl bg-white/2">
             Produk tidak ditemukan atau tidak tersedia.
           </div>
         ) : (
@@ -485,10 +525,10 @@ export default function StorefrontPage() {
             {filteredProducts.map((p) => (
               <div
                 key={p.id}
-                className="bg-slate-900 border border-white/5 hover:border-[#6e3ff3]/30 rounded-2xl overflow-hidden flex flex-col group transition-all duration-300 shadow-md hover:shadow-[#6e3ff3]/5"
+                className="bg-zinc-900/50 backdrop-blur-md border border-white/5 hover:border-[#6e3ff3]/30 rounded-2xl overflow-hidden flex flex-col group transition-all duration-300 shadow-md hover:shadow-[#6e3ff3]/5"
               >
                 {/* Photo container */}
-                <div className="relative aspect-4/3 w-full bg-slate-950 overflow-hidden">
+                <div className="relative aspect-4/3 w-full bg-black overflow-hidden">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={p.image_url}
@@ -496,7 +536,7 @@ export default function StorefrontPage() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 left-3">
-                    <span className="text-[10px] font-bold text-white bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/10">
+                    <span className="text-[10px] font-bold text-white bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/10">
                       {p.category}
                     </span>
                   </div>
@@ -507,13 +547,13 @@ export default function StorefrontPage() {
                   <h3 className="font-bold text-sm text-white group-hover:text-[#aa8ef9] transition-colors line-clamp-1">
                     {p.name}
                   </h3>
-                  <p className="text-[11px] text-slate-400 line-clamp-2 h-8 leading-relaxed">
+                  <p className="text-[11px] text-zinc-400 line-clamp-2 h-8 leading-relaxed">
                     {p.description}
                   </p>
 
                   <div className="flex items-end justify-between mt-3 pt-3 border-t border-white/5">
                     <div className="flex flex-col">
-                      <span className="text-[10px] text-slate-400 font-medium">Harga</span>
+                      <span className="text-[10px] text-zinc-400 font-medium">Harga</span>
                       <span className="font-extrabold text-sm sm:text-base text-white tabular-nums">
                         Rp {p.price.toLocaleString("id-ID")}
                       </span>
@@ -539,24 +579,24 @@ export default function StorefrontPage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-950 border-t border-white/10 py-10 mt-10">
+      <footer className="bg-black border-t border-white/10 py-10 mt-10">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="space-y-3">
+          <div id="tentang-kami" className="space-y-3 scroll-mt-20">
             <h4 className="font-bold text-sm text-white">Mengenai BUMDes</h4>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-[280px]">
+            <p className="text-xs text-zinc-400 leading-relaxed max-w-[280px]">
               Koperasi Usaha Desa Berakit mengelola komoditas lokal hasil laut, kuliner, dan handicraft nelayan Bintan.
             </p>
           </div>
-          <div className="space-y-3">
+          <div id="hubungi-kami" className="space-y-3 scroll-mt-20">
             <h4 className="font-bold text-sm text-white">Hubungi Pengelola</h4>
-            <div className="space-y-1.5 text-xs text-slate-400">
+            <div className="space-y-1.5 text-xs text-zinc-400">
               <p className="flex items-center gap-2"><Phone className="size-3.5 text-[#aa8ef9]" /> {bumdesInfo.phone} (WhatsApp)</p>
               <p className="flex items-start gap-2 max-w-[320px]"><MapPin className="size-3.5 text-[#aa8ef9] mt-0.5 shrink-0" /> {bumdesInfo.address}</p>
             </div>
           </div>
           <div className="space-y-3">
             <h4 className="font-bold text-sm text-white">Informasi</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-zinc-400 leading-relaxed">
               Semua transaksi bersifat langsung dan terintegrasi dengan portal WhatsApp desa untuk percepatan respon.
             </p>
             <div className="pt-2">
@@ -570,7 +610,7 @@ export default function StorefrontPage() {
             </div>
           </div>
         </div>
-        <div className="container mx-auto px-4 mt-8 pt-8 border-t border-white/5 text-center text-[10px] text-slate-500">
+        <div className="container mx-auto px-4 mt-8 pt-8 border-t border-white/5 text-center text-[10px] text-zinc-500">
           &copy; {new Date().getFullYear()} BUMDes Berakit Maju. Hak Cipta Dilindungi.
         </div>
       </footer>
@@ -582,15 +622,15 @@ export default function StorefrontPage() {
           <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsCartOpen(false)} />
 
           {/* Drawer body */}
-          <div className="relative w-full max-w-[420px] bg-slate-900 border-l border-white/10 h-full flex flex-col shadow-2xl z-10 animate-in slide-in-from-right duration-350">
+          <div className="relative w-full max-w-[420px] bg-zinc-900 border-l border-white/10 h-full flex flex-col shadow-2xl z-10 animate-in slide-in-from-right duration-350">
             {/* Header */}
-            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/40">
               <div className="flex items-center gap-2">
                 <ShoppingCart className="size-4 text-[#aa8ef9]" />
                 <h3 className="font-bold text-sm text-white">Keranjang Belanja</h3>
                 <Badge className="bg-[#6e3ff3] text-white text-[10px]">{cartItemCount}</Badge>
               </div>
-              <Button variant="ghost" size="icon" className="size-8 text-slate-400 hover:text-white" onClick={() => setIsCartOpen(false)}>
+              <Button variant="ghost" size="icon" className="size-8 text-zinc-400 hover:text-white" onClick={() => setIsCartOpen(false)}>
                 <X className="size-4" />
               </Button>
             </div>
@@ -598,8 +638,8 @@ export default function StorefrontPage() {
             {/* Cart Items list */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
               {cart.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400 py-10">
-                  <ShoppingCart className="size-10 text-slate-650" />
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-zinc-400 py-10">
+                  <ShoppingCart className="size-10 text-zinc-600" />
                   <p className="text-xs">Keranjang Anda masih kosong.</p>
                 </div>
               ) : (
@@ -609,23 +649,23 @@ export default function StorefrontPage() {
                     <img
                       src={item.product.image_url}
                       alt={item.product.name}
-                      className="size-14 object-cover rounded-lg bg-slate-950"
+                      className="size-14 object-cover rounded-lg bg-black"
                     />
                     <div className="flex-1 min-w-0 pr-6 flex flex-col justify-between">
                       <span className="font-bold text-xs text-white block truncate">{item.product.name}</span>
-                      <span className="text-[10px] text-slate-400 block">Rp {item.product.price.toLocaleString("id-ID")}</span>
+                      <span className="text-[10px] text-zinc-400 block">Rp {item.product.price.toLocaleString("id-ID")}</span>
                       
                       {/* Qty controls */}
                       <div className="flex items-center gap-2 mt-1">
                         <button
-                          className="size-5 rounded border border-white/10 hover:bg-white/5 flex items-center justify-center text-xs text-slate-350"
+                          className="size-5 rounded border border-white/10 hover:bg-white/5 flex items-center justify-center text-xs text-zinc-300"
                           onClick={() => updateCartQty(item.product.id, -1)}
                         >
                           <Minus className="size-2.5" />
                         </button>
                         <span className="text-xs font-bold text-white w-4 text-center">{item.quantity}</span>
                         <button
-                          className="size-5 rounded border border-white/10 hover:bg-white/5 flex items-center justify-center text-xs text-slate-350"
+                          className="size-5 rounded border border-white/10 hover:bg-white/5 flex items-center justify-center text-xs text-zinc-300"
                           onClick={() => updateCartQty(item.product.id, 1)}
                         >
                           <Plus className="size-2.5" />
@@ -634,7 +674,7 @@ export default function StorefrontPage() {
                     </div>
 
                     <button
-                      className="absolute top-3 right-3 text-slate-500 hover:text-rose-500"
+                      className="absolute top-3 right-3 text-zinc-500 hover:text-rose-500"
                       onClick={() => removeFromCart(item.product.id)}
                     >
                       <Trash2 className="size-3.5" />
@@ -646,9 +686,9 @@ export default function StorefrontPage() {
 
             {/* Cart Footer */}
             {cart.length > 0 && (
-              <div className="p-4 border-t border-white/5 bg-slate-950/40 space-y-4">
+              <div className="p-4 border-t border-white/5 bg-black/40 space-y-4">
                 <div className="flex justify-between items-end">
-                  <span className="text-xs text-slate-400">Total Harga Barang</span>
+                  <span className="text-xs text-zinc-400">Total Harga Barang</span>
                   <span className="font-extrabold text-base text-white">Rp {totalCartPrice.toLocaleString("id-ID")}</span>
                 </div>
                 <div className="grid grid-cols-1 gap-2">
@@ -672,9 +712,9 @@ export default function StorefrontPage() {
           <div className="absolute inset-0 bg-black/75 backdrop-blur-xs" onClick={() => setIsCheckoutOpen(false)} />
 
           {/* Modal Content */}
-          <div className="relative w-full max-w-[480px] bg-slate-900 border border-white/10 rounded-2xl shadow-2xl z-10 overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-[480px] bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl z-10 overflow-hidden animate-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-slate-950/40">
+            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/40">
               <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
                 <ShoppingCart className="size-4 text-[#aa8ef9]" />
                 Formulir Checkout Pesanan
@@ -682,7 +722,7 @@ export default function StorefrontPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-8 text-slate-400 hover:text-white"
+                className="size-8 text-zinc-400 hover:text-white"
                 onClick={() => setIsCheckoutOpen(false)}
               >
                 <X className="size-4" />
@@ -697,18 +737,18 @@ export default function StorefrontPage() {
                 </div>
                 <div>
                   <h4 className="font-bold text-base text-white">Pesanan Berhasil Dicatat!</h4>
-                  <p className="text-xs text-slate-450 mt-1 max-w-[340px] leading-relaxed">
+                  <p className="text-xs text-zinc-400 mt-1 max-w-[340px] leading-relaxed">
                     Pesanan Anda telah dimasukkan ke database dengan ID: <span className="font-mono text-[#aa8ef9]">{lastCreatedOrderId}</span>.
                   </p>
                 </div>
                 
                 {/* Transfer Bank Instructions */}
                 {paymentMethod === "Transfer Bank" && (
-                  <div className="w-full bg-slate-950/80 border border-white/5 rounded-xl p-3.5 text-left space-y-1">
-                    <p className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Metode Transfer Bank:</p>
-                    <p className="text-xs text-slate-200 font-semibold">{bumdesInfo.bankName}</p>
+                  <div className="w-full bg-black/80 border border-white/5 rounded-xl p-3.5 text-left space-y-1">
+                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Metode Transfer Bank:</p>
+                    <p className="text-xs text-zinc-200 font-semibold">{bumdesInfo.bankName}</p>
                     <p className="text-sm font-extrabold text-white tracking-wider my-1">{bumdesInfo.bankAccount}</p>
-                    <p className="text-[10px] text-slate-400">a.n. {bumdesInfo.bankHolder}</p>
+                    <p className="text-[10px] text-zinc-400">a.n. {bumdesInfo.bankHolder}</p>
                     <p className="text-[10px] text-amber-400 pt-1 font-medium italic">
                       *Silakan simpan nomor rekening di atas dan lampirkan bukti transfer saat menghubungi WA pengelola.
                     </p>
@@ -729,11 +769,11 @@ export default function StorefrontPage() {
               <form onSubmit={handleCheckout} className="p-4 space-y-4">
                 
                 {/* Product Summary list */}
-                <div className="max-h-[100px] overflow-y-auto space-y-1.5 p-2 rounded-lg bg-slate-950/30 border border-white/5">
+                <div className="max-h-[100px] overflow-y-auto space-y-1.5 p-2 rounded-lg bg-black/30 border border-white/5">
                   {cart.map((item) => (
-                    <div key={item.product.id} className="flex justify-between items-center text-[11px] text-slate-400">
+                    <div key={item.product.id} className="flex justify-between items-center text-[11px] text-zinc-400">
                       <span className="truncate max-w-[240px]">{item.product.name} (x{item.quantity})</span>
-                      <span className="font-semibold text-slate-200">Rp {(item.product.price * item.quantity).toLocaleString("id-ID")}</span>
+                      <span className="font-semibold text-zinc-200">Rp {(item.product.price * item.quantity).toLocaleString("id-ID")}</span>
                     </div>
                   ))}
                 </div>
@@ -741,55 +781,55 @@ export default function StorefrontPage() {
                 {/* Form fields */}
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Nama Lengkap Penerima</label>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Nama Lengkap Penerima</label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-500" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
                       <Input
                         required
                         placeholder="Masukkan nama lengkap Anda..."
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
-                        className="pl-9 h-9 text-xs bg-slate-950 border-white/10 text-slate-200 focus-visible:ring-[#6e3ff3]"
+                        className="pl-9 h-9 text-xs bg-black border-white/10 text-zinc-200 focus-visible:ring-[#6e3ff3]"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Nomor WhatsApp / HP</label>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Nomor WhatsApp / HP</label>
                     <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-500" />
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-zinc-500" />
                       <Input
                         required
                         placeholder="Contoh: 081234567890..."
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
-                        className="pl-9 h-9 text-xs bg-slate-950 border-white/10 text-slate-200 focus-visible:ring-[#6e3ff3]"
+                        className="pl-9 h-9 text-xs bg-black border-white/10 text-zinc-200 focus-visible:ring-[#6e3ff3]"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase">Alamat Pengiriman</label>
+                    <label className="text-[10px] font-bold text-zinc-400 uppercase">Alamat Pengiriman</label>
                     <div className="relative">
-                      <MapPin className="absolute left-3 top-2.5 size-3.5 text-slate-500" />
+                      <MapPin className="absolute left-3 top-2.5 size-3.5 text-zinc-500" />
                       <textarea
                         required
                         placeholder="Nama jalan, RT/RW, Dusun, Desa Berakit..."
                         rows={2}
                         value={customerAddress}
                         onChange={(e) => setCustomerAddress(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 text-xs rounded-md bg-slate-950 border border-white/10 text-slate-200 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-[#6e3ff3] resize-none"
+                        className="w-full pl-9 pr-3 py-2 text-xs rounded-md bg-black border border-white/10 text-zinc-200 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-[#6e3ff3] resize-none"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-slate-400 uppercase">Metode Pembayaran</label>
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase">Metode Pembayaran</label>
                       <select
                         value={paymentMethod}
                         onChange={(e) => setPaymentMethod(e.target.value)}
-                        className="w-full h-9 px-2 text-xs rounded-md bg-slate-950 border border-white/10 text-slate-200 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-[#6e3ff3]"
+                        className="w-full h-9 px-2 text-xs rounded-md bg-black border border-white/10 text-zinc-200 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-[#6e3ff3]"
                       >
                         <option value="COD">Tunai di Tempat (COD)</option>
                         <option value="Transfer Bank">Transfer Bank</option>
@@ -797,12 +837,12 @@ export default function StorefrontPage() {
                     </div>
 
                     <div className="flex flex-col justify-end text-right">
-                      <span className="text-[10px] text-slate-400">Total Pembayaran</span>
+                      <span className="text-[10px] text-zinc-400">Total Pembayaran</span>
                       <span className="font-extrabold text-sm sm:text-base text-white tabular-nums">
                         Rp {(totalCartPrice + (paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate)).toLocaleString("id-ID")}
                       </span>
                       {paymentMethod === "Transfer Bank" && (
-                        <span className="text-[8px] text-slate-500 font-medium">Termasuk Ongkir Rp {bumdesInfo.shippingRate.toLocaleString("id-ID")}</span>
+                        <span className="text-[8px] text-zinc-500 font-medium">Termasuk Ongkir Rp {bumdesInfo.shippingRate.toLocaleString("id-ID")}</span>
                       )}
                     </div>
                   </div>
@@ -814,7 +854,7 @@ export default function StorefrontPage() {
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="text-xs text-slate-400 hover:text-white"
+                    className="text-xs text-zinc-400 hover:text-white"
                     onClick={() => setIsCheckoutOpen(false)}
                   >
                     Batal
