@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { useRouter } from "next/navigation";
 import {
   ShoppingBag,
@@ -42,6 +44,68 @@ interface CartItem {
   quantity: number;
 }
 
+// Helper to remove white background from the centerpiece image dynamically in client canvas
+function removeBackground(img: HTMLImageElement): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return img.src;
+  ctx.drawImage(img, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const width = canvas.width;
+  const height = canvas.height;
+  
+  // Flood fill visited array
+  const visited = new Uint8Array(width * height);
+  const queue: number[] = [];
+  
+  const pushPixel = (x: number, y: number) => {
+    const idx = y * width + x;
+    if (visited[idx]) return;
+    visited[idx] = 1;
+    queue.push(idx);
+  };
+  
+  // Push all boundary pixels
+  for (let x = 0; x < width; x++) {
+    pushPixel(x, 0);
+    pushPixel(x, height - 1);
+  }
+  for (let y = 0; y < height; y++) {
+    pushPixel(0, y);
+    pushPixel(width - 1, y);
+  }
+  
+  // BFS
+  let head = 0;
+  while (head < queue.length) {
+    const idx = queue[head++];
+    const x = idx % width;
+    const y = Math.floor(idx / width);
+    
+    const rIdx = idx * 4;
+    const r = data[rIdx];
+    const g = data[rIdx + 1];
+    const b = data[rIdx + 2];
+    
+    // If pixel is near-white (threshold > 230), make it transparent and propagate
+    if (r > 230 && g > 230 && b > 230) {
+      data[rIdx + 3] = 0; // Set alpha to 0
+      
+      // Propagate 4-way
+      if (x > 0) pushPixel(x - 1, y);
+      if (x < width - 1) pushPixel(x + 1, y);
+      if (y > 0) pushPixel(x, y - 1);
+      if (y < height - 1) pushPixel(x, y + 1);
+    }
+  }
+  
+  ctx.putImageData(imageData, 0, 0);
+  return canvas.toDataURL('image/png');
+}
+
 export default function StorefrontPage() {
   const router = useRouter();
 
@@ -64,6 +128,18 @@ export default function StorefrontPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = React.useState(false);
   const [lastCreatedOrderId, setLastCreatedOrderId] = React.useState("");
+  const [activeProfileTab, setActiveProfileTab] = React.useState<"profile" | "collaboration" | "focus">("profile");
+
+  // GSAP Refs & States
+  const preloaderRef = React.useRef<HTMLDivElement>(null);
+  const heroCtaRef = React.useRef<HTMLDivElement>(null);
+  const headerRef = React.useRef<HTMLElement>(null);
+
+  const [progress, setProgress] = React.useState(0);
+  const [processedHoneySrc, setProcessedHoneySrc] = React.useState("/hero-center.png");
+  const marqueeRef = React.useRef<HTMLDivElement>(null);
+  const tweenRef = React.useRef<gsap.core.Tween | null>(null);
+  const [isHovered, setIsHovered] = React.useState(false);
 
   // BUMDes config (loaded from settings / fallbacks)
   const [bumdesInfo, setBumdesInfo] = React.useState({
@@ -165,6 +241,153 @@ export default function StorefrontPage() {
   React.useEffect(() => {
     loadStoreData();
   }, [loadStoreData]);
+
+  React.useEffect(() => {
+    const img = new Image();
+    img.src = "/hero-center.png";
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const transparentDataUrl = removeBackground(img);
+        setProcessedHoneySrc(transparentDataUrl);
+      } catch (e) {
+        console.error("Failed to remove image background", e);
+      }
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const marqueeEl = marqueeRef.current;
+    if (!marqueeEl) return;
+    
+    // Start from -50% to have buffer on left and right
+    gsap.set(marqueeEl, { xPercent: -50 });
+    
+    // Tween from -50 to -25 to move to the right (speed increased to 12s)
+    const tween = gsap.to(marqueeEl, {
+      xPercent: -25,
+      repeat: -1,
+      duration: 12,
+      ease: "none",
+      paused: false
+    });
+    
+    tweenRef.current = tween;
+    
+    return () => {
+      if (tween) tween.kill();
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let lastScrollTop = window.scrollY;
+    let scrollTimeout: NodeJS.Timeout;
+    
+    const handleScroll = () => {
+      if (isHovered) return;
+      
+      const scrollTop = window.scrollY;
+      const delta = scrollTop - lastScrollTop;
+      lastScrollTop = scrollTop;
+      
+      // Calculate velocity-based skew angle (clamp to max 12 degrees)
+      const maxSkew = 12;
+      const skewAmount = Math.min(Math.max(delta * 0.18, -maxSkew), maxSkew);
+      
+      // Animate skew on scroll
+      gsap.to(marqueeRef.current, { skewX: skewAmount, duration: 0.1, overwrite: "auto" });
+      
+      if (delta > 0) {
+        // Scroll down -> move left (timeScale = -2.8)
+        gsap.to(tweenRef.current, { timeScale: -2.8, duration: 0.1, overwrite: "auto" });
+      } else if (delta < 0) {
+        // Scroll up -> move right faster (timeScale = 3.8)
+        gsap.to(tweenRef.current, { timeScale: 3.8, duration: 0.1, overwrite: "auto" });
+      }
+      
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        if (!isHovered) {
+          gsap.to(tweenRef.current, { timeScale: 1, duration: 0.5, ease: "power1.out", overwrite: "auto" });
+          gsap.to(marqueeRef.current, { skewX: 0, duration: 0.4, ease: "power2.out", overwrite: "auto" });
+        }
+      }, 100);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [isHovered]);
+
+  useGSAP(() => {
+    const obj = { val: 0 };
+    const tl = gsap.timeline();
+
+    // 1. Preload counter animation
+    tl.to(obj, {
+      val: 100,
+      duration: 2.0,
+      ease: "power2.out",
+      onUpdate: () => {
+        setProgress(Math.floor(obj.val));
+      }
+    });
+
+    // 2. Preloader slide out
+    tl.to(preloaderRef.current, {
+      yPercent: -100,
+      duration: 0.85,
+      ease: "power4.inOut",
+    });
+
+    // 3. Header reveal
+    tl.fromTo(headerRef.current, 
+      { y: -60, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
+      "-=0.4"
+    );
+
+    // 4. Hero Background Text reveal
+    tl.fromTo(".hero-text-bg-1, .hero-text-bg-2",
+      { y: 70, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.9, stagger: 0.12, ease: "power4.out" },
+      "-=0.5"
+    );
+
+    // 5. Centerpiece reveal
+    tl.fromTo(".hero-centerpiece",
+      { scale: 0.75, opacity: 0, y: 40 },
+      { scale: 1, opacity: 1, y: 0, duration: 0.9, ease: "back.out(1.4)" },
+      "-=0.6"
+    );
+
+    // 6. Floating centerpiece loop (starts after reveal is complete)
+    tl.add(() => {
+      gsap.to(".hero-centerpiece", {
+        y: -12,
+        duration: 2.5,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1
+      });
+    }, "-=0.2");
+
+    // 7. Hero CTA buttons & cards
+    tl.fromTo(heroCtaRef.current,
+      { y: 25, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
+      "-=0.45"
+    );
+
+    // Bottom cards fade in
+    tl.fromTo(".hero-bottom-left-card, .hero-bottom-right-card",
+      { opacity: 0, y: 25 },
+      { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: "power2.out" },
+      "-=0.4"
+    );
+  }, []);
 
   // Filter products
   const filteredProducts = React.useMemo(() => {
@@ -332,109 +555,438 @@ export default function StorefrontPage() {
     setCustomerAddress("");
   };
 
+  const marqueeBrands = [
+    "VOGUE",
+    "ELLE",
+    "HARPER'S",
+    "INSTYLE",
+    "COSMOPOLITAN",
+    "GQ",
+    "GLAMOUR",
+    "MARIE CLAIRE"
+  ];
+
   return (
-    <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans overflow-x-hidden relative">
       
-      {/* Top Banner Navigation */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/80 backdrop-blur-md">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => router.push("/")}>
-            <svg viewBox="0 0 24 24" className="size-5 text-white stroke-current fill-none stroke-[2]" xmlns="http://www.w3.org/2000/svg">
+      {/* GSAP Preloader Overlay */}
+      <div 
+        ref={preloaderRef}
+        className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center select-none"
+      >
+        <div className="space-y-6 text-center animate-in fade-in duration-500">
+          <div className="flex items-center gap-2.5 justify-center">
+            <svg viewBox="0 0 24 24" className="size-8 text-white stroke-current fill-none stroke-[2]" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4z" />
             </svg>
-            <span className="font-bold text-sm tracking-widest text-white uppercase">
+            <span className="font-bold text-xl tracking-widest text-white uppercase">
               BUMDes Berakit
             </span>
           </div>
 
+          <div className="text-4xl sm:text-5xl font-extrabold text-white/95 font-mono tracking-tighter">
+            {progress}%
+          </div>
+
+          <div className="w-[180px] sm:w-[240px] h-[2px] bg-zinc-900 rounded-full overflow-hidden mx-auto">
+            <div 
+              className="h-full bg-white transition-all duration-75"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Top Banner Navigation */}
+      <header ref={headerRef} className="sticky top-0 z-40 w-full border-b border-zinc-200/50 bg-white">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
+            <svg viewBox="0 0 24 24" className="size-5 text-black stroke-current fill-none stroke-[2]" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4z" />
+            </svg>
+            <span className="font-bold text-sm tracking-[0.2em] text-black uppercase">
+              BUMDes Berakit.
+            </span>
+          </div>
+
           {/* Center Navigation Pill (visible on desktop) */}
-          <nav className="hidden md:flex items-center bg-zinc-900/60 border border-white/10 rounded-full px-5 py-1.5 gap-6 text-[10px] font-bold uppercase tracking-wider text-zinc-300">
-            <a href="#" className="hover:text-white transition-colors">Overview</a>
-            <a href="#katalog" className="hover:text-white transition-colors">Katalog Produk</a>
-            <a href="#tentang-kami" className="hover:text-white transition-colors">Tentang Kami</a>
-            <a href="#hubungi-kami" className="hover:text-white transition-colors">Kontak</a>
+          <nav className="hidden md:flex items-center gap-8 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-500">
+            <a href="#" className="hover:text-black transition-colors">Collections</a>
+            <a href="#katalog" className="hover:text-black transition-colors">Catalog</a>
+            <a href="#profil" className="hover:text-black transition-colors">Why Us</a>
+            <a href="#hubungi-kami" className="hover:text-black transition-colors">Newsletter</a>
           </nav>
 
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-[10px] h-8 font-bold border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10 hover:text-white uppercase tracking-wider"
+          <div className="flex items-center gap-6">
+            <button className="text-zinc-600 hover:text-black transition-colors">
+              <Search className="size-4" />
+            </button>
+            <button 
+              className="text-[10px] font-medium tracking-[0.2em] text-zinc-600 hover:text-black uppercase transition-colors"
               onClick={() => router.push("/login")}
             >
-              Masuk
-            </Button>
-            <Button
-              className="hidden sm:flex text-[10px] h-8 font-bold bg-white text-black hover:bg-zinc-200 uppercase tracking-wider gap-1 px-3.5 rounded-md"
-              onClick={() => router.push("/login")}
-            >
-              Portal Admin <ChevronRight className="size-3" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative border border-white/10 bg-white/5 size-8 text-zinc-200 hover:text-white hover:bg-white/10"
+              Sign In
+            </button>
+            <button
+              className="relative text-zinc-600 hover:text-black transition-colors"
               onClick={() => setIsCartOpen(true)}
             >
-              <ShoppingCart className="size-4" />
+              <ShoppingBag className="size-4.5" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#6e3ff3] text-white text-[9px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center animate-pulse">
+                <span className="absolute -top-1.5 -right-1.5 bg-[#bef264] text-black text-[9px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center animate-pulse">
                   {cartItemCount}
                 </span>
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
       <section 
-        className="relative overflow-hidden min-h-[85vh] sm:min-h-[90vh] flex flex-col justify-between bg-cover bg-center pt-24 pb-12 sm:pb-20 px-4 sm:px-12 border-b border-white/10"
-        style={{ backgroundImage: "url('/hero-bg.png')" }}
+        className="relative overflow-hidden min-h-[90vh] flex flex-col justify-between bg-white pt-6 pb-12 px-4 sm:px-12 border-b border-zinc-200/50"
       >
-        {/* Semi-transparent dark overlay for premium high contrast readability */}
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px] -z-10" />
+        {/* Soft yellow-lime radial gradient behind layout */}
+        <div className="absolute inset-x-0 top-0 h-[65%] bg-[radial-gradient(ellipse_at_top,rgba(197,255,46,0.22)_0%,transparent_70%)] pointer-events-none -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#bef264]/10 rounded-full blur-[120px] pointer-events-none -z-10" />
 
-        <div className="container mx-auto px-4 relative z-10 flex flex-col justify-end h-full flex-1 gap-6 text-left">
-          <div className="max-w-[850px] space-y-6">
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] text-white">
-              The Complete Stack for Smarter Desa Berakit Products
-            </h1>
-            <p className="text-xs sm:text-sm text-zinc-200 max-w-[550px] leading-relaxed">
-              Mulai dari madu hutan alami murni, kuliner keripik siput gonggong khas Melayu, hingga miniatur kapal kayu tradisional buatan tangan pengrajin lokal Desa Berakit.
-            </p>
-            <div className="flex flex-wrap items-center gap-3 pt-2">
-              <a href="#katalog">
-                <Button className="bg-white hover:bg-zinc-200 text-black text-[10px] sm:text-xs px-5 py-4.5 rounded-lg font-bold gap-1 uppercase tracking-wider transition-all">
-                  Mulai Belanja <ChevronRight className="size-3.5" />
-                </Button>
-              </a>
-              <Button 
-                variant="outline" 
-                className="border-white/20 bg-white/5 hover:bg-white/10 text-white text-[10px] sm:text-xs px-5 py-4.5 rounded-lg font-bold uppercase tracking-wider transition-all"
-                onClick={() => {
-                  const el = document.getElementById("tentang-kami");
-                  if (el) el.scrollIntoView({ behavior: "smooth" });
-                }}
-              >
-                Tentang Kami &gt;
-              </Button>
-            </div>
+        {/* Big Background Typography (Placed below the header with custom spacing) */}
+        <div className="w-full text-center pt-8 pb-4 relative z-0">
+          <h1 className="text-center font-black tracking-tighter uppercase leading-[0.85] select-none text-[7vw] sm:text-[8vw] flex flex-col items-center">
+            <span className="text-[#111111] block hero-text-bg-1">ELEVATE YOUR STYLE</span>
+            <span className="text-[#bef264] block hero-text-bg-2">IN EVERY REALITY!</span>
+          </h1>
+        </div>
+
+        {/* Centerpiece Image (Overlapping in front of the text) */}
+        <div className="absolute left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none select-none">
+          <div className="relative hero-centerpiece-container">
+            {/* Ambient product glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-[#bef264]/20 rounded-full blur-[90px] opacity-75 pointer-events-none" />
+            <img 
+              src={processedHoneySrc} 
+              alt="BUMDes Honey Centerpiece" 
+              className="hero-centerpiece h-[280px] sm:h-[380px] md:h-[450px] object-contain relative z-10 select-none pointer-events-none"
+            />
           </div>
         </div>
 
-        {/* Partners Footer Row */}
-        <div className="container mx-auto px-4 relative z-10 pt-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-12 sm:mt-0">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[9px] sm:text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">
-            <span className="text-zinc-500 font-bold">Mitra Resmi BUMDes:</span>
-            <span>Kementerian Desa PDTT</span>
-            <span className="text-slate-600">/</span>
-            <span>Pemerintah Kabupaten Bintan</span>
-            <span className="text-slate-600">/</span>
-            <span>Dinas Koperasi & UMKM</span>
-            <span className="text-slate-600">/</span>
-            <span>Kepulauan Riau</span>
+        {/* Bottom Row containing Info Card (Left), CTAs (Center), and Video Thumbnail (Right) */}
+        <div className="w-full max-w-[1400px] mx-auto px-4 relative z-20 flex flex-col lg:flex-row items-center lg:items-end justify-between mt-auto gap-8">
+          {/* Bottom Left Card */}
+          <div className="hero-bottom-left-card hidden lg:flex flex-col bg-gradient-to-br from-[#f8faf2] to-white border border-zinc-200/50 rounded-3xl p-5 max-w-[280px] space-y-4 shadow-md text-left">
+            <div className="flex -space-x-1.5">
+              <div className="size-8 rounded-full border border-white bg-zinc-200 flex items-center justify-center text-[9px] font-bold text-zinc-700 uppercase tracking-wider">JD</div>
+              <div className="size-8 rounded-full border border-white bg-zinc-300 flex items-center justify-center text-[9px] font-bold text-zinc-700 uppercase tracking-wider">AM</div>
+              <div className="size-8 rounded-full border border-white bg-zinc-400 flex items-center justify-center text-[9px] font-bold text-zinc-700 uppercase tracking-wider">KR</div>
+            </div>
+            <p className="text-[11px] text-zinc-600 leading-relaxed font-semibold">
+              Stay ahead of the curve with sustainably sourced local goods. Our premium forest honey and crafts support coastal women in Desa Berakit.
+            </p>
           </div>
+
+          {/* Center Buttons (CTA) */}
+          <div ref={heroCtaRef} className="flex items-center gap-3 relative z-30 lg:-translate-y-2">
+            <a href="#katalog">
+              <Button className="bg-black hover:bg-zinc-800 text-white font-bold px-8 py-5 rounded-full text-xs uppercase tracking-wider transition-all shadow-md">
+                Shop Now
+              </Button>
+            </a>
+            <Button 
+              variant="outline" 
+              className="border-zinc-200 bg-white hover:bg-zinc-50 text-black font-bold px-8 py-5 rounded-full text-xs uppercase tracking-wider transition-all"
+              onClick={() => {
+                const el = document.getElementById("profil");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Explore All &gt;
+            </Button>
+          </div>
+
+          {/* Bottom Right Card */}
+          <div className="hero-bottom-right-card hidden lg:block relative rounded-3xl overflow-hidden aspect-video w-[220px] border border-zinc-200/50 group cursor-pointer shadow-md">
+            <img 
+              src="/hero-thumbnail.png" 
+              alt="Video Preview" 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+              <div className="size-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white border border-white/20 hover:scale-110 transition-transform">
+                <svg viewBox="0 0 24 24" className="size-4 fill-current ml-0.5" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Marquee Section */}
+      <div className="w-full bg-white py-12 border-b border-zinc-200/50 overflow-hidden relative">
+        <div 
+          className="w-full text-center mb-6 uppercase select-none"
+          style={{
+            fontFamily: "'Inter', system-ui, sans-serif",
+            fontWeight: 700,
+            color: "lab(48.496 0 0)",
+            fontSize: "16px",
+            lineHeight: "24px"
+          }}
+        >
+          As Featured In
+        </div>
+        
+        <div 
+          className="select-none relative w-full flex items-center overflow-hidden py-4 cursor-pointer"
+          onMouseEnter={() => {
+            setIsHovered(true);
+            gsap.to(tweenRef.current, { timeScale: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" });
+          }}
+          onMouseLeave={() => {
+            setIsHovered(false);
+            gsap.to(tweenRef.current, { timeScale: 1, duration: 0.5, ease: "power2.out", overwrite: "auto" });
+          }}
+        >
+          <div 
+            className="flex whitespace-nowrap min-w-full" 
+            ref={marqueeRef}
+          >
+            {/* Set 1 */}
+            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12">
+              {marqueeBrands.map((brand, i) => (
+                <span 
+                  key={`s1-${i}`} 
+                  className="text-[#e5e7eb] hover:text-[rgb(212,249,49)] transition-colors duration-300 select-none cursor-pointer"
+                  style={{
+                    fontFamily: "'Oswald', Impact, sans-serif",
+                    fontWeight: 900,
+                    fontSize: "144px",
+                    lineHeight: "144px"
+                  }}
+                >
+                  {brand}
+                </span>
+              ))}
+            </div>
+            {/* Set 2 */}
+            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12">
+              {marqueeBrands.map((brand, i) => (
+                <span 
+                  key={`s2-${i}`} 
+                  className="text-[#e5e7eb] hover:text-[rgb(212,249,49)] transition-colors duration-300 select-none cursor-pointer"
+                  style={{
+                    fontFamily: "'Oswald', Impact, sans-serif",
+                    fontWeight: 900,
+                    fontSize: "144px",
+                    lineHeight: "144px"
+                  }}
+                >
+                  {brand}
+                </span>
+              ))}
+            </div>
+            {/* Set 3 */}
+            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12">
+              {marqueeBrands.map((brand, i) => (
+                <span 
+                  key={`s3-${i}`} 
+                  className="text-[#e5e7eb] hover:text-[rgb(212,249,49)] transition-colors duration-300 select-none cursor-pointer"
+                  style={{
+                    fontFamily: "'Oswald', Impact, sans-serif",
+                    fontWeight: 900,
+                    fontSize: "144px",
+                    lineHeight: "144px"
+                  }}
+                >
+                  {brand}
+                </span>
+              ))}
+            </div>
+            {/* Set 4 */}
+            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12">
+              {marqueeBrands.map((brand, i) => (
+                <span 
+                  key={`s4-${i}`} 
+                  className="text-[#e5e7eb] hover:text-[rgb(212,249,49)] transition-colors duration-300 select-none cursor-pointer"
+                  style={{
+                    fontFamily: "'Oswald', Impact, sans-serif",
+                    fontWeight: 900,
+                    fontSize: "144px",
+                    lineHeight: "144px"
+                  }}
+                >
+                  {brand}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 2: Group Profile (KUEP Melati) */}
+      <section id="profil" className="container mx-auto px-4 py-16 sm:py-24 space-y-10 border-b border-white/10">
+        {/* Title area */}
+        <div className="space-y-3 text-left">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+            <span className="size-1.5 rounded-full bg-[#6e3ff3] animate-pulse" />
+            Group Profile
+          </div>
+          <h2 
+            className="text-[32px] sm:text-[44px] leading-[38px] sm:leading-[51px] max-w-[750px]"
+            style={{ 
+              fontFamily: 'Geist, "Geist Fallback", sans-serif',
+              fontWeight: 400,
+              fontStyle: 'normal'
+            }}
+          >
+            <span style={{ color: 'rgb(255, 255, 255)' }}>Empowering coastal women,</span>{" "}
+            <span style={{ color: 'rgba(255, 255, 255, 0.45)' }}>sustaining marine ecosystems.</span>
+          </h2>
+        </div>
+
+        {/* Tabs switcher */}
+        <div className="flex border-b border-white/5 gap-6 sm:gap-8 overflow-x-auto pb-1 text-xs sm:text-sm font-semibold">
+          {[
+            { id: "profile", label: "Overview" },
+            { id: "collaboration", label: "Partnership" },
+            { id: "focus", label: "Core Focus" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveProfileTab(tab.id as any)}
+              className={`pb-3 relative transition-all uppercase tracking-wider text-[10px] sm:text-xs font-bold ${
+                activeProfileTab === tab.id 
+                  ? "text-white" 
+                  : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {tab.label}
+              {activeProfileTab === tab.id && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#6e3ff3] rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Content split grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center pt-4">
+          
+          {/* Left Column: Visual Showcase */}
+          <div className="relative aspect-4/3 sm:aspect-16/10 lg:aspect-4/3 w-full rounded-2xl overflow-hidden border border-white/10 bg-zinc-900 group">
+            {/* Background Mangrove Image */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/kuep-mangrove.png" 
+              alt="Mangrove Ecosystem Berakit" 
+              className="w-full h-full object-cover opacity-80 group-hover:scale-102 transition-transform duration-700" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+
+            {/* Bubble Conversation Card Overlay */}
+            <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 p-4 sm:p-5 rounded-2xl border border-white/10 bg-black/90 backdrop-blur-md space-y-3 max-w-[380px] shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="flex items-center gap-2">
+                <div className="size-6 rounded-full bg-[#6e3ff3]/20 flex items-center justify-center border border-[#6e3ff3]/30">
+                  <span className="text-[10px] font-extrabold text-[#aa8ef9]">KM</span>
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs text-white">KUEP Melati</h4>
+                  <p className="text-[9px] text-zinc-500">
+                    {activeProfileTab === "profile" && "Since October 2024"}
+                    {activeProfileTab === "collaboration" && "Multi-Stakeholder Synergy"}
+                    {activeProfileTab === "focus" && "3 Core Pillars"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-[11px] text-zinc-300 leading-relaxed font-medium space-y-1">
+                {activeProfileTab === "profile" && (
+                  <p>
+                    Established to strengthen the role of coastal women in environmental conservation and drive the economic independence of Berakit Village.
+                  </p>
+                )}
+                {activeProfileTab === "collaboration" && (
+                  <p>
+                    This empowerment program is a multi-stakeholder synergy to conserve the coastal mangrove forest of Bintan while generating green jobs.
+                  </p>
+                )}
+                {activeProfileTab === "focus" && (
+                  <div className="space-y-0.5">
+                    <p className="text-[#aa8ef9] font-bold">1. Creative Local Potential Products</p>
+                    <p className="text-[#aa8ef9] font-bold">2. Mangrove Ecosystem Conservation</p>
+                    <p className="text-[#aa8ef9] font-bold">3. Coastal Women's Economic Independence</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Detailed Text */}
+          <div className="space-y-6 lg:pl-4">
+            {activeProfileTab === "profile" && (
+              <>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#aa8ef9]">
+                  Overview
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                  Melati Women's Economic Enterprise Group (KUEP Melati)
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-medium">
+                  Melati Women's Economic Enterprise Group (KUEP Melati) is a group of coastal women from Berakit Village formed in October 2024 through the Berakit Village Women's Empowerment and Mangrove Ecosystem Restoration Program.
+                </p>
+                <div className="pt-2">
+                  <a href="#katalog">
+                    <Button className="bg-white hover:bg-zinc-200 text-black text-[10px] sm:text-xs px-5 py-4 rounded-lg font-bold uppercase tracking-wider gap-1.5 transition-all">
+                      Explore Our Products <ChevronRight className="size-3.5" />
+                    </Button>
+                  </a>
+                </div>
+              </>
+            )}
+
+            {activeProfileTab === "collaboration" && (
+              <>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#aa8ef9]">
+                  Partnership
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                  Multi-Stakeholder Collaboration for Real Impact
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-medium">
+                  This program is a concrete collaboration between the Riau Islands Ecology Foundation, CARE Peduli Foundation, with support from Traveloka for coastal conservation and local empowerment.
+                </p>
+                <div className="pt-2">
+                  <a href="#tentang-kami">
+                    <Button className="bg-white hover:bg-zinc-200 text-black text-[10px] sm:text-xs px-5 py-4 rounded-lg font-bold uppercase tracking-wider gap-1.5 transition-all">
+                      Learn About Collaboration <ChevronRight className="size-3.5" />
+                    </Button>
+                  </a>
+                </div>
+              </>
+            )}
+
+            {activeProfileTab === "focus" && (
+              <>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#aa8ef9]">
+                  Core Focus
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+                  Local Creativity & Environmental Sustainability
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-medium">
+                  KUEP Melati focuses on developing creative products based on local potential, promoting sustainability values, and enhancing the economic independence of coastal women.
+                </p>
+                <div className="pt-2">
+                  <a href="#hubungi-kami">
+                    <Button className="bg-white hover:bg-zinc-200 text-black text-[10px] sm:text-xs px-5 py-4 rounded-lg font-bold uppercase tracking-wider gap-1.5 transition-all">
+                      Contact Organizers <ChevronRight className="size-3.5" />
+                    </Button>
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
+
         </div>
       </section>
 
