@@ -27,6 +27,11 @@ import {
   ShieldCheck,
   ChevronRight,
   Loader2,
+  Truck,
+  RotateCcw,
+  Shield,
+  Headphones,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -139,12 +144,16 @@ export default function StorefrontPage() {
   const preloaderRef = React.useRef<HTMLDivElement>(null);
   const heroCtaRef = React.useRef<HTMLDivElement>(null);
   const headerRef = React.useRef<HTMLElement>(null);
+  const horizontalWrapperRef = React.useRef<HTMLDivElement>(null);
+  const horizontalContainerRef = React.useRef<HTMLDivElement>(null);
 
   const [progress, setProgress] = React.useState(0);
   const [processedHoneySrc, setProcessedHoneySrc] = React.useState("/hero-center.png");
   const marqueeRef = React.useRef<HTMLDivElement>(null);
   const tweenRef = React.useRef<gsap.core.Tween | null>(null);
   const [isHovered, setIsHovered] = React.useState(false);
+  const [hoveredNavLink, setHoveredNavLink] = React.useState<number | null>(null);
+  const [openFaqIndex, setOpenFaqIndex] = React.useState<number | null>(null);
 
   // BUMDes config (loaded from settings / fallbacks)
   const [bumdesInfo, setBumdesInfo] = React.useState({
@@ -413,6 +422,139 @@ export default function StorefrontPage() {
         }
       }
     );
+
+    // 9. Difference Section ScrollTrigger Animation
+    const diffTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: "#difference-section",
+        start: "top 80%",
+        toggleActions: "play none none none"
+      }
+    });
+
+    diffTl.fromTo(
+      "#difference-header",
+      {
+        y: 80,
+        opacity: 0
+      },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 1.0,
+        ease: "power3.out"
+      }
+    ).fromTo(
+      ".difference-card-animate",
+      {
+        y: 80,
+        opacity: 0
+      },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 1.0,
+        stagger: 0.15,
+        ease: "power3.out"
+      },
+      "-=0.5"
+    );
+
+    // 10. Voices Horizontal Pinning ScrollTrigger
+    const container = horizontalContainerRef.current;
+    const wrapper = horizontalWrapperRef.current;
+    if (container && wrapper) {
+      const getScrollAmount = () => {
+        return -(container.scrollWidth - wrapper.clientWidth);
+      };
+
+      gsap.set(container, { x: 0 });
+
+      const mm = gsap.matchMedia();
+
+      mm.add("(min-width: 1024px)", () => {
+        gsap.to(container, {
+          x: getScrollAmount,
+          ease: "none",
+          scrollTrigger: {
+            trigger: "#voices-section",
+            pin: true,
+            pinSpacing: true,
+            scrub: 1,
+            start: "top top",
+            end: () => `+=${container.scrollWidth - wrapper.clientWidth}`,
+            invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              gsap.set("#sync-progress-bar", {
+                width: `${self.progress * 100}%`
+              });
+            }
+          }
+        });
+      });
+
+      // Smooth entrance reveal for the left column
+      gsap.fromTo(
+        "#voices-left-col",
+        {
+          opacity: 0,
+          x: -50
+        },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 1,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: "#voices-section",
+            start: "top 80%",
+            toggleActions: "play none none none"
+          }
+        }
+      );
+
+      // Smooth entrance reveal for the cards
+      gsap.fromTo(
+        ".voices-card-animate",
+        {
+          y: 60,
+          opacity: 0,
+          scale: 0.95
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.8,
+          stagger: 0.1,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: "#voices-section",
+            start: "top 80%",
+            toggleActions: "play none none none"
+          }
+        }
+      );
+      // Smooth entrance reveal for the FAQ left column
+      gsap.fromTo(
+        "#faq-left-col",
+        {
+          opacity: 0,
+          y: 40
+        },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: "#faq-section",
+            start: "top 80%",
+            toggleActions: "play none none none"
+          }
+        }
+      );
+    }
   }, []);
 
   // Filter products
@@ -625,7 +767,7 @@ export default function StorefrontPage() {
 
       {/* Top Banner Navigation */}
       <header ref={headerRef} className="sticky top-0 z-40 w-full border-b border-zinc-200/50 bg-white">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
             <svg viewBox="0 0 24 24" className="size-5 text-black stroke-current fill-none stroke-[2]" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4z" />
@@ -636,11 +778,31 @@ export default function StorefrontPage() {
           </div>
 
           {/* Center Navigation Pill (visible on desktop) */}
-          <nav className="hidden md:flex items-center gap-8 text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-500">
-            <a href="#" className="hover:text-black transition-colors">Collections</a>
-            <a href="#katalog" className="hover:text-black transition-colors">Catalog</a>
-            <a href="#profil" className="hover:text-black transition-colors">Why Us</a>
-            <a href="#hubungi-kami" className="hover:text-black transition-colors">Newsletter</a>
+          <nav className="hidden md:flex items-center gap-8">
+            {[
+              { label: "Collections", href: "#" },
+              { label: "New Arrivals", href: "#katalog" },
+              { label: "Why Us", href: "#profil" },
+              { label: "News Letter", href: "#hubungi-kami" },
+            ].map((link, idx) => (
+              <a
+                key={idx}
+                href={link.href}
+                className="transition-colors duration-200"
+                onMouseEnter={() => setHoveredNavLink(idx)}
+                onMouseLeave={() => setHoveredNavLink(null)}
+                style={{
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontWeight: 700,
+                  fontStyle: "normal",
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: hoveredNavLink === idx ? "rgb(212, 249, 49)" : "lab(2.75381 0 0)"
+                }}
+              >
+                {link.label}
+              </a>
+            ))}
           </nav>
 
           <div className="flex items-center gap-6">
@@ -678,9 +840,33 @@ export default function StorefrontPage() {
 
         {/* Big Background Typography (Placed below the header with custom spacing) */}
         <div className="w-full text-center pt-8 pb-4 relative z-0">
-          <h1 className="text-center font-black tracking-tighter uppercase leading-[0.85] select-none text-[7vw] sm:text-[8vw] flex flex-col items-center">
-            <span className="text-[#111111] block hero-text-bg-1">ELEVATE YOUR STYLE</span>
-            <span className="text-[#bef264] block hero-text-bg-2">IN EVERY REALITY!</span>
+          <h1 
+            className="flex flex-col items-center select-none"
+            style={{
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontWeight: 400,
+              fontSize: "16px",
+              lineHeight: "24px"
+            }}
+          >
+            <span 
+              className="text-[#111111] block hero-text-bg-1 text-center font-black tracking-tighter uppercase leading-[0.85] text-[7vw] sm:text-[8vw]"
+              style={{
+                fontFamily: "'Oswald', Impact, sans-serif",
+                fontWeight: 900
+              }}
+            >
+              ELEVATE YOUR STYLE
+            </span>
+            <span 
+              className="text-[#bef264] block hero-text-bg-2 text-center font-black tracking-tighter uppercase leading-[0.85] text-[7vw] sm:text-[8vw]"
+              style={{
+                fontFamily: "'Oswald', Impact, sans-serif",
+                fontWeight: 900
+              }}
+            >
+              IN EVERY REALITY!
+            </span>
           </h1>
         </div>
 
@@ -698,7 +884,7 @@ export default function StorefrontPage() {
         </div>
 
         {/* Bottom Row containing Info Card (Left), CTAs (Center), and Video Thumbnail (Right) */}
-        <div className="w-full max-w-[1400px] mx-auto px-4 relative z-20 flex flex-col lg:flex-row items-center lg:items-end justify-between mt-auto gap-8">
+        <div className="w-full max-w-[1800px] mx-auto px-4 relative z-20 flex flex-col lg:flex-row items-center lg:items-end justify-between mt-auto gap-8">
           {/* Bottom Left Card */}
           <div className="hero-bottom-left-card hidden lg:flex flex-col bg-gradient-to-br from-[#f8faf2] to-white border border-zinc-200/50 rounded-3xl p-5 max-w-[280px] space-y-4 shadow-md text-left">
             <div className="flex -space-x-1.5">
@@ -855,7 +1041,7 @@ export default function StorefrontPage() {
         id="collections-section" 
         className="w-full bg-[#fbfcfb] py-16 sm:py-24 border-b border-zinc-200/50"
       >
-        <div className="container mx-auto px-4 sm:px-12">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
           {/* Header row */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
             <div className="space-y-2 text-left">
@@ -1036,348 +1222,472 @@ export default function StorefrontPage() {
         </div>
       </section>
 
-      {/* Section 3: Group Profile (KUEP Melati) */}
-      <section id="profil" className="container mx-auto px-4 py-16 sm:py-24 space-y-10 border-b border-white/10">
-        {/* Title area */}
-        <div className="space-y-3 text-left">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-            <span className="size-1.5 rounded-full bg-[#6e3ff3] animate-pulse" />
-            Group Profile
+      {/* Section 3: Why Choose Us / The Berakit Difference */}
+      <section 
+        id="difference-section" 
+        className="w-full bg-white py-16 sm:py-24 border-b border-zinc-200/50"
+      >
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
+          {/* Header Row */}
+          <div id="difference-header" className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
+            <div className="space-y-2 text-left max-w-[800px]">
+              <span 
+                className="block uppercase tracking-[0.25em]"
+                style={{
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontWeight: 700,
+                  color: "rgb(212, 249, 49)",
+                  fontSize: "14px",
+                  lineHeight: "20px"
+                }}
+              >
+                Why Choose Us
+              </span>
+              <h2 
+                className="uppercase leading-[1.05] tracking-tight"
+                style={{
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontWeight: 900,
+                  fontSize: "88px"
+                }}
+              >
+                <span className="text-black">The Berakit</span><br />
+                <span style={{ color: "lab(48.496 0 0)" }}>Difference</span>
+                <span className="text-[#bef264]">.</span>
+              </h2>
+            </div>
+            <div className="max-w-[450px] text-left">
+              <p 
+                className="text-sm sm:text-base text-zinc-500 font-normal leading-relaxed"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                We don't just sell local products; we deliver an authentic coastal heritage. Every interaction is designed to support the local fishermen, craft artisans, and families of Desa Berakit.
+              </p>
+            </div>
           </div>
-          <h2 
-            className="text-[32px] sm:text-[44px] leading-[38px] sm:leading-[51px] max-w-[750px]"
-            style={{ 
-              fontFamily: 'Geist, "Geist Fallback", sans-serif',
-              fontWeight: 400,
-              fontStyle: 'normal'
-            }}
-          >
-            <span style={{ color: 'rgb(255, 255, 255)' }}>Empowering coastal women,</span>{" "}
-            <span style={{ color: 'rgba(255, 255, 255, 0.45)' }}>sustaining marine ecosystems.</span>
-          </h2>
-        </div>
 
-        {/* Tabs switcher */}
-        <div className="flex border-b border-white/5 gap-6 sm:gap-8 overflow-x-auto pb-1 text-xs sm:text-sm font-semibold">
-          {[
-            { id: "profile", label: "Overview" },
-            { id: "collaboration", label: "Partnership" },
-            { id: "focus", label: "Core Focus" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveProfileTab(tab.id as any)}
-              className={`pb-3 relative transition-all uppercase tracking-wider text-[10px] sm:text-xs font-bold ${
-                activeProfileTab === tab.id 
-                  ? "text-white" 
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {tab.label}
-              {activeProfileTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#6e3ff3] rounded-full" />
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Content split grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center pt-4">
-          
-          {/* Left Column: Visual Showcase */}
-          <div className="relative aspect-4/3 sm:aspect-16/10 lg:aspect-4/3 w-full rounded-2xl overflow-hidden border border-white/10 bg-zinc-900 group">
-            {/* Background Mangrove Image */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/kuep-mangrove.png" 
-              alt="Mangrove Ecosystem Berakit" 
-              className="w-full h-full object-cover opacity-80 group-hover:scale-102 transition-transform duration-700" 
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-
-            {/* Bubble Conversation Card Overlay */}
-            <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 p-4 sm:p-5 rounded-2xl border border-white/10 bg-black/90 backdrop-blur-md space-y-3 max-w-[380px] shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
-              <div className="flex items-center gap-2">
-                <div className="size-6 rounded-full bg-[#6e3ff3]/20 flex items-center justify-center border border-[#6e3ff3]/30">
-                  <span className="text-[10px] font-extrabold text-[#aa8ef9]">KM</span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-xs text-white">KUEP Melati</h4>
-                  <p className="text-[9px] text-zinc-500">
-                    {activeProfileTab === "profile" && "Since October 2024"}
-                    {activeProfileTab === "collaboration" && "Multi-Stakeholder Synergy"}
-                    {activeProfileTab === "focus" && "3 Core Pillars"}
-                  </p>
-                </div>
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Card 1 */}
+            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-all duration-500 hover:-translate-y-2 relative cursor-pointer">
+              {/* Faint Watermark */}
+              <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
+                01
+              </div>
+              
+              {/* Icon Container */}
+              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-black transition-all duration-300 group-hover:bg-[#bef264] group-hover:text-black">
+                <Truck className="size-6" />
               </div>
 
-              <div className="text-[11px] text-zinc-300 leading-relaxed font-medium space-y-1">
-                {activeProfileTab === "profile" && (
-                  <p>
-                    Established to strengthen the role of coastal women in environmental conservation and drive the economic independence of Berakit Village.
-                  </p>
-                )}
-                {activeProfileTab === "collaboration" && (
-                  <p>
-                    This empowerment program is a multi-stakeholder synergy to conserve the coastal mangrove forest of Bintan while generating green jobs.
-                  </p>
-                )}
-                {activeProfileTab === "focus" && (
-                  <div className="space-y-0.5">
-                    <p className="text-[#aa8ef9] font-bold">1. Creative Local Potential Products</p>
-                    <p className="text-[#aa8ef9] font-bold">2. Mangrove Ecosystem Conservation</p>
-                    <p className="text-[#aa8ef9] font-bold">3. Coastal Women's Economic Independence</p>
+              {/* Card text & Arrow */}
+              <div className="space-y-4 text-left">
+                <div className="flex items-end justify-between">
+                  <div className="space-y-2">
+                    <h3 
+                      className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
+                      style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
+                    >
+                      Free Worldwide Shipping
+                    </h3>
+                    <p 
+                      className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
+                      style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    >
+                      Free shipping on all orders over $150. Delivered to your doorstep within 5-7 business days.
+                    </p>
                   </div>
-                )}
+                  <div className="size-8 rounded-full border border-zinc-200 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:border-[#bef264] transition-all duration-300 transform group-hover:translate-x-1">
+                    <ArrowRight className="size-4 text-black" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2 */}
+            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-all duration-500 hover:-translate-y-2 relative cursor-pointer">
+              {/* Faint Watermark */}
+              <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
+                02
+              </div>
+              
+              {/* Icon Container */}
+              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-black transition-all duration-300 group-hover:bg-[#bef264] group-hover:text-black animate-none">
+                <RotateCcw className="size-6" />
+              </div>
+
+              {/* Card text & Arrow */}
+              <div className="space-y-4 text-left">
+                <div className="flex items-end justify-between">
+                  <div className="space-y-2">
+                    <h3 
+                      className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
+                      style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
+                    >
+                      30-Day Free Returns
+                    </h3>
+                    <p 
+                      className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
+                      style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    >
+                      Not satisfied? Return within 30 days for a full refund. No questions asked.
+                    </p>
+                  </div>
+                  <div className="size-8 rounded-full border border-zinc-200 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:border-[#bef264] transition-all duration-300 transform group-hover:translate-x-1">
+                    <ArrowRight className="size-4 text-black" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-all duration-500 hover:-translate-y-2 relative cursor-pointer">
+              {/* Faint Watermark */}
+              <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
+                03
+              </div>
+              
+              {/* Icon Container */}
+              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-black transition-all duration-300 group-hover:bg-[#bef264] group-hover:text-black">
+                <Shield className="size-6" />
+              </div>
+
+              {/* Card text & Arrow */}
+              <div className="space-y-4 text-left">
+                <div className="flex items-end justify-between">
+                  <div className="space-y-2">
+                    <h3 
+                      className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
+                      style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
+                    >
+                      Secure Checkout
+                    </h3>
+                    <p 
+                      className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
+                      style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    >
+                      Your payment information is encrypted and secure. Shop with confidence.
+                    </p>
+                  </div>
+                  <div className="size-8 rounded-full border border-zinc-200 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:border-[#bef264] transition-all duration-300 transform group-hover:translate-x-1">
+                    <ArrowRight className="size-4 text-black" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4 */}
+            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-all duration-500 hover:-translate-y-2 relative cursor-pointer">
+              {/* Faint Watermark */}
+              <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
+                04
+              </div>
+              
+              {/* Icon Container */}
+              <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-black transition-all duration-300 group-hover:bg-[#bef264] group-hover:text-black">
+                <Headphones className="size-6" />
+              </div>
+
+              {/* Card text & Arrow */}
+              <div className="space-y-4 text-left">
+                <div className="flex items-end justify-between">
+                  <div className="space-y-2">
+                    <h3 
+                      className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
+                      style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
+                    >
+                      24/7 Customer Support
+                    </h3>
+                    <p 
+                      className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
+                      style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    >
+                      Our dedicated team is here to help you anytime, anywhere.
+                    </p>
+                  </div>
+                  <div className="size-8 rounded-full border border-zinc-200 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:border-[#bef264] transition-all duration-300 transform group-hover:translate-x-1">
+                    <ArrowRight className="size-4 text-black" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4: Voices From The Grid (Horizontal scroll) */}
+      <section 
+        id="voices-section" 
+        className="relative w-full h-screen bg-white flex items-center overflow-hidden border-b border-zinc-200/50"
+      >
+        {/* Background Grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-40" />
+
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 flex flex-col lg:flex-row items-center justify-between gap-12 relative z-10">
+          {/* Left Column - Title & Progress */}
+          <div id="voices-left-col" className="w-full lg:w-[420px] shrink-0 text-left space-y-6">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#bef264] uppercase tracking-wider">
+                <span className="animate-pulse">⚡</span> LIVE TRANSMISSIONS
+              </div>
+              <h2 
+                className="text-[44px] sm:text-[56px] leading-[1.05] text-[#111111] uppercase tracking-tight flex flex-col"
+                style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 900 }}
+              >
+                <span>VOICES FROM</span>
+                <span>THE GRID<span className="text-[#bef264]">.</span></span>
+              </h2>
+              <p 
+                className="text-xs sm:text-sm text-zinc-500 font-normal leading-relaxed max-w-[340px]"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                Decrypting user logs to reveal the unparalleled luxury experience in the digital-physical frontier.
+              </p>
+            </div>
+
+            {/* Scroll Progress Bar */}
+            <div className="space-y-2 pt-4">
+              <div className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                SYNC PROGRESS
+              </div>
+              <div className="w-[180px] h-[3px] bg-zinc-100 rounded-full overflow-hidden">
+                <div 
+                  id="sync-progress-bar"
+                  className="h-full bg-[#bef264] w-0 transition-all duration-75"
+                />
               </div>
             </div>
           </div>
 
-          {/* Right Column: Detailed Text */}
-          <div className="space-y-6 lg:pl-4">
-            {activeProfileTab === "profile" && (
-              <>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#aa8ef9]">
-                  Overview
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-                  Melati Women's Economic Enterprise Group (KUEP Melati)
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-medium">
-                  Melati Women's Economic Enterprise Group (KUEP Melati) is a group of coastal women from Berakit Village formed in October 2024 through the Berakit Village Women's Empowerment and Mangrove Ecosystem Restoration Program.
-                </p>
-                <div className="pt-2">
-                  <a href="#katalog">
-                    <Button className="bg-white hover:bg-zinc-200 text-black text-[10px] sm:text-xs px-5 py-4 rounded-lg font-bold uppercase tracking-wider gap-1.5 transition-all">
-                      Explore Our Products <ChevronRight className="size-3.5" />
-                    </Button>
-                  </a>
-                </div>
-              </>
-            )}
-
-            {activeProfileTab === "collaboration" && (
-              <>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#aa8ef9]">
-                  Partnership
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-                  Multi-Stakeholder Collaboration for Real Impact
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-medium">
-                  This program is a concrete collaboration between the Riau Islands Ecology Foundation, CARE Peduli Foundation, with support from Traveloka for coastal conservation and local empowerment.
-                </p>
-                <div className="pt-2">
-                  <a href="#tentang-kami">
-                    <Button className="bg-white hover:bg-zinc-200 text-black text-[10px] sm:text-xs px-5 py-4 rounded-lg font-bold uppercase tracking-wider gap-1.5 transition-all">
-                      Learn About Collaboration <ChevronRight className="size-3.5" />
-                    </Button>
-                  </a>
-                </div>
-              </>
-            )}
-
-            {activeProfileTab === "focus" && (
-              <>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#aa8ef9]">
-                  Core Focus
-                </div>
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
-                  Local Creativity & Environmental Sustainability
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-medium">
-                  KUEP Melati focuses on developing creative products based on local potential, promoting sustainability values, and enhancing the economic independence of coastal women.
-                </p>
-                <div className="pt-2">
-                  <a href="#hubungi-kami">
-                    <Button className="bg-white hover:bg-zinc-200 text-black text-[10px] sm:text-xs px-5 py-4 rounded-lg font-bold uppercase tracking-wider gap-1.5 transition-all">
-                      Contact Organizers <ChevronRight className="size-3.5" />
-                    </Button>
-                  </a>
-                </div>
-              </>
-            )}
-          </div>
-
-        </div>
-      </section>
-
-      {/* Features summary */}
-      <section className="container mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white/5 border border-white/5 p-4 rounded-xl flex items-start gap-3">
-          <div className="size-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
-            <ShieldCheck className="size-4" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm">100% Bahan Alami & Lokal</h3>
-            <p className="text-xs text-zinc-400 mt-0.5">Semua produk didatangkan langsung dari alam & pengrajin Desa Berakit.</p>
-          </div>
-        </div>
-        <div className="bg-white/5 border border-white/5 p-4 rounded-xl flex items-start gap-3">
-          <div className="size-8 rounded-lg bg-[#6e3ff3]/10 text-[#aa8ef9] flex items-center justify-center shrink-0">
-            <User className="size-4" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm">Menyokong Nelayan & UMKM</h3>
-            <p className="text-xs text-zinc-400 mt-0.5">Keuntungan penjualan kembali sepenuhnya untuk memajukan perekonomian desa.</p>
-          </div>
-        </div>
-        <div className="bg-white/5 border border-white/5 p-4 rounded-xl flex items-start gap-3">
-          <div className="size-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
-            <CreditCard className="size-4" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm">Bayar Aman COD / Transfer</h3>
-            <p className="text-xs text-zinc-400 mt-0.5">Mendukung pembayaran tunai di tempat saat barang sampai atau transfer bank.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Catalog Search & Grid */}
-      <main id="katalog" className="flex-1 container mx-auto px-4 py-10 space-y-6">
-        
-        {/* Title and filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white">Katalog Produk Desa</h2>
-            <p className="text-xs text-zinc-400">Temukan produk kuliner dan kerajinan terbaik</p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="relative w-full sm:w-[240px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-500" />
-              <Input
-                placeholder="Cari produk..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-xs bg-zinc-900 border-white/10 text-zinc-200 focus-visible:ring-[#6e3ff3]"
-              />
-            </div>
-
-            {/* Categories */}
-            <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0">
-              {["Semua", "Kuliner", "Kerajinan", "Hasil Laut"].map((cat) => (
-                <Button
-                  key={cat}
-                  variant={selectedCategory === cat ? "default" : "outline"}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`h-8 text-[11px] px-3.5 rounded-full ${
-                    selectedCategory === cat
-                      ? "bg-[#6e3ff3] text-white hover:bg-[#5b2fe0]"
-                      : "border-white/10 bg-zinc-900/40 text-zinc-300 hover:bg-white/5"
-                  }`}
+          {/* Right Column - Horizontal Scroll Container */}
+          <div className="w-full lg:flex-1 overflow-x-auto lg:overflow-hidden relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" ref={horizontalWrapperRef}>
+            <div 
+              ref={horizontalContainerRef}
+              className="flex gap-8 pl-4 pr-16 py-12 animate-in fade-in zoom-in duration-500"
+              style={{ width: "fit-content" }}
+            >
+              {[
+                {
+                  id: "SYS.ID.REV-1",
+                  quote: "Madu Hutan Asli Desa Berakit benar-benar kualitas premium. Rasa manisnya alami dan sangat berkhasiat bagi kesehatan. Sangat direkomendasikan!",
+                  user: "@NeonDrifter",
+                  avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
+                },
+                {
+                  id: "SYS.ID.REV-2",
+                  quote: "Miniatur Kapal Kayu buatan pengrajin Berakit ini sangat detail dan kokoh. Menjadi hiasan ruang tamu yang elegan dan bernilai seni tinggi.",
+                  user: "@Holo_Hype",
+                  avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
+                },
+                {
+                  id: "SYS.ID.REV-3",
+                  quote: "Hasil laut keringnya sangat segar dan bersih. Proses checkout cepat lewat WhatsApp pengelola, barang dikirim hari itu juga. Sangat puas!",
+                  user: "@SynthWave_99",
+                  avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80"
+                },
+                {
+                  id: "SYS.ID.REV-4",
+                  quote: "Madu Trigona Berakit rasanya khas asam manis segar. Layanan COD desa sangat membantu transaksi aman langsung bayar saat kurir datang.",
+                  user: "@Grid_Runner",
+                  avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80"
+                },
+                {
+                  id: "SYS.ID.REV-5",
+                  quote: "Kerajinan kerang hiasnya cantik sekali. Salut untuk BUMDes Berakit yang berhasil memajukan produk usaha ibu-ibu nelayan secara profesional!",
+                  user: "@Pixel_Punk",
+                  avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80"
+                }
+              ].map((card, idx) => (
+                <div 
+                  key={idx}
+                  className="voices-card-animate group bg-white border border-zinc-100 hover:border-[#bef264]/80 hover:shadow-[0_0_35px_-5px_rgba(190,242,100,0.35)] rounded-[28px] p-8 w-[380px] sm:w-[420px] h-[440px] flex flex-col justify-between transition-all duration-300 relative cursor-pointer select-none shrink-0"
                 >
-                  {cat}
-                </Button>
+                  {/* Corner Crosshairs */}
+                  <div className="absolute top-4 left-4 text-[10px] font-light text-zinc-300 group-hover:text-[#bef264] transition-colors duration-300 select-none pointer-events-none">+</div>
+                  <div className="absolute top-4 right-4 text-[10px] font-light text-zinc-300 group-hover:text-[#bef264] transition-colors duration-300 select-none pointer-events-none">+</div>
+                  <div className="absolute bottom-4 left-4 text-[10px] font-light text-zinc-300 group-hover:text-[#bef264] transition-colors duration-300 select-none pointer-events-none">+</div>
+                  <div className="absolute bottom-4 right-4 text-[10px] font-light text-zinc-300 group-hover:text-[#bef264] transition-colors duration-300 select-none pointer-events-none">+</div>
+
+                  {/* Top Quote Icon watermark */}
+                  <div 
+                    className="absolute right-8 top-8 text-[120px] font-bold text-[#bef264]/10 select-none leading-none pointer-events-none"
+                    style={{ fontFamily: "'Oswald', sans-serif" }}
+                  >
+                    ”
+                  </div>
+
+                  {/* Card Header (Log entry details) */}
+                  <div className="space-y-1 relative z-10">
+                    <div className="text-[10px] font-extrabold text-[#bef264] tracking-widest">
+                      LOG ENTRY
+                    </div>
+                    <div className="text-[11px] font-semibold text-zinc-400 font-mono tracking-tight">
+                      {card.id}
+                    </div>
+                  </div>
+
+                  {/* Card Quote */}
+                  <div className="relative z-10 py-4 flex-1 flex items-center">
+                    <p 
+                      className="text-base sm:text-lg font-semibold text-zinc-900 leading-relaxed text-left"
+                      style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    >
+                      "{card.quote}"
+                    </p>
+                  </div>
+
+                  {/* Card Footer (User details & Rating) */}
+                  <div className="flex items-center justify-between pt-6 border-t border-zinc-100 relative z-10">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <img 
+                          src={card.avatar} 
+                          alt={card.user}
+                          className="size-11 rounded-full object-cover border border-zinc-200 group-hover:border-[#bef264] transition-colors duration-300"
+                        />
+                        <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-zinc-100">
+                          <CheckCircle className="size-3.5 text-[#bef264] fill-current" />
+                        </div>
+                      </div>
+                      <div className="text-left">
+                        <div className="font-bold text-xs text-zinc-900 flex items-center gap-1">
+                          {card.user}
+                        </div>
+                        <div className="text-[9px] font-extrabold text-zinc-400 uppercase tracking-wider">
+                          VERIFIED USER
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Star Rating */}
+                    <div className="flex gap-0.5 text-[#bef264]">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className="size-3.5 fill-current" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Product Grid */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-2">
-            <Loader2 className="size-8 text-[#6e3ff3] animate-spin" />
-            <span className="text-sm text-zinc-400">Memuat produk khas Berakit...</span>
+      {/* Section 5: Frequently Asked Questions (FAQ) Accordion */}
+      <section 
+        id="faq-section" 
+        className="relative w-full bg-white py-24 border-b border-zinc-200/50"
+      >
+        {/* Background Grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-20" />
+
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 flex flex-col lg:flex-row gap-16 items-start relative z-10">
+          {/* Left Column - Headline */}
+          <div id="faq-left-col" className="w-full lg:w-[420px] shrink-0 text-left space-y-4">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#bef264] uppercase tracking-wider">
+              <span>🗂</span> DATABASE QUERY
+            </div>
+            <h2 
+              className="text-[44px] sm:text-[56px] leading-[1.05] text-[#111111] uppercase tracking-tight flex flex-col"
+              style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 900 }}
+            >
+              <span>FREQUENTLY</span>
+              <span>ASKED<span className="text-[#bef264]">.</span></span>
+            </h2>
+            <p 
+              className="text-xs sm:text-sm text-zinc-500 font-normal leading-relaxed max-w-[340px]"
+              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+            >
+              Find answers to the most common inquiries regarding our products, shipping, and secure village enterprise ecosystem.
+            </p>
           </div>
-        ) : filteredProducts.length === 0 ? (
-          <div className="text-center py-20 text-zinc-400 border border-dashed border-white/10 rounded-2xl bg-white/2">
-            Produk tidak ditemukan atau tidak tersedia.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredProducts.map((p) => (
-              <div
-                key={p.id}
-                className="bg-zinc-900/50 backdrop-blur-md border border-white/5 hover:border-[#6e3ff3]/30 rounded-2xl overflow-hidden flex flex-col group transition-all duration-300 shadow-md hover:shadow-[#6e3ff3]/5"
-              >
-                {/* Photo container */}
-                <div className="relative aspect-4/3 w-full bg-black overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={p.image_url}
-                    alt={p.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="text-[10px] font-bold text-white bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/10">
-                      {p.category}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Details */}
-                <div className="p-4 flex flex-col flex-1 gap-1">
-                  <h3 className="font-bold text-sm text-white group-hover:text-[#aa8ef9] transition-colors line-clamp-1">
-                    {p.name}
-                  </h3>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 h-8 leading-relaxed">
-                    {p.description}
-                  </p>
-
-                  <div className="flex items-end justify-between mt-3 pt-3 border-t border-white/5">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-zinc-400 font-medium">Harga</span>
-                      <span className="font-extrabold text-sm sm:text-base text-white tabular-nums">
-                        Rp {p.price.toLocaleString("id-ID")}
+          {/* Right Column - Accordion */}
+          <div className="w-full lg:flex-1 space-y-0">
+            {[
+              {
+                q: "What are your shipping policies?",
+                a: "We provide secure shipping on all orders. Your items will be securely delivered to your doorstep within 3-5 business days across Bintan and surrounding areas, or via shipping services for domestic orders."
+              },
+              {
+                q: "Do you ship physical items or just digital assets?",
+                a: "We ship authentic physical items including local premium forest honey, hand-carved miniature wooden boats, and fresh processed marine catches direct from Berakit Village."
+              },
+              {
+                q: "Is my payment data secure during checkout?",
+                a: "Yes, all checkout transactions are routed through secure, verified channels. You can choose bank transfer or cash-on-delivery (COD) for maximum trust."
+              },
+              {
+                q: "How can I reach out for assistance?",
+                a: "You can easily reach us via the WhatsApp integration buttons on our page. Our village administrator will directly respond and assist you with your order status."
+              },
+              {
+                q: "Where are these local products harvested and manufactured?",
+                a: "All honey is sustainably harvested from the wild mangrove forests of Bintan, and all crafts are created by the local women's enterprise groups and fishermen of Berakit Village."
+              },
+              {
+                q: "Can I cancel or modify my order after checking out?",
+                a: "Since our ordering system integrates directly with WhatsApp, you can coordinate cancellations or modifications immediately with the administrator before shipping."
+              },
+              {
+                q: "How do I unlock bulk order pricing for BUMDes items?",
+                a: "For corporate gifts, hospitality supply, or wholesale orders, contact the BUMDes administrator directly via our helpline to receive special volume discounts."
+              }
+            ].map((faq, idx) => {
+              const isOpen = openFaqIndex === idx;
+              return (
+                <div 
+                  key={idx}
+                  className={`border-b border-zinc-100 transition-colors duration-300 ${isOpen ? "bg-[#bef264]/5" : "hover:bg-zinc-50/50"}`}
+                >
+                  <button
+                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                    className="w-full py-6 flex items-center justify-between text-left group px-4 sm:px-6 transition-all"
+                  >
+                    <div className="flex items-center gap-6 pr-4">
+                      {/* Number Prefix */}
+                      <span className={`font-mono text-xs transition-colors duration-300 ${isOpen ? "text-[#bef264] font-bold" : "text-zinc-300 group-hover:text-zinc-500"}`}>
+                        {String(idx + 1).padStart(2, "0")}
+                      </span>
+                      {/* Question */}
+                      <span 
+                        className={`text-sm sm:text-base font-bold transition-colors duration-300 ${isOpen ? "text-[#bef264]" : "text-zinc-800 group-hover:text-zinc-600"}`}
+                        style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                      >
+                        {faq.q}
                       </span>
                     </div>
+                    {/* Plus / Close Icon */}
+                    <span 
+                      className={`text-xl font-bold transition-all duration-300 ${isOpen ? "rotate-45 text-[#bef264] scale-110" : "text-zinc-400 group-hover:text-zinc-650"}`}
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
+                      +
+                    </span>
+                  </button>
 
-                    {p.stock === 0 ? (
-                      <Badge variant="destructive" className="h-7 text-[10px] px-2.5">Habis</Badge>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="bg-[#6e3ff3] hover:bg-[#5b2fe0] text-white text-[11px] px-3.5 h-8 rounded-lg gap-1 font-semibold"
-                        onClick={() => addToCart(p)}
-                      >
-                        <Plus className="size-3.5" /> Beli
-                      </Button>
-                    )}
+                  {/* Answer Panel with smooth transition */}
+                  <div 
+                    className={`grid transition-all duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100 pb-6 px-4 sm:px-6" : "grid-rows-[0fr] opacity-0"}`}
+                    style={{ overflow: "hidden" }}
+                  >
+                    <div className="min-h-0">
+                      <div className="border-l-2 border-[#bef264] pl-4 py-1">
+                        <p 
+                          className="text-xs sm:text-sm text-zinc-500 leading-relaxed font-medium"
+                          style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                        >
+                          {faq.a}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-black border-t border-white/10 py-10 mt-10">
-        <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div id="tentang-kami" className="space-y-3 scroll-mt-20">
-            <h4 className="font-bold text-sm text-white">Mengenai BUMDes</h4>
-            <p className="text-xs text-zinc-400 leading-relaxed max-w-[280px]">
-              Koperasi Usaha Desa Berakit mengelola komoditas lokal hasil laut, kuliner, dan handicraft nelayan Bintan.
-            </p>
-          </div>
-          <div id="hubungi-kami" className="space-y-3 scroll-mt-20">
-            <h4 className="font-bold text-sm text-white">Hubungi Pengelola</h4>
-            <div className="space-y-1.5 text-xs text-zinc-400">
-              <p className="flex items-center gap-2"><Phone className="size-3.5 text-[#aa8ef9]" /> {bumdesInfo.phone} (WhatsApp)</p>
-              <p className="flex items-start gap-2 max-w-[320px]"><MapPin className="size-3.5 text-[#aa8ef9] mt-0.5 shrink-0" /> {bumdesInfo.address}</p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            <h4 className="font-bold text-sm text-white">Informasi</h4>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Semua transaksi bersifat langsung dan terintegrasi dengan portal WhatsApp desa untuk percepatan respon.
-            </p>
-            <div className="pt-2">
-              <Button
-                variant="link"
-                className="text-xs text-[#aa8ef9] p-0 hover:text-[#b59dfb]"
-                onClick={() => router.push("/login")}
-              >
-                Log In Admin Panel &rarr;
-              </Button>
-            </div>
+              );
+            })}
           </div>
         </div>
-        <div className="container mx-auto px-4 mt-8 pt-8 border-t border-white/5 text-center text-[10px] text-zinc-500">
-          &copy; {new Date().getFullYear()} BUMDes Berakit Maju. Hak Cipta Dilindungi.
-        </div>
-      </footer>
+      </section>
 
       {/* Shopping Cart Drawer (Right Slide-out) */}
       {isCartOpen && (
