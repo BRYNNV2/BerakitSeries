@@ -925,7 +925,7 @@ export default function StorefrontPage() {
               <a
                 key={idx}
                 href={link.href}
-                className="relative transition-colors duration-200 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#bef264] after:transition-all after:duration-300 after:ease-out"
+                className="relative opacity-60 hover:opacity-100 transition-all duration-300 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#bef264] after:transition-all after:duration-300 after:ease-out"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontWeight: 700,
