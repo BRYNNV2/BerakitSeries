@@ -629,6 +629,48 @@ export default function StorefrontPage() {
           }
         }
       );
+
+      // Smooth entrance reveal for the Newsletter section
+      gsap.fromTo(
+        "#newsletter-card",
+        {
+          opacity: 0,
+          y: 60,
+          scale: 0.95
+        },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 1.2,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: "#newsletter-section",
+            start: "top 85%",
+            toggleActions: "play reverse play reverse"
+          }
+        }
+      );
+
+      // Smooth entrance reveal for the Footer section
+      gsap.fromTo(
+        "#footer-section",
+        {
+          opacity: 0,
+          y: 40
+        },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 1,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: "#footer-section",
+            start: "top 95%",
+            toggleActions: "play reverse play reverse"
+          }
+        }
+      );
     }
   }, []);
 
@@ -2048,6 +2090,170 @@ export default function StorefrontPage() {
           </div>
         </div>
       </section>
+
+      {/* Section 7: Newsletter (GET 15% OFF YOUR FIRST ORDER.) */}
+      <section 
+        id="newsletter-section" 
+        className="relative w-full py-24 sm:py-32 bg-white flex items-center overflow-hidden border-b border-zinc-200/50"
+      >
+        {/* Background Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-40" />
+
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
+          <div 
+            id="newsletter-card"
+            className="w-full bg-zinc-950 rounded-[32px] p-8 sm:p-12 lg:p-16 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12 border border-zinc-800 shadow-2xl"
+          >
+            {/* Subtle background gradient glow */}
+            <div className="absolute right-0 top-0 w-[500px] h-[500px] bg-[#bef264]/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute left-0 bottom-0 w-[300px] h-[300px] bg-zinc-800/20 rounded-full blur-[80px] pointer-events-none" />
+
+            {/* Left Column: Heading */}
+            <div className="w-full lg:max-w-xl text-left space-y-2 relative z-10">
+              <h2 
+                className="uppercase tracking-tight text-white flex flex-col"
+                style={{ 
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontStyle: "normal",
+                  fontWeight: 900,
+                  fontSize: "88px",
+                  lineHeight: "79px"
+                }}
+              >
+                <span>GET 15% OFF</span>
+                <span className="text-[#bef264]">YOUR FIRST</span>
+                <span className="text-zinc-500">ORDER.</span>
+              </h2>
+            </div>
+
+            {/* Right Column: Form */}
+            <div className="w-full lg:max-w-xl text-left space-y-6 relative z-10">
+              {/* Pill */}
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-zinc-900 border border-zinc-800/80 text-[11px] font-bold text-[#bef264] uppercase tracking-wider">
+                <span className="size-1.5 rounded-full bg-[#bef264] animate-pulse" /> JOIN 50,000+ SUBSCRIBERS
+              </div>
+
+              <p 
+                className="text-zinc-400 font-normal"
+                style={{ 
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontStyle: "normal",
+                  fontWeight: 400,
+                  fontSize: "16px",
+                  lineHeight: "26px"
+                }}
+              >
+                Subscribe to our exclusive newsletter and be the first to know about new digital drops, limited offers, and boundary-pushing style tips.
+              </p>
+
+              {/* Input Form */}
+              <form onSubmit={(e) => e.preventDefault()} className="w-full bg-white p-2 rounded-full flex items-center justify-between shadow-lg max-w-[500px]">
+                <input 
+                  type="email" 
+                  placeholder="Enter your email address..."
+                  className="w-full pl-6 pr-4 py-2 bg-transparent text-zinc-900 placeholder-zinc-400 text-sm focus:outline-none"
+                  style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                />
+                <button 
+                  type="submit"
+                  className="bg-[#bef264] hover:bg-[#bef264]/95 text-black font-bold uppercase text-xs tracking-wider px-6 py-3 rounded-full flex items-center gap-2 shrink-0 transition-all duration-300 hover:scale-102 cursor-pointer"
+                  style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                >
+                  SUBSCRIBE <ArrowRight className="size-4" />
+                </button>
+              </form>
+
+              {/* Disclaimer */}
+              <p className="text-xs text-zinc-500 font-medium">
+                By subscribing, you agree to our <a href="#" className="text-zinc-400 hover:text-[#bef264] transition-colors underline">Terms of Service</a> and <a href="#" className="text-zinc-400 hover:text-[#bef264] transition-colors underline">Privacy Policy</a>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer Section */}
+      <footer 
+        id="footer-section" 
+        className="w-full bg-zinc-950 py-16 border-t border-zinc-900 relative z-10"
+      >
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
+          {/* Top Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-16 text-left">
+            {/* Column 1: Logo & Tagline */}
+            <div className="lg:col-span-2 space-y-4">
+              <span 
+                className="text-white uppercase tracking-tighter block"
+                style={{
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontWeight: 900,
+                  fontSize: "32px",
+                  lineHeight: "1.0"
+                }}
+              >
+                NOVASHION<span className="text-[#bef264]">.</span>
+              </span>
+              <p 
+                className="text-zinc-400 text-sm max-w-sm leading-relaxed"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                Empowering the coastal community of Desa Berakit by blending traditional heritage with modern digital storefronts.
+              </p>
+            </div>
+
+            {/* Column 2: Collections */}
+            <div className="space-y-4">
+              <h5 className="text-xs font-bold text-zinc-300 uppercase tracking-widest" style={{ fontFamily: "Consolas, monospace" }}>
+                COLLECTIONS
+              </h5>
+              <ul className="space-y-2 text-sm text-zinc-500 font-medium">
+                <li><a href="#collections-section" className="hover:text-[#bef264] transition-colors">Forest Honey</a></li>
+                <li><a href="#collections-section" className="hover:text-[#bef264] transition-colors">Local Crafts</a></li>
+                <li><a href="#collections-section" className="hover:text-[#bef264] transition-colors">Marine Products</a></li>
+                <li><a href="#collections-section" className="hover:text-[#bef264] transition-colors">Eco Ecotourism</a></li>
+              </ul>
+            </div>
+
+            {/* Column 3: Platform */}
+            <div className="space-y-4">
+              <h5 className="text-xs font-bold text-zinc-300 uppercase tracking-widest" style={{ fontFamily: "Consolas, monospace" }}>
+                PLATFORM
+              </h5>
+              <ul className="space-y-2 text-sm text-zinc-500 font-medium">
+                <li><a href="#difference-section" className="hover:text-[#bef264] transition-colors">Why Choose Us</a></li>
+                <li><a href="#voices-section" className="hover:text-[#bef264] transition-colors">Customer Voices</a></li>
+                <li><a href="#faq-section" className="hover:text-[#bef264] transition-colors">FAQ Support</a></li>
+                <li><a href="#hub-section" className="hover:text-[#bef264] transition-colors">Physical Hub</a></li>
+              </ul>
+            </div>
+
+            {/* Column 4: Contact */}
+            <div className="space-y-4">
+              <h5 className="text-xs font-bold text-zinc-300 uppercase tracking-widest" style={{ fontFamily: "Consolas, monospace" }}>
+                SATELLITE UPLINK
+              </h5>
+              <ul className="space-y-2 text-sm text-zinc-500 font-medium">
+                <li><a href="mailto:mfyansah@student.umrah.ac.id" className="hover:text-[#bef264] transition-colors">mfyansah@student.umrah.ac.id</a></li>
+                <li><span className="text-zinc-600 block">Jalan Bhatin Muhammad Ali, Bintan</span></li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Row */}
+          <div className="pt-8 border-t border-zinc-900/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span 
+              className="text-xs text-zinc-600 font-semibold"
+              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+            >
+              © 2026 NOVASHION / BUMDES BERAKIT. ALL RIGHTS RESERVED.
+            </span>
+            <div className="flex items-center gap-6 text-xs text-zinc-600 font-semibold">
+              <a href="#" className="hover:text-zinc-400 transition-colors">PRIVACY POLICY</a>
+              <a href="#" className="hover:text-zinc-400 transition-colors">TERMS OF SERVICE</a>
+            </div>
+          </div>
+        </div>
+      </footer>
 
       {/* Shopping Cart Drawer (Right Slide-out) */}
       {isCartOpen && (
