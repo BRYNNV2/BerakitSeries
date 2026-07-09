@@ -35,6 +35,8 @@ import {
   Shield,
   Headphones,
   Star,
+  Clock,
+  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -581,6 +583,47 @@ export default function StorefrontPage() {
           ease: "power2.out",
           scrollTrigger: {
             trigger: "#faq-section",
+            start: "top 80%",
+            toggleActions: "play reverse play reverse"
+          }
+        }
+      );
+
+      // Smooth entrance reveal for the Map Hub section
+      gsap.fromTo(
+        "#hub-left-col",
+        {
+          opacity: 0,
+          x: -50
+        },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 1,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: "#hub-section",
+            start: "top 80%",
+            toggleActions: "play reverse play reverse"
+          }
+        }
+      );
+
+      gsap.fromTo(
+        "#hub-map-container",
+        {
+          opacity: 0,
+          scale: 0.9,
+          clipPath: "inset(10% 10% 10% 10% round 32px)",
+        },
+        {
+          opacity: 1,
+          scale: 1,
+          clipPath: "inset(0% 0% 0% 0% round 32px)",
+          duration: 1.2,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: "#hub-section",
             start: "top 80%",
             toggleActions: "play reverse play reverse"
           }
@@ -1723,6 +1766,153 @@ export default function StorefrontPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Section 6: Physical Hub / Satellite Uplink (Maps Section) */}
+      <section 
+        id="hub-section" 
+        className="relative w-full py-24 sm:py-32 bg-white flex items-center overflow-hidden border-b border-zinc-200/50"
+      >
+        {/* Background Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-40" />
+
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12 flex flex-col lg:flex-row items-center justify-between gap-16 relative z-10">
+          {/* Left Column - Information Uplink */}
+          <div id="hub-left-col" className="w-full lg:w-[480px] shrink-0 text-left space-y-8">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#bef264] uppercase tracking-wider">
+                <span className="size-2 rounded-full bg-[#bef264] animate-pulse" /> SATELLITE UPLINK
+              </div>
+              <h2 
+                className="text-4xl sm:text-5xl lg:text-[70px] font-black uppercase tracking-tight leading-[0.9] text-black"
+                style={{ fontFamily: "'Oswald', sans-serif" }}
+              >
+                PHYSICAL<br />
+                <span className="text-zinc-400">HUB</span>
+                <span className="text-[#bef264]">.</span>
+              </h2>
+              <p 
+                className="text-sm sm:text-base text-zinc-500 leading-relaxed font-medium"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                Drop by our operational headquarters. Experience the authentic taste of wild mangrove honey and local maritime heritage.
+              </p>
+            </div>
+
+            {/* Stepper info blocks */}
+            <div className="relative space-y-4 pt-4">
+              {/* Absolute vertical timeline line behind circle icons */}
+              <div className="absolute left-[36px] top-10 bottom-10 w-[1.5px] bg-zinc-200/80 pointer-events-none" />
+
+              {/* Step 1: Coordinates */}
+              <div className="relative z-10 flex gap-4 p-4 rounded-[20px] border border-transparent hover:bg-zinc-50 hover:border-zinc-100/60 hover:shadow-xs transition-all duration-300 group cursor-pointer hover:translate-x-1">
+                <div className="shrink-0">
+                  <div className="size-10 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-950 bg-white shadow-xs transition-all duration-300 group-hover:bg-[#bef264]/20 group-hover:border-[#bef264] group-hover:text-[#bef264]">
+                    <MapPin className="size-5 transition-transform duration-300 group-hover:scale-110" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block transition-colors duration-300 group-hover:text-[#bef264]">COORDINATES</span>
+                  <h4 className="font-bold text-zinc-900 text-sm transition-colors duration-300 group-hover:text-black" style={{ fontFamily: "'Inter', sans-serif" }}>BUMDES BERAKIT HQ</h4>
+                  <p 
+                    className="text-xs text-zinc-500 leading-relaxed font-medium max-w-sm transition-colors duration-300 group-hover:text-zinc-700" 
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    Jalan Bhatin Muhammad Ali, Gang Asiah No. 20, RT 06 / RW 03, Semelur Desa Berakit Kecamatan Teluk Sebong Kabupaten Bintan, Kepulauan Riau
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 2: Access Time */}
+              <div className="relative z-10 flex gap-4 p-4 rounded-[20px] border border-transparent hover:bg-zinc-50 hover:border-zinc-100/60 hover:shadow-xs transition-all duration-300 group cursor-pointer hover:translate-x-1">
+                <div className="shrink-0">
+                  <div className="size-10 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-950 bg-white shadow-xs transition-all duration-300 group-hover:bg-[#bef264]/20 group-hover:border-[#bef264] group-hover:text-[#bef264]">
+                    <Clock className="size-5 transition-transform duration-300 group-hover:scale-110" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block transition-colors duration-300 group-hover:text-[#bef264]">OFFLINE ACCESS</span>
+                  <h4 className="font-bold text-zinc-900 text-sm transition-colors duration-300 group-hover:text-black" style={{ fontFamily: "'Inter', sans-serif" }}>08:00 - 17:00</h4>
+                  <p 
+                    className="text-xs text-zinc-500 leading-relaxed font-medium transition-colors duration-300 group-hover:text-zinc-700" 
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    Local Time / GMT+7
+                  </p>
+                </div>
+              </div>
+
+              {/* Step 3: Digital Comm */}
+              <div className="relative z-10 flex gap-4 p-4 rounded-[20px] border border-transparent hover:bg-zinc-50 hover:border-zinc-100/60 hover:shadow-xs transition-all duration-300 group cursor-pointer hover:translate-x-1">
+                <div className="shrink-0">
+                  <div className="size-10 rounded-full border border-zinc-200 flex items-center justify-center text-zinc-950 bg-white shadow-xs transition-all duration-300 group-hover:bg-[#bef264]/20 group-hover:border-[#bef264] group-hover:text-[#bef264]">
+                    <Mail className="size-5 transition-transform duration-300 group-hover:scale-110" />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block transition-colors duration-300 group-hover:text-[#bef264]">DIGITAL COMM</span>
+                  <h4 
+                    className="font-bold text-zinc-900 text-sm uppercase transition-colors duration-300 group-hover:text-black" 
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    mfyansah@student.umrah.ac.id
+                  </h4>
+                  <p 
+                    className="text-xs text-zinc-500 leading-relaxed font-medium transition-colors duration-300 group-hover:text-zinc-700" 
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    24/7 Secure Contact Channel
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          {/* Right Column - Map Frame */}
+          <div className="w-full flex-1 max-w-[840px]">
+            <div 
+              id="hub-map-container"
+              className="relative w-full aspect-square md:aspect-[4/3] rounded-[32px] overflow-hidden border border-zinc-200 bg-zinc-950 shadow-2xl"
+            >
+              {/* Map iframe */}
+              <iframe 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4731.657649311793!2d104.5499708!3d1.210686!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31dbd9beffe89e77%3A0x8496e2d6a6e327df!2sWisata%20Mangrove%20Tanjung%20Berakit!5e1!3m2!1sid!2sid!4v1783596097087!5m2!1sid!2sid" 
+                className="w-full h-full border-0 absolute inset-0"
+                allowFullScreen={true}
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade"
+                style={{
+                  filter: "invert(90%) hue-rotate(180deg) saturate(60%) brightness(95%) contrast(90%)",
+                }}
+              />
+
+              {/* Futuristic Scan HUD Overlay */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                <div className="relative size-20 border border-[#bef264]/40 rounded-full flex items-center justify-center animate-ping duration-[3.5s]" />
+                <div className="absolute size-10 border border-[#bef264]/50 rounded-full flex items-center justify-center">
+                  <div className="size-1.5 bg-[#bef264] rounded-full" />
+                </div>
+                <div className="absolute w-14 h-[1px] bg-[#bef264]/30" />
+                <div className="absolute w-[1px] h-14 bg-[#bef264]/30" />
+              </div>
+
+              {/* Floating Badges */}
+              <a 
+                href="https://maps.google.com/?q=Wisata+Mangrove+Tanjung+Berakit" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="absolute top-6 left-6 bg-zinc-950/75 hover:bg-zinc-950 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full text-[10px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
+              >
+                Open in Maps <ArrowRight className="size-3 -rotate-45" />
+              </a>
+
+              <div className="absolute top-6 right-6 bg-zinc-950/75 backdrop-blur-md border border-white/10 px-3.5 py-1.5 rounded-full text-[9px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                <span className="size-1.5 rounded-full bg-[#bef264] animate-pulse" /> LIVE FEED
+              </div>
+            </div>
           </div>
         </div>
       </section>
