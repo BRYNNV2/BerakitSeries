@@ -1319,11 +1319,13 @@ export default function StorefrontPage() {
                 Why Choose Us
               </span>
               <h2 
-                className="uppercase leading-[1.05] tracking-tight"
+                className="uppercase tracking-tight text-black"
                 style={{
                   fontFamily: "'Oswald', Impact, sans-serif",
+                  fontStyle: "normal",
                   fontWeight: 900,
-                  fontSize: "88px"
+                  fontSize: "88px",
+                  lineHeight: "79px"
                 }}
               >
                 <span className="text-black">The Berakit</span><br />
@@ -1333,8 +1335,14 @@ export default function StorefrontPage() {
             </div>
             <div className="max-w-[450px] text-left">
               <p 
-                className="text-sm sm:text-base text-zinc-500 font-normal leading-relaxed"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                className="text-zinc-500 font-normal"
+                style={{ 
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontStyle: "normal",
+                  fontWeight: 400,
+                  fontSize: "18px",
+                  lineHeight: "29px"
+                }}
               >
                 We don't just sell local products; we deliver an authentic coastal heritage. Every interaction is designed to support the local fishermen, craft artisans, and families of Desa Berakit.
               </p>
@@ -1506,15 +1514,27 @@ export default function StorefrontPage() {
                 <span className="animate-pulse">⚡</span> LIVE TRANSMISSIONS
               </div>
               <h2 
-                className="text-[44px] sm:text-[56px] leading-[1.05] text-[#111111] uppercase tracking-tight flex flex-col"
-                style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 900 }}
+                className="uppercase tracking-tight text-black flex flex-col"
+                style={{ 
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontStyle: "normal",
+                  fontWeight: 900,
+                  fontSize: "88px",
+                  lineHeight: "79px"
+                }}
               >
                 <span>VOICES FROM</span>
                 <span>THE GRID<span className="text-[#bef264]">.</span></span>
               </h2>
               <p 
-                className="text-xs sm:text-sm text-zinc-500 font-normal leading-relaxed max-w-[340px]"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                className="text-zinc-500 font-normal max-w-[420px]"
+                style={{ 
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontStyle: "normal",
+                  fontWeight: 400,
+                  fontSize: "18px",
+                  lineHeight: "29px"
+                }}
               >
                 Decrypting user logs to reveal the unparalleled luxury experience in the digital-physical frontier.
               </p>
@@ -1663,15 +1683,27 @@ export default function StorefrontPage() {
               <span>🗂</span> DATABASE QUERY
             </div>
             <h2 
-              className="text-[44px] sm:text-[56px] leading-[1.05] text-[#111111] uppercase tracking-tight flex flex-col"
-              style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 900 }}
+              className="uppercase tracking-tight text-black flex flex-col"
+              style={{ 
+                fontFamily: "'Oswald', Impact, sans-serif",
+                fontStyle: "normal",
+                fontWeight: 900,
+                fontSize: "88px",
+                lineHeight: "79px"
+              }}
             >
               <span>FREQUENTLY</span>
               <span>ASKED<span className="text-[#bef264]">.</span></span>
             </h2>
             <p 
-              className="text-xs sm:text-sm text-zinc-500 font-normal leading-relaxed max-w-[340px]"
-              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              className="text-zinc-500 font-normal max-w-[420px]"
+              style={{ 
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontStyle: "normal",
+                fontWeight: 400,
+                fontSize: "18px",
+                lineHeight: "29px"
+              }}
             >
               Find answers to the most common inquiries regarding our products, shipping, and secure village enterprise ecosystem.
             </p>
@@ -1778,7 +1810,7 @@ export default function StorefrontPage() {
         {/* Background Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-40" />
 
-        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12 flex flex-col lg:flex-row items-center justify-between gap-16 relative z-10">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 flex flex-col lg:flex-row items-center justify-between gap-16 relative z-10">
           {/* Left Column - Information Uplink */}
           <div id="hub-left-col" className="w-full lg:w-[480px] shrink-0 text-left space-y-8">
             <div className="space-y-4">
@@ -1786,18 +1818,30 @@ export default function StorefrontPage() {
                 <span className="size-2 rounded-full bg-[#bef264] animate-pulse" /> SATELLITE UPLINK
               </div>
               <h2 
-                className="text-4xl sm:text-5xl lg:text-[70px] font-black uppercase tracking-tight leading-[0.9] text-black"
-                style={{ fontFamily: "'Oswald', sans-serif" }}
+                className="uppercase tracking-tight text-black"
+                style={{ 
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontStyle: "normal",
+                  fontWeight: 900,
+                  fontSize: "88px",
+                  lineHeight: "79px"
+                }}
               >
                 PHYSICAL<br />
                 <span className="text-zinc-400">HUB</span>
                 <span className="text-[#bef264]">.</span>
               </h2>
               <p 
-                className="text-sm sm:text-base text-zinc-500 leading-relaxed font-medium"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                className="text-zinc-500 font-normal"
+                style={{ 
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontStyle: "normal",
+                  fontWeight: 400,
+                  fontSize: "18px",
+                  lineHeight: "29px"
+                }}
               >
-                Drop by our operational headquarters. Experience the authentic taste of wild mangrove honey and local maritime heritage.
+                Drop by our operational headquarters. Experience the seamless fusion of high-end infrastructure and digital realities.
               </p>
             </div>
 
@@ -1814,11 +1858,42 @@ export default function StorefrontPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block transition-colors duration-300 group-hover:text-[#bef264]">COORDINATES</span>
-                  <h4 className="font-bold text-zinc-900 text-sm transition-colors duration-300 group-hover:text-black" style={{ fontFamily: "'Inter', sans-serif" }}>BUMDES BERAKIT HQ</h4>
+                  <span 
+                    className="block transition-colors duration-300 group-hover:text-[#bef264] uppercase tracking-widest"
+                    style={{
+                      fontFamily: "Consolas, Monaco, monospace",
+                      fontStyle: "normal",
+                      fontWeight: 700,
+                      fontSize: "12px",
+                      lineHeight: "16px",
+                      color: "rgb(161, 161, 170)"
+                    }}
+                  >
+                    COORDINATES
+                  </span>
+                  <h4 
+                    className="transition-colors duration-300 group-hover:text-black uppercase" 
+                    style={{ 
+                      fontFamily: "'Oswald', Impact, sans-serif",
+                      fontStyle: "normal",
+                      fontWeight: 700,
+                      fontSize: "24px",
+                      lineHeight: "32px",
+                      color: "rgb(24, 24, 27)"
+                    }}
+                  >
+                    BUMDES BERAKIT HQ
+                  </h4>
                   <p 
-                    className="text-xs text-zinc-500 leading-relaxed font-medium max-w-sm transition-colors duration-300 group-hover:text-zinc-700" 
-                    style={{ fontFamily: "'Inter', sans-serif" }}
+                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal max-w-sm" 
+                    style={{ 
+                      fontFamily: "'Inter', system-ui, sans-serif",
+                      fontStyle: "normal",
+                      fontWeight: 400,
+                      color: "lab(48.496 0 0)",
+                      fontSize: "16px",
+                      lineHeight: "26px"
+                    }}
                   >
                     Jalan Bhatin Muhammad Ali, Gang Asiah No. 20, RT 06 / RW 03, Semelur Desa Berakit Kecamatan Teluk Sebong Kabupaten Bintan, Kepulauan Riau
                   </p>
@@ -1833,11 +1908,42 @@ export default function StorefrontPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block transition-colors duration-300 group-hover:text-[#bef264]">OFFLINE ACCESS</span>
-                  <h4 className="font-bold text-zinc-900 text-sm transition-colors duration-300 group-hover:text-black" style={{ fontFamily: "'Inter', sans-serif" }}>08:00 - 17:00</h4>
+                  <span 
+                    className="block transition-colors duration-300 group-hover:text-[#bef264] uppercase tracking-widest"
+                    style={{
+                      fontFamily: "Consolas, Monaco, monospace",
+                      fontStyle: "normal",
+                      fontWeight: 700,
+                      fontSize: "12px",
+                      lineHeight: "16px",
+                      color: "rgb(161, 161, 170)"
+                    }}
+                  >
+                    OFFLINE ACCESS
+                  </span>
+                  <h4 
+                    className="transition-colors duration-300 group-hover:text-black uppercase" 
+                    style={{ 
+                      fontFamily: "'Oswald', Impact, sans-serif",
+                      fontStyle: "normal",
+                      fontWeight: 700,
+                      fontSize: "24px",
+                      lineHeight: "32px",
+                      color: "rgb(24, 24, 27)"
+                    }}
+                  >
+                    08:00 - 17:00
+                  </h4>
                   <p 
-                    className="text-xs text-zinc-500 leading-relaxed font-medium transition-colors duration-300 group-hover:text-zinc-700" 
-                    style={{ fontFamily: "'Inter', sans-serif" }}
+                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal" 
+                    style={{ 
+                      fontFamily: "'Inter', system-ui, sans-serif",
+                      fontStyle: "normal",
+                      fontWeight: 400,
+                      color: "lab(48.496 0 0)",
+                      fontSize: "16px",
+                      lineHeight: "26px"
+                    }}
                   >
                     Local Time / GMT+7
                   </p>
@@ -1852,16 +1958,42 @@ export default function StorefrontPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block transition-colors duration-300 group-hover:text-[#bef264]">DIGITAL COMM</span>
+                  <span 
+                    className="block transition-colors duration-300 group-hover:text-[#bef264] uppercase tracking-widest"
+                    style={{
+                      fontFamily: "Consolas, Monaco, monospace",
+                      fontStyle: "normal",
+                      fontWeight: 700,
+                      fontSize: "12px",
+                      lineHeight: "16px",
+                      color: "rgb(161, 161, 170)"
+                    }}
+                  >
+                    DIGITAL COMM
+                  </span>
                   <h4 
-                    className="font-bold text-zinc-900 text-sm uppercase transition-colors duration-300 group-hover:text-black" 
-                    style={{ fontFamily: "'Inter', sans-serif" }}
+                    className="transition-colors duration-300 group-hover:text-black uppercase" 
+                    style={{ 
+                      fontFamily: "'Oswald', Impact, sans-serif",
+                      fontStyle: "normal",
+                      fontWeight: 700,
+                      fontSize: "24px",
+                      lineHeight: "32px",
+                      color: "rgb(24, 24, 27)"
+                    }}
                   >
                     mfyansah@student.umrah.ac.id
                   </h4>
                   <p 
-                    className="text-xs text-zinc-500 leading-relaxed font-medium transition-colors duration-300 group-hover:text-zinc-700" 
-                    style={{ fontFamily: "'Inter', sans-serif" }}
+                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal" 
+                    style={{ 
+                      fontFamily: "'Inter', system-ui, sans-serif",
+                      fontStyle: "normal",
+                      fontWeight: 400,
+                      color: "lab(48.496 0 0)",
+                      fontSize: "16px",
+                      lineHeight: "26px"
+                    }}
                   >
                     24/7 Secure Contact Channel
                   </p>
