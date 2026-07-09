@@ -420,16 +420,18 @@ export default function StorefrontPage() {
       "-=0.6"
     );
 
-    // 6. Floating centerpiece loop (starts after reveal is complete)
-    tl.add(() => {
-      gsap.to(".hero-centerpiece", {
-        y: -12,
-        duration: 2.5,
-        ease: "sine.inOut",
-        yoyo: true,
-        repeat: -1
-      });
-    }, "-=0.2");
+    // 6. Scroll exit animation (instead of float loop)
+    gsap.to(".hero-centerpiece", {
+      scale: 0.85,
+      opacity: 0,
+      y: -80,
+      scrollTrigger: {
+        trigger: "#hero-section",
+        start: "top top",
+        end: "bottom 30%",
+        scrub: true
+      }
+    });
 
     // 7. Hero CTA buttons & cards
     tl.fromTo(heroCtaTarget,
@@ -958,6 +960,7 @@ export default function StorefrontPage() {
 
       {/* Hero Section */}
       <section 
+        id="hero-section"
         className="relative overflow-hidden min-h-[90vh] flex flex-col justify-between bg-white pt-6 pb-12 px-4 sm:px-12 border-b border-zinc-200/50"
       >
         {/* Soft yellow-lime radial gradient behind layout */}
@@ -997,14 +1000,14 @@ export default function StorefrontPage() {
         </div>
 
         {/* Centerpiece Image (Overlapping in front of the text) */}
-        <div className="absolute left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none select-none">
+        <div className="absolute left-1/2 top-[56%] -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none select-none">
           <div className="relative hero-centerpiece-container">
             {/* Ambient product glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-[#bef264]/20 rounded-full blur-[90px] opacity-75 pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#bef264]/20 rounded-full blur-[100px] opacity-75 pointer-events-none" />
             <img 
               src={processedBatikSrc} 
               alt="BERAKIT SERIES Centerpiece" 
-              className="hero-centerpiece h-[260px] sm:h-[350px] md:h-[410px] object-contain relative z-20 select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)]"
+              className="hero-centerpiece h-[320px] sm:h-[420px] md:h-[500px] object-contain relative z-20 select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)]"
             />
           </div>
         </div>
