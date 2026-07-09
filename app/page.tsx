@@ -420,19 +420,6 @@ export default function StorefrontPage() {
       "-=0.6"
     );
 
-    // 6. Scroll exit animation (instead of float loop)
-    gsap.to(".hero-centerpiece", {
-      scale: 0.85,
-      opacity: 0,
-      y: -80,
-      scrollTrigger: {
-        trigger: "#hero-section",
-        start: "top top",
-        end: "bottom 30%",
-        scrub: true
-      }
-    });
-
     // 7. Hero CTA buttons & cards
     tl.fromTo(heroCtaTarget,
       { y: 25, opacity: 0 },
@@ -446,6 +433,22 @@ export default function StorefrontPage() {
       { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: "power2.out" },
       "-=0.4"
     );
+
+    // 8. Scroll exit animation (starts after reveal is complete)
+    tl.add(() => {
+      gsap.to(".hero-centerpiece", {
+        scale: 0.85,
+        opacity: 0,
+        y: -80,
+        scrollTrigger: {
+          trigger: "#hero-section",
+          start: "top top",
+          end: "bottom 30%",
+          scrub: true,
+          invalidateOnRefresh: true
+        }
+      });
+    });
 
     // 8. Collections ScrollTrigger Animation
     gsap.fromTo(
