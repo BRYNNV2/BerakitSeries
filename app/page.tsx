@@ -1683,15 +1683,21 @@ export default function StorefrontPage() {
                       </span>
                       {/* Question */}
                       <span 
-                        className={`text-sm sm:text-base font-bold transition-colors duration-300 ${isOpen ? "text-[#bef264]" : "text-zinc-800 group-hover:text-zinc-600"}`}
-                        style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                        className={`transition-colors duration-300 ${isOpen ? "text-[#bef264]" : "text-zinc-900 group-hover:text-zinc-700"}`}
+                        style={{ 
+                          fontFamily: "'Inter', system-ui, sans-serif",
+                          fontWeight: 500,
+                          fontSize: "24px",
+                          lineHeight: "33px",
+                          fontStyle: "normal"
+                        }}
                       >
                         {faq.q}
                       </span>
                     </div>
                     {/* Plus / Close Icon */}
                     <span 
-                      className={`text-xl font-bold transition-all duration-300 ${isOpen ? "rotate-45 text-[#bef264] scale-110" : "text-zinc-400 group-hover:text-zinc-650"}`}
+                      className={`text-2xl font-light transition-all duration-300 ${isOpen ? "rotate-45 text-[#bef264] scale-110" : "text-zinc-400 group-hover:text-zinc-600"}`}
                       style={{ fontFamily: "'Inter', sans-serif" }}
                     >
                       +
