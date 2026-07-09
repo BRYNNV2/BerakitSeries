@@ -378,6 +378,10 @@ export default function StorefrontPage() {
     const obj = { val: 0 };
     const tl = gsap.timeline();
 
+    const preloaderTarget = preloaderRef.current || "#preloader";
+    const headerTarget = headerRef.current || "header";
+    const heroCtaTarget = heroCtaRef.current || ".hero-cta-container";
+
     // 1. Preload counter animation
     tl.to(obj, {
       val: 100,
@@ -389,14 +393,14 @@ export default function StorefrontPage() {
     });
 
     // 2. Preloader slide out
-    tl.to(preloaderRef.current, {
+    tl.to(preloaderTarget, {
       yPercent: -100,
       duration: 0.85,
       ease: "power4.inOut",
     });
 
     // 3. Header reveal
-    tl.fromTo(headerRef.current, 
+    tl.fromTo(headerTarget, 
       { y: -60, opacity: 0 },
       { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
       "-=0.4"
@@ -428,7 +432,7 @@ export default function StorefrontPage() {
     }, "-=0.2");
 
     // 7. Hero CTA buttons & cards
-    tl.fromTo(heroCtaRef.current,
+    tl.fromTo(heroCtaTarget,
       { y: 25, opacity: 0 },
       { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" },
       "-=0.45"
@@ -859,9 +863,9 @@ export default function StorefrontPage() {
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans overflow-x-hidden relative">
       
-      {/* GSAP Preloader Overlay */}
       <div 
         ref={preloaderRef}
+        id="preloader"
         className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center select-none"
       >
         <div className="space-y-6 text-center animate-in fade-in duration-500">
@@ -1000,7 +1004,7 @@ export default function StorefrontPage() {
             <img 
               src={processedBatikSrc} 
               alt="BERAKIT SERIES Centerpiece" 
-              className="w-full h-full object-contain pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)] group-hover:scale-102 transition-transform duration-500 relative z-20"
+              className="hero-centerpiece h-[260px] sm:h-[350px] md:h-[410px] object-contain relative z-20 select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)]"
             />
           </div>
         </div>
@@ -1020,7 +1024,7 @@ export default function StorefrontPage() {
           </div>
 
           {/* Center Buttons (CTA) */}
-          <div ref={heroCtaRef} className="flex items-center gap-3 relative z-30 lg:-translate-y-2">
+          <div ref={heroCtaRef} className="hero-cta-container flex items-center gap-3 relative z-30 lg:-translate-y-2">
             <a href="#katalog">
               <Button className="bg-black hover:bg-zinc-800 text-white font-bold px-8 py-5 rounded-full text-xs uppercase tracking-wider transition-all shadow-md">
                 Shop Now
