@@ -897,16 +897,22 @@ export default function StorefrontPage() {
       </div>
 
       {/* Top Banner Navigation */}
-      <header ref={headerRef} className="sticky top-0 z-40 w-full border-b border-zinc-200/50 bg-white">
+      {/* Top Banner Navigation */}
+      <header ref={headerRef} className="fixed top-0 inset-x-0 z-40 w-full border-b border-zinc-200/50 bg-white/90 backdrop-blur-md">
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
-            <svg viewBox="0 0 24 24" className="size-5 text-black stroke-current fill-none stroke-[2]" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4z" />
-            </svg>
-            <span className="font-bold text-sm tracking-[0.2em] text-black uppercase">
-              BERAKIT SERIES.
-            </span>
-          </div>
+          <span 
+            className="uppercase tracking-normal cursor-pointer select-none"
+            style={{
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontWeight: 900,
+              color: "lab(2.75381 0 0)",
+              fontSize: "30px",
+              lineHeight: "36px"
+            }}
+            onClick={() => router.push("/")}
+          >
+            BERAKIT SERIES.
+          </span>
 
           {/* Center Navigation Pill (visible on desktop) */}
           <nav className="hidden md:flex items-center gap-8">
@@ -919,16 +925,14 @@ export default function StorefrontPage() {
               <a
                 key={idx}
                 href={link.href}
-                className="transition-colors duration-200"
-                onMouseEnter={() => setHoveredNavLink(idx)}
-                onMouseLeave={() => setHoveredNavLink(null)}
+                className="relative transition-colors duration-200 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#bef264] after:transition-all after:duration-300 after:ease-out"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontWeight: 700,
                   fontStyle: "normal",
                   fontSize: "14px",
                   lineHeight: "20px",
-                  color: hoveredNavLink === idx ? "rgb(212, 249, 49)" : "lab(2.75381 0 0)"
+                  color: "lab(2.75381 0 0)"
                 }}
               >
                 {link.label}
@@ -937,20 +941,27 @@ export default function StorefrontPage() {
           </nav>
 
           <div className="flex items-center gap-6">
-            <button className="text-zinc-600 hover:text-black transition-colors">
-              <Search className="size-4" />
+            <button className="text-black hover:opacity-80 transition-opacity">
+              <Search className="size-[20px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
             </button>
             <button 
-              className="text-[10px] font-medium tracking-[0.2em] text-zinc-600 hover:text-black uppercase transition-colors"
+              className="uppercase transition-colors duration-200 hover:opacity-80"
+              style={{
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontWeight: 700,
+                color: "lab(7.78201 -0.0000149012 0)",
+                fontSize: "12px",
+                lineHeight: "16px"
+              }}
               onClick={() => router.push("/login")}
             >
               Sign In
             </button>
             <button
-              className="relative text-zinc-600 hover:text-black transition-colors"
+              className="relative text-black hover:opacity-80 transition-opacity"
               onClick={() => setIsCartOpen(true)}
             >
-              <ShoppingBag className="size-4.5" />
+              <ShoppingBag className="size-[20px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
               {cartItemCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 bg-[#bef264] text-black text-[9px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center animate-pulse">
                   {cartItemCount}
@@ -964,7 +975,7 @@ export default function StorefrontPage() {
       {/* Hero Section */}
       <section 
         id="hero-section"
-        className="relative overflow-hidden min-h-[90vh] flex flex-col justify-between bg-white pt-6 pb-12 px-4 sm:px-12 border-b border-zinc-200/50"
+        className="relative overflow-hidden min-h-[90vh] flex flex-col justify-between bg-white pt-24 pb-12 px-4 sm:px-12 border-b border-zinc-200/50"
       >
         {/* Soft yellow-lime radial gradient behind layout */}
         <div className="absolute inset-x-0 top-0 h-[65%] bg-[radial-gradient(ellipse_at_top,rgba(197,255,46,0.22)_0%,transparent_70%)] pointer-events-none -z-10" />
