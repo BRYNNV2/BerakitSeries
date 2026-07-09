@@ -56,39 +56,39 @@ interface Product {
 const DEFAULT_PRODUCTS: Product[] = [
   {
     id: "prod-1",
-    name: "Madu Hutan Asli Berakit",
-    description: "Madu murni yang diambil langsung dari hutan di sekitar Desa Berakit. Kualitas terjamin tanpa bahan pengawet.",
-    price: 85000,
+    name: "Batik Tulis Biota Laut",
+    description: "Batik tulis eksklusif dengan motif terumbu karang dan gonggong khas pesisir Berakit. Dibuat menggunakan pewarna alam premium.",
+    price: 450000,
     stock: 24,
-    image_url: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500&auto=format&fit=crop&q=60",
-    category: "Kuliner",
+    image_url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&auto=format&fit=crop&q=60",
+    category: "Batik Tulis",
   },
   {
     id: "prod-2",
-    name: "Keripik Gonggong Pedas Manis",
-    description: "Keripik khas Kepulauan Riau yang terbuat dari siput gonggong segar dengan bumbu pedas manis karamel.",
-    price: 35000,
+    name: "Batik Cap Mangrove Berakit",
+    description: "Batik cap motif daun mangrove dengan desain geometris modern, sangat cocok untuk pakaian formal dan semi-formal.",
+    price: 195000,
     stock: 80,
-    image_url: "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=500&auto=format&fit=crop&q=60",
-    category: "Kuliner",
+    image_url: "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=500&auto=format&fit=crop&q=60",
+    category: "Batik Cap",
   },
   {
     id: "prod-3",
-    name: "Kerajinan Miniatur Kapal Kayu",
-    description: "Miniatur kapal tradisional Melayu yang dirakit dengan tangan oleh pengrajin lokal Desa Berakit menggunakan kayu keras pilihan.",
-    price: 250000,
+    name: "Batik Kombinasi Semelur",
+    description: "Perpaduan elegan teknik cap dan canting tulis dengan corak ombak samudra biru tua yang menawan.",
+    price: 295000,
     stock: 5,
-    image_url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=60",
-    category: "Kerajinan",
+    image_url: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=500&auto=format&fit=crop&q=60",
+    category: "Batik Kombinasi",
   },
   {
     id: "prod-4",
-    name: "Ikan Asin Tenggiri Kering",
-    description: "Ikan tenggiri segar tangkapan nelayan Berakit yang diasinkan secara tradisional dan dikeringkan di bawah sinar matahari.",
-    price: 65000,
+    name: "Selendang Sutra Batik Berakit",
+    description: "Selendang sutra premium bermotif batik tulis pesisir yang halus, memberikan sentuhan mewah pada penampilan Anda.",
+    price: 150000,
     stock: 12,
-    image_url: "https://images.unsplash.com/photo-1534604973900-c43ab4c2e0ab?w=500&auto=format&fit=crop&q=60",
-    category: "Hasil Laut",
+    image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=60",
+    category: "Aksesoris",
   },
 ];
 
@@ -106,7 +106,7 @@ export function ProductsCrud() {
   const [formDescription, setFormDescription] = React.useState("");
   const [formPrice, setFormPrice] = React.useState(0);
   const [formStock, setFormStock] = React.useState(0);
-  const [formCategory, setFormCategory] = React.useState("Kuliner");
+  const [formCategory, setFormCategory] = React.useState("Batik Tulis");
   const [formImageUrl, setFormImageUrl] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -190,7 +190,7 @@ export function ProductsCrud() {
     setFormDescription("");
     setFormPrice(0);
     setFormStock(0);
-    setFormCategory("Kuliner");
+    setFormCategory("Batik Tulis");
     setFormImageUrl("");
     setIsFormOpen(true);
   };
@@ -202,7 +202,7 @@ export function ProductsCrud() {
     setFormDescription(product.description || "");
     setFormPrice(product.price);
     setFormStock(product.stock);
-    setFormCategory(product.category || "Kuliner");
+    setFormCategory(product.category || "Batik Tulis");
     setFormImageUrl(product.image_url || "");
     setIsFormOpen(true);
   };
@@ -341,7 +341,7 @@ export function ProductsCrud() {
     });
   }, [products, searchQuery, categoryFilter]);
 
-  const categories = ["Kuliner", "Kerajinan", "Hasil Laut", "Jasa Wisata"];
+  const categories = ["Batik Tulis", "Batik Cap", "Batik Kombinasi", "Aksesoris"];
 
   return (
     <div className="space-y-4">

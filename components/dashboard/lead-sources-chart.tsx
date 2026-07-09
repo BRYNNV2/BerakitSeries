@@ -13,10 +13,10 @@ interface Product {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  "Kuliner": "#6e3ff3",
-  "Kerajinan": "#e255f2",
-  "Hasil Laut": "#35b9e9",
-  "Jasa Wisata": "#375dfb",
+  "Batik Tulis": "#6e3ff3",
+  "Batik Cap": "#e255f2",
+  "Batik Kombinasi": "#35b9e9",
+  "Aksesoris": "#375dfb",
 };
 
 export function LeadSourcesChart() {
@@ -50,18 +50,18 @@ export function LeadSourcesChart() {
 
     // Process categories
     const counts: Record<string, number> = {
-      "Kuliner": 0,
-      "Kerajinan": 0,
-      "Hasil Laut": 0,
-      "Jasa Wisata": 0,
+      "Batik Tulis": 0,
+      "Batik Cap": 0,
+      "Batik Kombinasi": 0,
+      "Aksesoris": 0,
     };
 
     productsList.forEach((p) => {
-      const cat = p.category || "Kuliner";
+      const cat = p.category || "Batik Tulis";
       if (counts[cat] !== undefined) {
         counts[cat]++;
       } else {
-        counts["Kuliner"]++;
+        counts["Batik Tulis"]++;
       }
     });
 

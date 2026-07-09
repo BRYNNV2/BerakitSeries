@@ -148,7 +148,7 @@ export function WelcomeSection() {
   const handleDownloadTemplate = (type: "products" | "transactions") => {
     const csvContent =
       type === "products"
-        ? '"name","description","price","stock","category","image_url"\n"Madu Hutan Asli Berakit","Madu murni lebah liar",85000,24,"Kuliner","https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500"\n"Keripik Gonggong Cilik","Camilan siput khas Bintan",35000,80,"Kuliner","https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=500"'
+        ? '"name","description","price","stock","category","image_url"\n"Batik Tulis Biota Laut","Batik tulis eksklusif motif terumbu karang",450000,12,"Batik Tulis","https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500"\n"Batik Cap Mangrove","Batik cap motif daun mangrove modern",195000,24,"Batik Cap","https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=500"'
         : '"customer_name","customer_phone","address","total_amount","status","payment_method"\n"Budi Nelayan","081270012345","RT 02 RW 01, Desa Berakit Bintan",120000,"Selesai","Transfer Bank"\n"Siti Rahma","087799887766","Jl. Pantai Indah, Dusun 3 Berakit",35000,"Pending","COD"';
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -283,7 +283,7 @@ export function WelcomeSection() {
               description: descIdx !== -1 ? row[descIdx] : "",
               price,
               stock,
-              category: catIdx !== -1 && row[catIdx] ? row[catIdx] : "Kuliner",
+              category: catIdx !== -1 && row[catIdx] ? row[catIdx] : "Batik Tulis",
               image_url: imgIdx !== -1 && row[imgIdx] ? row[imgIdx] : "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500",
             };
           });

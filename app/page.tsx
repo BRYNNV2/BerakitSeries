@@ -187,7 +187,7 @@ export default function StorefrontPage() {
   const horizontalContainerRef = React.useRef<HTMLDivElement>(null);
 
   const [progress, setProgress] = React.useState(0);
-  const [processedHoneySrc, setProcessedHoneySrc] = React.useState("/hero-center.png");
+  const [processedBatikSrc, setProcessedBatikSrc] = React.useState("/batik-center.png");
   const marqueeRef = React.useRef<HTMLDivElement>(null);
   const tweenRef = React.useRef<gsap.core.Tween | null>(null);
   const [isHovered, setIsHovered] = React.useState(false);
@@ -196,12 +196,12 @@ export default function StorefrontPage() {
 
   // BUMDes config (loaded from settings / fallbacks)
   const [bumdesInfo, setBumdesInfo] = React.useState({
-    name: "BUMDes Berakit Maju",
+    name: "BERAKIT SERIES",
     phone: "081234567890",
     address: "Desa Berakit, RT 02 / RW 01, Kecamatan Teluk Sebong, Bintan",
     bankName: "Bank Riau Kepri Syariah",
     bankAccount: "102-09-08765",
-    bankHolder: "BUMDES BERAKIT SEJAHTERA",
+    bankHolder: "BERAKIT SERIES HQ",
     shippingRate: 15000,
   });
 
@@ -233,39 +233,39 @@ export default function StorefrontPage() {
         dbProducts = [
           {
             id: "prod-1",
-            name: "Madu Hutan Asli Berakit",
-            description: "Madu murni yang diambil langsung dari hutan di sekitar Desa Berakit. Kualitas terjamin tanpa bahan pengawet.",
-            price: 85000,
+            name: "Batik Tulis Biota Laut",
+            description: "Batik tulis eksklusif dengan motif terumbu karang dan gonggong khas pesisir Berakit. Dibuat menggunakan pewarna alam premium.",
+            price: 450000,
             stock: 24,
-            image_url: "https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=500&auto=format&fit=crop&q=80",
-            category: "Kuliner",
+            image_url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&auto=format&fit=crop&q=80",
+            category: "Batik Tulis",
           },
           {
             id: "prod-2",
-            name: "Keripik Gonggong Pedas Manis",
-            description: "Keripik khas Kepulauan Riau yang terbuat dari siput gonggong segar dengan bumbu pedas manis karamel.",
-            price: 35000,
+            name: "Batik Cap Mangrove Berakit",
+            description: "Batik cap motif daun mangrove dengan desain geometris modern, sangat cocok untuk pakaian formal dan semi-formal.",
+            price: 195000,
             stock: 80,
-            image_url: "https://images.unsplash.com/photo-1566838803981-aa2f7b09d001?w=500&auto=format&fit=crop&q=80",
-            category: "Kuliner",
+            image_url: "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=500&auto=format&fit=crop&q=80",
+            category: "Batik Cap",
           },
           {
             id: "prod-3",
-            name: "Kerajinan Miniatur Kapal Kayu",
-            description: "Miniatur kapal tradisional Melayu yang dirakit dengan tangan oleh pengrajin lokal Desa Berakit menggunakan kayu keras pilihan.",
-            price: 250000,
+            name: "Batik Kombinasi Semelur",
+            description: "Perpaduan elegan teknik cap dan canting tulis dengan corak ombak samudra biru tua yang menawan.",
+            price: 295000,
             stock: 5,
-            image_url: "https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?w=500&auto=format&fit=crop&q=80",
-            category: "Kerajinan",
+            image_url: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=500&auto=format&fit=crop&q=80",
+            category: "Batik Kombinasi",
           },
           {
             id: "prod-4",
-            name: "Ikan Asin Tenggiri Kering",
-            description: "Ikan tenggiri segar tangkapan nelayan Berakit yang diasinkan secara tradisional dan dikeringkan di bawah sinar matahari.",
-            price: 65000,
+            name: "Selendang Sutra Batik Berakit",
+            description: "Selendang sutra premium bermotif batik tulis pesisir yang halus, memberikan sentuhan mewah pada penampilan Anda.",
+            price: 150000,
             stock: 12,
-            image_url: "https://images.unsplash.com/photo-1511112513418-4f81014e7a63?w=500&auto=format&fit=crop&q=80",
-            category: "Hasil Laut",
+            image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=80",
+            category: "Aksesoris",
           },
         ];
       }
@@ -297,12 +297,12 @@ export default function StorefrontPage() {
 
   React.useEffect(() => {
     const img = new Image();
-    img.src = "/hero-center.png";
+    img.src = "/batik-center.png";
     img.crossOrigin = "anonymous";
     img.onload = () => {
       try {
         const transparentDataUrl = removeBackground(img);
-        setProcessedHoneySrc(transparentDataUrl);
+        setProcessedBatikSrc(transparentDataUrl);
       } catch (e) {
         console.error("Failed to remove image background", e);
       }
@@ -830,7 +830,7 @@ export default function StorefrontPage() {
       .map((item) => `- ${item.product.name} (x${item.quantity}) : Rp ${(item.product.price * item.quantity).toLocaleString("id-ID")}`)
       .join("\n");
 
-    const message = `Halo BUMDes Berakit Maju,\nSaya ingin mengonfirmasi pesanan baru dari website:\n\n*Rincian Pembeli:*\n- Nama: ${customerName}\n- HP: ${customerPhone}\n- Alamat: ${customerAddress}\n\n*Pesanan:*\n${itemsSummary}\n- Ongkos Kirim: Rp ${(paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate).toLocaleString("id-ID")}\n- Total Belanja: *Rp ${(totalCartPrice + (paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate)).toLocaleString("id-ID")}*\n- Metode Bayar: *${paymentMethod}*\n\nMohon untuk segera diproses ya. Terima kasih!`;
+    const message = `Halo BERAKIT SERIES,\nSaya ingin mengonfirmasi pesanan baru dari website:\n\n*Rincian Pembeli:*\n- Nama: ${customerName}\n- HP: ${customerPhone}\n- Alamat: ${customerAddress}\n\n*Pesanan:*\n${itemsSummary}\n- Ongkos Kirim: Rp ${(paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate).toLocaleString("id-ID")}\n- Total Belanja: *Rp ${(totalCartPrice + (paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate)).toLocaleString("id-ID")}*\n- Metode Bayar: *${paymentMethod}*\n\nMohon untuk segera diproses ya. Terima kasih!`;
     
     const url = `https://api.whatsapp.com/send?phone=${sellerPhone}&text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
@@ -870,7 +870,7 @@ export default function StorefrontPage() {
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4z" />
             </svg>
             <span className="font-bold text-xl tracking-widest text-white uppercase">
-              BUMDes Berakit
+              BERAKIT SERIES
             </span>
           </div>
 
@@ -895,7 +895,7 @@ export default function StorefrontPage() {
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4z" />
             </svg>
             <span className="font-bold text-sm tracking-[0.2em] text-black uppercase">
-              BUMDes Berakit.
+              BERAKIT SERIES.
             </span>
           </div>
 
@@ -998,9 +998,9 @@ export default function StorefrontPage() {
             {/* Ambient product glow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] bg-[#bef264]/20 rounded-full blur-[90px] opacity-75 pointer-events-none" />
             <img 
-              src={processedHoneySrc} 
-              alt="BUMDes Honey Centerpiece" 
-              className="hero-centerpiece h-[280px] sm:h-[380px] md:h-[450px] object-contain relative z-10 select-none pointer-events-none"
+              src={processedBatikSrc} 
+              alt="BERAKIT SERIES Centerpiece" 
+              className="w-full h-full object-contain pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)] group-hover:scale-102 transition-transform duration-500 relative z-20"
             />
           </div>
         </div>
@@ -1015,7 +1015,7 @@ export default function StorefrontPage() {
               <div className="size-8 rounded-full border border-white bg-zinc-400 flex items-center justify-center text-[9px] font-bold text-zinc-700 uppercase tracking-wider">KR</div>
             </div>
             <p className="text-[11px] text-zinc-600 leading-relaxed font-semibold">
-              Stay ahead of the curve with sustainably sourced local goods. Our premium forest honey and crafts support coastal women in Desa Berakit.
+              Stay ahead of the curve with sustainably crafted Batik. Our premium collections support local weavers and artisans in Desa Berakit.
             </p>
           </div>
 
@@ -1230,8 +1230,8 @@ export default function StorefrontPage() {
             <div className="collection-card-animate w-full lg:w-[872.5px] h-[500px] lg:h-[850px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
               {/* Image */}
               <img 
-                src="https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=1000&auto=format&fit=crop&q=80" 
-                alt="Forest Honey Collection" 
+                src="https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=1000&auto=format&fit=crop&q=80" 
+                alt="Batik Tulis Collection" 
                 className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
               />
               {/* Bottom gradient overlay */}
@@ -1241,10 +1241,10 @@ export default function StorefrontPage() {
               <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                 <div className="space-y-1.5 text-left">
                   <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
-                    124 Items
+                    Exclusive Canting
                   </span>
                   <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">
-                    Forest Honey
+                    Batik Tulis
                   </h3>
                 </div>
                 {/* Arrow Button */}
@@ -1258,8 +1258,8 @@ export default function StorefrontPage() {
             <div className="collection-card-animate w-full lg:w-[420.25px] h-[500px] lg:h-[850px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
               {/* Image */}
               <img 
-                src="https://images.unsplash.com/photo-1599819811279-d5ad9cccf838?w=800&auto=format&fit=crop&q=80" 
-                alt="Local Crafts Collection" 
+                src="https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=800&auto=format&fit=crop&q=80" 
+                alt="Batik Cap Collection" 
                 className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
               />
               {/* Bottom gradient overlay */}
@@ -1269,10 +1269,10 @@ export default function StorefrontPage() {
               <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                 <div className="space-y-1.5 text-left">
                   <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
-                    86 Items
+                    Modern Stamps
                   </span>
                   <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">
-                    Local Crafts
+                    Batik Cap
                   </h3>
                 </div>
                 {/* Arrow Button */}
@@ -1288,8 +1288,8 @@ export default function StorefrontPage() {
               <div className="collection-card-animate w-full lg:w-[420.25px] h-[240px] lg:h-[409px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
                 {/* Image */}
                 <img 
-                  src="https://images.unsplash.com/photo-1511112513418-4f81014e7a63?w=800&auto=format&fit=crop&q=80" 
-                  alt="Marine Products Collection" 
+                  src="https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=800&auto=format&fit=crop&q=80" 
+                  alt="Batik Kombinasi Collection" 
                   className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
                 />
                 {/* Bottom gradient overlay */}
@@ -1299,10 +1299,10 @@ export default function StorefrontPage() {
                 <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                   <div className="space-y-1.5 text-left">
                     <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
-                      215 Items
+                      Hybrid Fusion
                     </span>
                     <h3 className="text-2xl font-black tracking-tight text-white uppercase leading-none">
-                      Marine Products
+                      Batik Kombinasi
                     </h3>
                   </div>
                   {/* Arrow Button */}
@@ -1316,8 +1316,8 @@ export default function StorefrontPage() {
               <div className="collection-card-animate w-full lg:w-[420.25px] h-[240px] lg:h-[409px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
                 {/* Image */}
                 <img 
-                  src="https://images.unsplash.com/photo-1500627869374-13ad993b111f?w=800&auto=format&fit=crop&q=80" 
-                  alt="Mangrove Ecotourism" 
+                  src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=80" 
+                  alt="Aksesoris Batik" 
                   className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
                 />
                 {/* Bottom gradient overlay */}
@@ -1327,10 +1327,10 @@ export default function StorefrontPage() {
                 <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                   <div className="space-y-1.5 text-left">
                     <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
-                      92 Items
+                      Batik Accs
                     </span>
                     <h3 className="text-2xl font-black tracking-tight text-white uppercase leading-none">
-                      Eco Ecotourism
+                      Aksesoris Batik
                     </h3>
                   </div>
                   {/* Arrow Button */}
@@ -1611,31 +1611,31 @@ export default function StorefrontPage() {
               {[
                 {
                   id: "SYS.ID.REV-1",
-                  quote: "Madu Hutan Asli Desa Berakit benar-benar kualitas premium. Rasa manisnya alami dan sangat berkhasiat bagi kesehatan. Sangat direkomendasikan!",
+                  quote: "Batik Tulis dari Berakit Series ini luar biasa indah! Motif terumbu karangnya sangat detail, bahannya adem dan nyaman dipakai seharian.",
                   user: "@NeonDrifter",
                   avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
                 },
                 {
                   id: "SYS.ID.REV-2",
-                  quote: "Miniatur Kapal Kayu buatan pengrajin Berakit ini sangat detail dan kokoh. Menjadi hiasan ruang tamu yang elegan dan bernilai seni tinggi.",
+                  quote: "Batik Cap Mangrove modern sangat pas untuk ke kantor. Kombinasi coraknya dinamis dan warnanya awet tidak luntur.",
                   user: "@Holo_Hype",
                   avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
                 },
                 {
                   id: "SYS.ID.REV-3",
-                  quote: "Hasil laut keringnya sangat segar dan bersih. Proses checkout cepat lewat WhatsApp pengelola, barang dikirim hari itu juga. Sangat puas!",
+                  quote: "Selendang batik sutranya sangat mewah! Cocok untuk kado premium, pengiriman cepat dan adminnya sangat ramah.",
                   user: "@SynthWave_99",
                   avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80"
                 },
                 {
                   id: "SYS.ID.REV-4",
-                  quote: "Madu Trigona Berakit rasanya khas asam manis segar. Layanan COD desa sangat membantu transaksi aman langsung bayar saat kurir datang.",
+                  quote: "Suka sekali dengan konsep pewarnaan alami di Batik Kombinasinya. Pembelian lewat COD sangat praktis dan aman.",
                   user: "@Grid_Runner",
                   avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80"
                 },
                 {
                   id: "SYS.ID.REV-5",
-                  quote: "Kerajinan kerang hiasnya cantik sekali. Salut untuk BUMDes Berakit yang berhasil memajukan produk usaha ibu-ibu nelayan secara profesional!",
+                  quote: "Koleksi Berakit Series keren sekali. Salut untuk BUMDes Berakit yang melestarikan warisan batik pesisir secara modern!",
                   user: "@Pixel_Punk",
                   avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80"
                 }
@@ -1765,7 +1765,7 @@ export default function StorefrontPage() {
               },
               {
                 q: "Do you ship physical items or just digital assets?",
-                a: "We ship authentic physical items including local premium forest honey, hand-carved miniature wooden boats, and fresh processed marine catches direct from Berakit Village."
+                a: "We ship authentic physical items including premium hand-drawn Batik Tulis, Batik Cap, Batik Kombinasi, and accessories direct from Berakit Village."
               },
               {
                 q: "Is my payment data secure during checkout?",
@@ -1777,7 +1777,7 @@ export default function StorefrontPage() {
               },
               {
                 q: "Where are these local products harvested and manufactured?",
-                a: "All honey is sustainably harvested from the wild mangrove forests of Bintan, and all crafts are created by the local women's enterprise groups and fishermen of Berakit Village."
+                a: "All batik is sustainably crafted by the local artisan groups and women weavers of Berakit Village, using high-quality fabrics and traditional motifs."
               },
               {
                 q: "Can I cancel or modify my order after checking out?",
@@ -2226,13 +2226,13 @@ export default function StorefrontPage() {
                   lineHeight: "1.0"
                 }}
               >
-                NOVASHION<span className="text-[#bef264]">.</span>
+                BERAKIT SERIES<span className="text-[#bef264]">.</span>
               </span>
               <p 
                 className="text-zinc-400 text-sm max-w-sm leading-relaxed font-normal"
                 style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
               >
-                We are a digital fashion house that mixes technology and creativity to take fashion beyond only-physical experiences.
+                Premium traditional coastal Batik fashion. Discover the ultimate convergence of cultural heritage and contemporary style.
               </p>
               
               {/* Social icons */}
@@ -2325,7 +2325,7 @@ export default function StorefrontPage() {
               className="text-xs text-zinc-600 font-semibold"
               style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
             >
-              © 2026 Novashion. All rights reserved.
+              © 2026 BERAKIT SERIES. All rights reserved.
             </span>
             <span 
               className="text-xs text-zinc-600 font-semibold"
@@ -2342,7 +2342,7 @@ export default function StorefrontPage() {
             className="text-[18vw] font-black text-white/[0.012] tracking-widest leading-none uppercase" 
             style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
           >
-            NOVASHION
+            BERAKIT SERIES
           </span>
         </div>
       </footer>
