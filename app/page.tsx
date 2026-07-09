@@ -42,6 +42,7 @@ import {
   Twitter,
   Instagram,
   Youtube,
+  Menu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -193,6 +194,7 @@ export default function StorefrontPage() {
   const [isHovered, setIsHovered] = React.useState(false);
   const [hoveredNavLink, setHoveredNavLink] = React.useState<number | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = React.useState<number | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   // BUMDes config (loaded from settings / fallbacks)
   const [bumdesInfo, setBumdesInfo] = React.useState({
@@ -897,7 +899,6 @@ export default function StorefrontPage() {
       </div>
 
       {/* Top Banner Navigation */}
-      {/* Top Banner Navigation */}
       <header ref={headerRef} className="fixed top-0 inset-x-0 z-40 w-full border-b border-zinc-200/50 bg-white/90 backdrop-blur-md">
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
           <span 
@@ -906,8 +907,8 @@ export default function StorefrontPage() {
               fontFamily: "'Inter', system-ui, sans-serif",
               fontWeight: 900,
               color: "lab(2.75381 0 0)",
-              fontSize: "30px",
-              lineHeight: "36px"
+              fontSize: "clamp(20px, 4vw, 30px)",
+              lineHeight: "clamp(24px, 4vw, 36px)"
             }}
             onClick={() => router.push("/")}
           >
@@ -940,12 +941,12 @@ export default function StorefrontPage() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 sm:gap-6">
             <button className="text-black hover:opacity-80 transition-opacity">
               <Search className="size-[20px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
             </button>
             <button 
-              className="uppercase transition-colors duration-200 hover:opacity-80"
+              className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"
               style={{
                 fontFamily: "'Inter', system-ui, sans-serif",
                 fontWeight: 700,
@@ -968,9 +969,85 @@ export default function StorefrontPage() {
                 </span>
               )}
             </button>
+            {/* Mobile Hamburger Icon */}
+            <button 
+              className="md:hidden text-black hover:opacity-80 transition-opacity"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              <Menu className="size-[22px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Mobile Navigation Drawer */}
+      <div 
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden ${
+          isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <div 
+          className={`absolute top-0 right-0 w-[80%] max-w-[300px] h-full bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col justify-between ${
+            isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <span 
+                className="uppercase tracking-normal font-black text-xl"
+                style={{
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  color: "lab(2.75381 0 0)",
+                }}
+              >
+                BERAKIT SERIES.
+              </span>
+              <button 
+                className="text-black hover:opacity-80 transition-opacity"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <X className="size-6" strokeWidth={2.5} style={{ color: "lab(2.75381 0 0)" }} />
+              </button>
+            </div>
+            
+            <nav className="flex flex-col gap-6">
+              {[
+                { label: "Collections", href: "#" },
+                { label: "New Arrivals", href: "#katalog" },
+                { label: "Why Us", href: "#profil" },
+                { label: "News Letter", href: "#hubungi-kami" },
+              ].map((link, idx) => (
+                <a
+                  key={idx}
+                  href={link.href}
+                  className="text-lg font-bold transition-colors hover:text-black py-2 border-b border-zinc-100"
+                  style={{
+                    fontFamily: "'Inter', system-ui, sans-serif",
+                    color: "lab(2.75381 0 0)",
+                  }}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </a>
+              ))}
+            </nav>
+          </div>
+          
+          <div className="pt-6 border-t border-zinc-100 flex flex-col gap-4">
+            <button 
+              className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                router.push("/login");
+              }}
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Hero Section */}
       <section 
@@ -1209,8 +1286,8 @@ export default function StorefrontPage() {
                     fontFamily: "'Oswald', Impact, sans-serif",
                     fontWeight: 400,
                     color: "lab(2.75381 0 0)",
-                    fontSize: "88px",
-                    lineHeight: "88px"
+                    fontSize: "clamp(48px, 8vw, 88px)",
+                    lineHeight: "clamp(48px, 8vw, 88px)"
                   }}
                 >
                   Explore Our
@@ -1221,8 +1298,8 @@ export default function StorefrontPage() {
                     fontFamily: "'Oswald', Impact, sans-serif",
                     fontWeight: 900,
                     color: "lab(48.496 0 0)",
-                    fontSize: "88px",
-                    lineHeight: "88px"
+                    fontSize: "clamp(48px, 8vw, 88px)",
+                    lineHeight: "clamp(48px, 8vw, 88px)"
                   }}
                 >
                   Collections
@@ -1392,8 +1469,8 @@ export default function StorefrontPage() {
                   fontFamily: "'Oswald', Impact, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 900,
-                  fontSize: "88px",
-                  lineHeight: "79px"
+                  fontSize: "clamp(48px, 8vw, 88px)",
+                  lineHeight: "clamp(44px, 8vw, 79px)"
                 }}
               >
                 <span className="text-black">The Berakit</span><br />
@@ -1569,7 +1646,7 @@ export default function StorefrontPage() {
       {/* Section 4: Voices From The Grid (Horizontal scroll) */}
       <section 
         id="voices-section" 
-        className="relative w-full h-screen bg-white flex items-center overflow-hidden border-b border-zinc-200/50"
+        className="relative w-full lg:h-screen bg-white flex items-center overflow-x-hidden overflow-y-visible lg:overflow-hidden py-16 lg:py-0 border-b border-zinc-200/50"
       >
         {/* Background Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-40" />
@@ -1587,8 +1664,8 @@ export default function StorefrontPage() {
                   fontFamily: "'Oswald', Impact, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 900,
-                  fontSize: "88px",
-                  lineHeight: "79px"
+                  fontSize: "clamp(48px, 8vw, 88px)",
+                  lineHeight: "clamp(44px, 8vw, 79px)"
                 }}
               >
                 <span>VOICES FROM</span>
@@ -1756,8 +1833,8 @@ export default function StorefrontPage() {
                 fontFamily: "'Oswald', Impact, sans-serif",
                 fontStyle: "normal",
                 fontWeight: 900,
-                fontSize: "88px",
-                lineHeight: "79px"
+                fontSize: "clamp(48px, 8vw, 88px)",
+                lineHeight: "clamp(44px, 8vw, 79px)"
               }}
             >
               <span>FREQUENTLY</span>
@@ -1830,8 +1907,8 @@ export default function StorefrontPage() {
                         style={{ 
                           fontFamily: "'Inter', system-ui, sans-serif",
                           fontWeight: 500,
-                          fontSize: "24px",
-                          lineHeight: "33px",
+                          fontSize: "clamp(18px, 4vw, 24px)",
+                          lineHeight: "clamp(24px, 4vw, 33px)",
                           fontStyle: "normal"
                         }}
                       >
@@ -1891,8 +1968,8 @@ export default function StorefrontPage() {
                   fontFamily: "'Oswald', Impact, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 900,
-                  fontSize: "88px",
-                  lineHeight: "79px"
+                  fontSize: "clamp(48px, 8vw, 88px)",
+                  lineHeight: "clamp(44px, 8vw, 79px)"
                 }}
               >
                 PHYSICAL<br />
@@ -2142,8 +2219,8 @@ export default function StorefrontPage() {
                   fontFamily: "'Oswald', Impact, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 900,
-                  fontSize: "88px",
-                  lineHeight: "79px"
+                  fontSize: "clamp(40px, 8vw, 88px)",
+                  lineHeight: "clamp(36px, 8vw, 79px)"
                 }}
               >
                 <span>GET 15% OFF</span>
