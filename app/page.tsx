@@ -5,6 +5,9 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 
+import Lenis from "lenis";
+import "lenis/dist/lenis.css";
+
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -118,6 +121,35 @@ function removeBackground(img: HTMLImageElement): string {
 
 export default function StorefrontPage() {
   const router = useRouter();
+
+  // Initialize Lenis Smooth Scroll and sync with GSAP ScrollTrigger
+  React.useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: "vertical",
+      gestureOrientation: "vertical",
+      smoothWheel: true,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.5,
+    });
+
+    lenis.on("scroll", () => {
+      ScrollTrigger.update();
+    });
+
+    const updateRaf = (time: number) => {
+      lenis.raf(time * 1000);
+    };
+
+    gsap.ticker.add(updateRaf);
+    gsap.ticker.lagSmoothing(0);
+
+    return () => {
+      gsap.ticker.remove(updateRaf);
+      lenis.destroy();
+    };
+  }, []);
 
   // Storefront state
   const [products, setProducts] = React.useState<Product[]>([]);
@@ -418,7 +450,7 @@ export default function StorefrontPage() {
         scrollTrigger: {
           trigger: "#collections-section",
           start: "top 82%",
-          toggleActions: "play none none none"
+          toggleActions: "play reverse play reverse"
         }
       }
     );
@@ -428,7 +460,7 @@ export default function StorefrontPage() {
       scrollTrigger: {
         trigger: "#difference-section",
         start: "top 80%",
-        toggleActions: "play none none none"
+        toggleActions: "play reverse play reverse"
       }
     });
 
@@ -508,7 +540,7 @@ export default function StorefrontPage() {
           scrollTrigger: {
             trigger: "#voices-section",
             start: "top 80%",
-            toggleActions: "play none none none"
+            toggleActions: "play reverse play reverse"
           }
         }
       );
@@ -531,7 +563,7 @@ export default function StorefrontPage() {
           scrollTrigger: {
             trigger: "#voices-section",
             start: "top 80%",
-            toggleActions: "play none none none"
+            toggleActions: "play reverse play reverse"
           }
         }
       );
@@ -550,7 +582,7 @@ export default function StorefrontPage() {
           scrollTrigger: {
             trigger: "#faq-section",
             start: "top 80%",
-            toggleActions: "play none none none"
+            toggleActions: "play reverse play reverse"
           }
         }
       );
