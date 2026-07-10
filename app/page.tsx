@@ -2449,84 +2449,109 @@ export default function StorefrontPage() {
       {isCartOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
           {/* Backdrop overlay */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" onClick={() => setIsCartOpen(false)} />
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-2xl animate-in fade-in duration-300" onClick={() => setIsCartOpen(false)} />
 
           {/* Drawer body */}
-          <div className="relative w-full max-w-[420px] bg-zinc-900 border-l border-white/10 h-full flex flex-col shadow-2xl z-10 animate-in slide-in-from-right duration-350">
+          <div className="relative w-full max-w-[420px] bg-white text-zinc-900 h-full flex flex-col shadow-[-8px_0_40px_rgba(0,0,0,0.1)] z-10 animate-in slide-in-from-right duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]">
             {/* Header */}
-            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-black/40">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="size-4 text-[#aa8ef9]" />
-                <h3 className="font-bold text-sm text-white">Keranjang Belanja</h3>
-                <Badge className="bg-[#6e3ff3] text-white text-[10px]">{cartItemCount}</Badge>
+            <div className="px-7 py-6 border-b border-zinc-100 flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <span className="font-black text-xl tracking-tight uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>
+                  YOUR CART
+                </span>
+                <span className="text-[#bef264] font-black text-xl">
+                  ({cartItemCount})
+                </span>
               </div>
-              <Button variant="ghost" size="icon" className="size-8 text-zinc-400 hover:text-white" onClick={() => setIsCartOpen(false)}>
-                <X className="size-4" />
-              </Button>
+              <button 
+                className="text-zinc-400 hover:text-zinc-900 transition-colors p-1"
+                onClick={() => setIsCartOpen(false)}
+              >
+                <X className="size-5 stroke-[2.5]" />
+              </button>
             </div>
 
             {/* Cart Items list */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+            <div className="flex-1 overflow-y-auto">
               {cart.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full gap-3 text-zinc-400 py-10">
-                  <ShoppingCart className="size-10 text-zinc-600" />
-                  <p className="text-xs">Keranjang Anda masih kosong.</p>
+                <div className="h-full flex flex-col items-center justify-center gap-4 text-center px-8">
+                  <div className="size-16 rounded-full bg-zinc-100 flex items-center justify-center">
+                    <ShoppingBag className="size-7 text-zinc-400 stroke-[1.5]" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="font-bold text-zinc-800 text-base">Cart is Empty</p>
+                    <p className="text-sm text-zinc-400 max-w-[260px] leading-relaxed">Looks like you haven&apos;t added anything yet.</p>
+                  </div>
                 </div>
               ) : (
-                cart.map((item) => (
-                  <div key={item.product.id} className="flex gap-3 bg-white/2 border border-white/5 p-3 rounded-xl relative group">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.product.image_url}
-                      alt={item.product.name}
-                      className="size-14 object-cover rounded-lg bg-black"
-                    />
-                    <div className="flex-1 min-w-0 pr-6 flex flex-col justify-between">
-                      <span className="font-bold text-xs text-white block truncate">{item.product.name}</span>
-                      <span className="text-[10px] text-zinc-400 block">Rp {item.product.price.toLocaleString("id-ID")}</span>
-                      
-                      {/* Qty controls */}
-                      <div className="flex items-center gap-2 mt-1">
-                        <button
-                          className="size-5 rounded border border-white/10 hover:bg-white/5 flex items-center justify-center text-xs text-zinc-300"
-                          onClick={() => updateCartQty(item.product.id, -1)}
-                        >
-                          <Minus className="size-2.5" />
-                        </button>
-                        <span className="text-xs font-bold text-white w-4 text-center">{item.quantity}</span>
-                        <button
-                          className="size-5 rounded border border-white/10 hover:bg-white/5 flex items-center justify-center text-xs text-zinc-300"
-                          onClick={() => updateCartQty(item.product.id, 1)}
-                        >
-                          <Plus className="size-2.5" />
-                        </button>
+                <div className="p-5 space-y-3">
+                  {cart.map((item) => (
+                    <div key={item.product.id} className="bg-zinc-50 border border-zinc-100 rounded-2xl p-4 flex gap-4 items-center">
+                      <img
+                        src={item.product.image_url}
+                        alt={item.product.name}
+                        className="size-16 rounded-xl bg-white border border-zinc-100 p-2 shrink-0 object-contain"
+                      />
+                      <div className="flex-1 min-w-0 text-left">
+                        <span className="font-bold text-sm text-zinc-900 block truncate uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>
+                          {item.product.name}
+                        </span>
+                        <span className="text-[10px] font-extrabold text-[#bef264] uppercase tracking-widest block mt-0.5">
+                          {item.product.category}
+                        </span>
+                        
+                        {/* Qty controls */}
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="font-bold text-xs text-zinc-700">Rp {item.product.price.toLocaleString("id-ID")}</span>
+                          <div className="flex items-center gap-2 bg-white border border-zinc-200 rounded-full px-2 py-1">
+                            <button
+                              className="text-zinc-400 hover:text-zinc-900 p-0.5 transition-colors"
+                              onClick={() => updateCartQty(item.product.id, -1)}
+                            >
+                              <Minus className="size-3" />
+                            </button>
+                            <span className="text-xs font-bold text-zinc-950 w-4 text-center">{item.quantity}</span>
+                            <button
+                              className="text-zinc-400 hover:text-zinc-900 p-0.5 transition-colors"
+                              onClick={() => updateCartQty(item.product.id, 1)}
+                            >
+                              <Plus className="size-3" />
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
-                    <button
-                      className="absolute top-3 right-3 text-zinc-500 hover:text-rose-500"
-                      onClick={() => removeFromCart(item.product.id)}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  </div>
-                ))
+                      <button
+                        className="text-zinc-300 hover:text-red-500 p-2 shrink-0 transition-colors"
+                        onClick={() => removeFromCart(item.product.id)}
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
             {/* Cart Footer */}
             {cart.length > 0 && (
-              <div className="p-4 border-t border-white/5 bg-black/40 space-y-4">
-                <div className="flex justify-between items-end">
-                  <span className="text-xs text-zinc-400">Total Harga Barang</span>
-                  <span className="font-extrabold text-base text-white">Rp {totalCartPrice.toLocaleString("id-ID")}</span>
+              <div className="px-7 py-6 border-t border-zinc-100 bg-white space-y-4">
+                <div className="flex justify-between items-center text-sm font-bold text-zinc-400">
+                  <span className="uppercase tracking-wider text-xs">Subtotal:</span>
+                  <span className="text-lg text-zinc-900 font-black">Rp {totalCartPrice.toLocaleString("id-ID")}</span>
                 </div>
-                <div className="grid grid-cols-1 gap-2">
+                <p className="text-[10px] text-zinc-400 text-left leading-relaxed">
+                  Pajak dan biaya pengiriman akan dihitung pada saat checkout. Semua produk dikirim langsung dari Desa Berakit.
+                </p>
+                <div className="pt-1 flex gap-3">
                   <Button
-                    className="w-full bg-[#6e3ff3] hover:bg-[#5b2fe0] text-white text-xs font-semibold py-4.5 rounded-lg flex items-center justify-center gap-1.5"
-                    onClick={() => setIsCheckoutOpen(true)}
+                    className="flex-1 h-12 bg-[#bef264] hover:bg-[#b2e658] text-black font-extrabold uppercase text-xs tracking-widest rounded-full flex items-center justify-center gap-2 shadow-md shadow-[#bef264]/10 hover:shadow-[#bef264]/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-none"
+                    onClick={() => {
+                      setIsCartOpen(false);
+                      setIsCheckoutOpen(true);
+                    }}
                   >
-                    Lanjutkan ke Pembayaran <ChevronRight className="size-4" />
+                    Checkout Sekarang <ArrowRight className="size-4" />
                   </Button>
                 </div>
               </div>
