@@ -110,8 +110,8 @@ function removeBackground(img: HTMLImageElement): string {
     const g = data[rIdx + 1];
     const b = data[rIdx + 2];
     
-    // If pixel is near-white (threshold > 230), make it transparent and propagate
-    if (r > 230 && g > 230 && b > 230) {
+    // If pixel is near-white (threshold > 190), make it transparent and propagate
+    if (r > 190 && g > 190 && b > 190) {
       data[rIdx + 3] = 0; // Set alpha to 0
       
       // Propagate 4-way
@@ -119,6 +119,33 @@ function removeBackground(img: HTMLImageElement): string {
       if (x < width - 1) pushPixel(x + 1, y);
       if (y > 0) pushPixel(x, y - 1);
       if (y < height - 1) pushPixel(x, y + 1);
+    }
+  }
+
+  // Second pass: Feather the edges of the background to remove white halos
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = y * width + x;
+      const rIdx = idx * 4;
+      
+      if (data[rIdx + 3] > 0) {
+        const hasTransparentNeighbor =
+          data[((y - 1) * width + x) * 4 + 3] === 0 ||
+          data[((y + 1) * width + x) * 4 + 3] === 0 ||
+          data[(y * width + (x - 1)) * 4 + 3] === 0 ||
+          data[(y * width + (x + 1)) * 4 + 3] === 0;
+
+        if (hasTransparentNeighbor) {
+          const r = data[rIdx];
+          const g = data[rIdx + 1];
+          const b = data[rIdx + 2];
+          const brightness = (r + g + b) / 3;
+          if (brightness > 150) {
+            const alphaFactor = (255 - brightness) / (255 - 150);
+            data[rIdx + 3] = Math.max(0, Math.min(255, Math.round(data[rIdx + 3] * alphaFactor)));
+          }
+        }
+      }
     }
   }
   

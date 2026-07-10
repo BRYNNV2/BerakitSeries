@@ -60,13 +60,40 @@ function removeBackground(img: HTMLImageElement): string {
     const g = data[rIdx + 1];
     const b = data[rIdx + 2];
     
-    if (r > 230 && g > 230 && b > 230) {
+    if (r > 190 && g > 190 && b > 190) {
       data[rIdx + 3] = 0;
       
       if (x > 0) pushPixel(x - 1, y);
       if (x < width - 1) pushPixel(x + 1, y);
       if (y > 0) pushPixel(x, y - 1);
       if (y < height - 1) pushPixel(x, y + 1);
+    }
+  }
+
+  // Second pass: Feather the edges of the background to remove white halos
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = y * width + x;
+      const rIdx = idx * 4;
+      
+      if (data[rIdx + 3] > 0) {
+        const hasTransparentNeighbor =
+          data[((y - 1) * width + x) * 4 + 3] === 0 ||
+          data[((y + 1) * width + x) * 4 + 3] === 0 ||
+          data[(y * width + (x - 1)) * 4 + 3] === 0 ||
+          data[(y * width + (x + 1)) * 4 + 3] === 0;
+
+        if (hasTransparentNeighbor) {
+          const r = data[rIdx];
+          const g = data[rIdx + 1];
+          const b = data[rIdx + 2];
+          const brightness = (r + g + b) / 3;
+          if (brightness > 150) {
+            const alphaFactor = (255 - brightness) / (255 - 150);
+            data[rIdx + 3] = Math.max(0, Math.min(255, Math.round(data[rIdx + 3] * alphaFactor)));
+          }
+        }
+      }
     }
   }
   
@@ -169,7 +196,7 @@ export default function LoginPage() {
           <img
             src={processedImageSrc}
             alt="Model Fashion"
-            className={`h-[110%] w-auto object-cover object-center max-w-none transform translate-y-12 drop-shadow-[0_35px_35px_rgba(0,0,0,0.6)] transition-opacity duration-700 ease-out ${
+            className={`h-[58%] w-auto object-contain transform translate-y-4 drop-shadow-[0_35px_35px_rgba(0,0,0,0.6)] transition-opacity duration-700 ease-out ${
               imageReady ? "opacity-100" : "opacity-0"
             }`}
           />
