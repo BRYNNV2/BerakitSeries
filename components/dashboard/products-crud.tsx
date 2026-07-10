@@ -80,7 +80,7 @@ export function ProductsCrud() {
   // Check Supabase status & fetch data
   const loadData = React.useCallback(async () => {
     setLoading(true);
-    const hasCredentials = !!supabase && localStorage.getItem("berakit_use_local_db") !== "true";
+    const hasCredentials = !!supabase;
 
     if (hasCredentials) {
       try {
@@ -95,9 +95,11 @@ export function ProductsCrud() {
 
         setProducts(data || []);
         setIsUsingSupabase(true);
-      } catch (err) {
-        console.warn("Supabase fetch failed, falling back to LocalStorage:", err);
-        loadLocalStorage();
+      } catch (err: any) {
+        console.error("Supabase fetch failed:", err);
+        toast.error(`Gagal mengambil data dari Supabase: ${err.message || err.details || err}`);
+        setProducts([]);
+        setIsUsingSupabase(false);
       }
     } else {
       loadLocalStorage();
@@ -311,32 +313,17 @@ export function ProductsCrud() {
   return (
     <div className="space-y-4">
       {/* Supabase Status Banner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg border bg-muted/30 text-xs sm:text-sm gap-2">
+      <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 text-xs sm:text-sm">
         <div className="flex items-center gap-2">
           <div className={`size-2 rounded-full ${isUsingSupabase ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
           <span className="font-medium">
             Status Database: {isUsingSupabase ? "Tersambung ke Supabase Cloud" : "Penyimpanan Lokal Sementara (Demo)"}
           </span>
         </div>
-        {!!supabase && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-[10px] px-2 py-0 border-zinc-200 dark:border-zinc-800 hover:bg-muted"
-            onClick={() => {
-              const currentVal = localStorage.getItem("berakit_use_local_db") === "true";
-              if (!currentVal) {
-                localStorage.setItem("berakit_use_local_db", "true");
-                toast.info("Beralih ke mode Penyimpanan Lokal.");
-              } else {
-                localStorage.removeItem("berakit_use_local_db");
-                toast.info("Beralih ke mode Supabase Cloud.");
-              }
-              loadData();
-            }}
-          >
-            {isUsingSupabase ? "Gunakan Mode Lokal" : "Gunakan Supabase"}
-          </Button>
+        {!isUsingSupabase && (
+          <span className="text-[10px] text-muted-foreground hidden sm:inline">
+            Isi file <code>.env.local</code> untuk menyambungkan ke Supabase.
+          </span>
         )}
       </div>
 

@@ -155,7 +155,7 @@ export default function ProductListingPage() {
       setLoading(true);
     }
 
-    const hasCredentials = !!supabase && localStorage.getItem("berakit_use_local_db") !== "true";
+    const hasCredentials = !!supabase;
 
     if (hasCredentials) {
       try {
