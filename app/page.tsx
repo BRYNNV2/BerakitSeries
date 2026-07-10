@@ -918,8 +918,8 @@ export default function StorefrontPage() {
           {/* Center Navigation Pill (visible on desktop) */}
           <nav className="hidden md:flex items-center gap-8">
             {[
-              { label: "Collections", href: "#" },
-              { label: "New Arrivals", href: "#katalog" },
+              { label: "Collections", href: "/product" },
+              { label: "New Arrivals", href: "/product" },
               { label: "Why Us", href: "#profil" },
               { label: "News Letter", href: "#hubungi-kami" },
             ].map((link, idx) => (
@@ -1014,8 +1014,8 @@ export default function StorefrontPage() {
             
             <nav className="flex flex-col gap-6">
               {[
-                { label: "Collections", href: "#" },
-                { label: "New Arrivals", href: "#katalog" },
+                { label: "Collections", href: "/product" },
+                { label: "New Arrivals", href: "/product" },
                 { label: "Why Us", href: "#profil" },
                 { label: "News Letter", href: "#hubungi-kami" },
               ].map((link, idx) => (
@@ -1119,7 +1119,7 @@ export default function StorefrontPage() {
 
           {/* Center Buttons (CTA) */}
           <div ref={heroCtaRef} className="hero-cta-container flex items-center gap-3 relative z-30 lg:-translate-y-2">
-            <a href="#katalog">
+            <a href="/product">
               <Button className="bg-black hover:bg-zinc-800 text-white font-bold px-8 py-5 rounded-full text-xs uppercase tracking-wider transition-all shadow-md">
                 Shop Now
               </Button>
@@ -1308,7 +1308,7 @@ export default function StorefrontPage() {
             </div>
             <div>
               <a 
-                href="#katalog" 
+                href="/product" 
                 className="inline-flex items-center gap-2 uppercase select-none transition-all duration-300 tracking-[0.2em] hover:tracking-[0.3em] hover:text-[rgb(212,249,49)] text-black"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
@@ -2368,12 +2368,12 @@ export default function StorefrontPage() {
                 SHOP
               </h5>
               <ul className="space-y-2 text-sm text-zinc-500 font-medium">
-                <li><a href="#collections-section" className="hover:text-[#bef264] transition-colors">New Arrivals</a></li>
-                <li><a href="#collections-section" className="hover:text-[#bef264] transition-colors">Best Sellers</a></li>
-                <li><a href="#collections-section" className="hover:text-[#bef264] transition-colors">Men</a></li>
-                <li><a href="#collections-section" className="hover:text-[#bef264] transition-colors">Women</a></li>
-                <li><a href="#collections-section" className="hover:text-[#bef264] transition-colors">Accessories</a></li>
-                <li><a href="#collections-section" className="hover:text-[#bef264] transition-colors">Sale</a></li>
+                <li><a href="/product" className="hover:text-[#bef264] transition-colors">New Arrivals</a></li>
+                <li><a href="/product" className="hover:text-[#bef264] transition-colors">Best Sellers</a></li>
+                <li><a href="/product?category=Batik%20Tulis" className="hover:text-[#bef264] transition-colors">Batik Tulis</a></li>
+                <li><a href="/product?category=Batik%20Cap" className="hover:text-[#bef264] transition-colors">Batik Cap</a></li>
+                <li><a href="/product?category=Batik%20Kombinasi" className="hover:text-[#bef264] transition-colors">Batik Kombinasi</a></li>
+                <li><a href="/product?category=Aksesoris" className="hover:text-[#bef264] transition-colors">Accessories</a></li>
               </ul>
             </div>
 

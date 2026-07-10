@@ -341,7 +341,14 @@ export function ProductsCrud() {
     });
   }, [products, searchQuery, categoryFilter]);
 
-  const categories = ["Batik Tulis", "Batik Cap", "Batik Kombinasi", "Aksesoris"];
+  const categories = [
+    "Batik Mangrove",
+    "Batik Cap",
+    "Batik Eco Print",
+    "Batik Tulis",
+    "Batik Kombinasi",
+    "Aksesoris"
+  ];
 
   return (
     <div className="space-y-4">
