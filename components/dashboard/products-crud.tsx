@@ -36,6 +36,8 @@ import {
   Loader2,
   PackageX,
   AlertTriangle,
+  UploadCloud,
+  X,
 } from "lucide-react";
 import { supabase, withTimeout } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
@@ -52,6 +54,15 @@ interface Product {
   category: string;
   created_at?: string;
 }
+
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
 
 const DEFAULT_PRODUCTS: Product[] = [];
 
@@ -72,6 +83,11 @@ export function ProductsCrud() {
   const [formCategory, setFormCategory] = React.useState("Batik Tulis");
   const [formImageUrl, setFormImageUrl] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
+
+  // File Upload States
+  const [uploadFile, setUploadFile] = React.useState<File | null>(null);
+  const [imagePreview, setImagePreview] = React.useState<string>("");
+  const [showUrlField, setShowUrlField] = React.useState(false);
 
   // Delete Dialog States
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
@@ -138,6 +154,9 @@ export function ProductsCrud() {
     setFormStock(0);
     setFormCategory("Batik Tulis");
     setFormImageUrl("");
+    setUploadFile(null);
+    setImagePreview("");
+    setShowUrlField(false);
     setIsFormOpen(true);
   };
 
@@ -150,7 +169,36 @@ export function ProductsCrud() {
     setFormStock(product.stock);
     setFormCategory(product.category || "Batik Tulis");
     setFormImageUrl(product.image_url || "");
+    setUploadFile(null);
+    setImagePreview(product.image_url || "");
+    setShowUrlField(false);
     setIsFormOpen(true);
+  };
+
+  // Handle file change
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Ukuran file terlalu besar. Maksimal 2MB.");
+        return;
+      }
+      setUploadFile(file);
+      try {
+        const previewUrl = await fileToBase64(file);
+        setImagePreview(previewUrl);
+        setFormImageUrl(""); // Clear URL input if file is uploaded
+      } catch (err) {
+        console.error("Preview generation failed", err);
+      }
+    }
+  };
+
+  // Handle remove image
+  const handleRemoveImage = () => {
+    setUploadFile(null);
+    setImagePreview("");
+    setFormImageUrl("");
   };
 
   // Handle Form Submit
@@ -159,13 +207,53 @@ export function ProductsCrud() {
     if (!formName.trim()) return;
 
     setSubmitting(true);
+    let finalImageUrl = formImageUrl || imagePreview || "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=60";
+
+    // Handle file upload
+    if (uploadFile) {
+      try {
+        // Try uploading to Supabase Storage in "products" bucket
+        if (isUsingSupabase && supabase) {
+          const fileExt = uploadFile.name.split(".").pop();
+          const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+          const filePath = `${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("products")
+            .upload(filePath, uploadFile, {
+              cacheControl: "3600",
+              upsert: false,
+            });
+
+          if (uploadError) {
+            console.warn("Supabase storage upload failed, falling back to base64 encoding:", uploadError);
+            const base64Url = await fileToBase64(uploadFile);
+            finalImageUrl = base64Url;
+          } else {
+            const { data: { publicUrl } } = supabase.storage
+              .from("products")
+              .getPublicUrl(filePath);
+            finalImageUrl = publicUrl;
+          }
+        } else {
+          // If offline or local storage, use base64
+          const base64Url = await fileToBase64(uploadFile);
+          finalImageUrl = base64Url;
+        }
+      } catch (err) {
+        console.warn("Storage upload exception, falling back to base64:", err);
+        const base64Url = await fileToBase64(uploadFile);
+        finalImageUrl = base64Url;
+      }
+    }
+
     const newProductData = {
       name: formName,
       description: formDescription,
       price: Number(formPrice),
       stock: Number(formStock),
       category: formCategory,
-      image_url: formImageUrl || "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=500&auto=format&fit=crop&q=60",
+      image_url: finalImageUrl,
     };
 
     if (isUsingSupabase) {
@@ -526,17 +614,89 @@ export function ProductsCrud() {
                 />
               </div>
 
-              {/* Image URL */}
-              <div className="grid gap-1.5">
-                <label className="text-xs font-semibold">URL Foto Produk</label>
-                <Input
-                  placeholder="https://..."
-                  value={formImageUrl}
-                  onChange={(e) => setFormImageUrl(e.target.value)}
+              {/* Foto Produk */}
+              <div className="grid gap-2">
+                <label className="text-xs font-semibold">Foto Produk</label>
+                
+                {imagePreview ? (
+                  <div className="relative group rounded-lg overflow-hidden border bg-muted aspect-video flex items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={() => document.getElementById("file-upload")?.click()}
+                      >
+                        Ganti Foto
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="h-8 text-xs"
+                        onClick={handleRemoveImage}
+                      >
+                        Hapus
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => document.getElementById("file-upload")?.click()}
+                    className="border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 rounded-lg p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-muted/30"
+                  >
+                    <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                      <UploadCloud className="size-5" />
+                    </div>
+                    <div className="text-center">
+                      <span className="text-xs font-medium text-primary hover:underline">Klik untuk mengunggah</span>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">PNG, JPG, JPEG (Maks. 2MB)</p>
+                    </div>
+                  </div>
+                )}
+                
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
                 />
-                <span className="text-[10px] text-muted-foreground">
-                  Tempel URL foto produk (Unsplash, Imgur, dll.) untuk visualisasi produk.
-                </span>
+
+                {/* Optional URL Toggle */}
+                <div className="flex items-center justify-between mt-1">
+                  <button
+                    type="button"
+                    className="text-[10px] font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={() => setShowUrlField(!showUrlField)}
+                  >
+                    {showUrlField ? "Sembunyikan Input URL" : "Atau masukkan URL gambar secara manual"}
+                  </button>
+                </div>
+
+                {showUrlField && (
+                  <div className="grid gap-1.5 mt-2 transition-all">
+                    <Input
+                      placeholder="https://example.com/gambar.jpg"
+                      value={formImageUrl}
+                      onChange={(e) => {
+                        setFormImageUrl(e.target.value);
+                        setImagePreview(e.target.value);
+                        setUploadFile(null); // Clear file upload if URL is edited
+                      }}
+                    />
+                    <span className="text-[10px] text-muted-foreground">
+                      Tempel URL gambar langsung (Unsplash, Imgur, dll.)
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Description */}
