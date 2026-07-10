@@ -14,8 +14,65 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  ArrowLeft,
 } from "lucide-react";
 import { supabase, withTimeout } from "@/lib/supabase";
+
+function removeBackground(img: HTMLImageElement): string {
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth;
+  canvas.height = img.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return img.src;
+  ctx.drawImage(img, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const width = canvas.width;
+  const height = canvas.height;
+  
+  const visited = new Uint8Array(width * height);
+  const queue: number[] = [];
+  
+  const pushPixel = (x: number, y: number) => {
+    const idx = y * width + x;
+    if (visited[idx]) return;
+    visited[idx] = 1;
+    queue.push(idx);
+  };
+  
+  for (let x = 0; x < width; x++) {
+    pushPixel(x, 0);
+    pushPixel(x, height - 1);
+  }
+  for (let y = 0; y < height; y++) {
+    pushPixel(0, y);
+    pushPixel(width - 1, y);
+  }
+  
+  let head = 0;
+  while (head < queue.length) {
+    const idx = queue[head++];
+    const x = idx % width;
+    const y = Math.floor(idx / width);
+    
+    const rIdx = idx * 4;
+    const r = data[rIdx];
+    const g = data[rIdx + 1];
+    const b = data[rIdx + 2];
+    
+    if (r > 230 && g > 230 && b > 230) {
+      data[rIdx + 3] = 0;
+      
+      if (x > 0) pushPixel(x - 1, y);
+      if (x < width - 1) pushPixel(x + 1, y);
+      if (y > 0) pushPixel(x, y - 1);
+      if (y < height - 1) pushPixel(x, y + 1);
+    }
+  }
+  
+  ctx.putImageData(imageData, 0, 0);
+  return canvas.toDataURL('image/png');
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,9 +83,24 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [rememberMe, setRememberMe] = React.useState(false);
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(false);
+  const [processedImageSrc, setProcessedImageSrc] = React.useState("/batik-center.png");
 
   React.useEffect(() => {
     setIsUsingSupabase(!!supabase);
+  }, []);
+
+  React.useEffect(() => {
+    const img = new Image();
+    img.src = "/batik-center.png";
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const transparentDataUrl = removeBackground(img);
+        setProcessedImageSrc(transparentDataUrl);
+      } catch (e) {
+        console.error("Failed to remove image background on login page", e);
+      }
+    };
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -46,7 +118,6 @@ export default function LoginPage() {
         );
 
         if (authError) {
-          // If Supabase auth fails, check if the input matches fallback credentials
           if (email === "admin@berakit.desa.id" && password === "adminberakit") {
             localStorage.setItem("berakit_admin_auth", "true");
             router.push("/admin");
@@ -54,7 +125,7 @@ export default function LoginPage() {
             setError(authError.message);
           }
         } else {
-          localStorage.removeItem("berakit_admin_auth"); // Clear fallback just in case
+          localStorage.removeItem("berakit_admin_auth");
           router.push("/admin");
         }
       } catch (err) {
@@ -67,7 +138,6 @@ export default function LoginPage() {
         }
       }
     } else {
-      // Local storage fallback authentication
       await new Promise((r) => setTimeout(r, 600));
       if (email === "admin@berakit.desa.id" && password === "adminberakit") {
         localStorage.setItem("berakit_admin_auth", "true");
@@ -80,245 +150,210 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex bg-white">
-      {/* ─── LEFT SIDE: Form ─── */}
-      <div className="flex flex-1 flex-col justify-center px-8 sm:px-12 lg:px-20 py-10 relative z-10">
-        {/* Subtle purple wave at bottom-left */}
-        <div className="absolute bottom-0 left-0 w-[55%] h-[120px] pointer-events-none overflow-hidden">
-          <svg
-            viewBox="0 0 600 120"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-full h-full"
-            preserveAspectRatio="none"
-          >
-            <path
-              d="M0 120 C100 40, 250 80, 400 30 C500 0, 550 50, 600 20 L600 120 Z"
-              fill="url(#wave-grad)"
-              opacity="0.10"
-            />
-            <defs>
-              <linearGradient id="wave-grad" x1="0" y1="0" x2="600" y2="0">
-                <stop offset="0%" stopColor="#6e3ff3" />
-                <stop offset="100%" stopColor="#aa8ef9" />
-              </linearGradient>
-            </defs>
-          </svg>
+    <div className="min-h-screen w-full flex bg-white font-sans overflow-hidden">
+      {/* ─── LEFT PANEL: DARK MODEL COVER ─── */}
+      <div className="hidden lg:flex w-1/2 bg-black relative flex-col justify-between p-12 overflow-hidden select-none">
+        {/* Huge Faint Watermark Text */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+          <div className="flex flex-col text-[7vw] font-black leading-[0.8] text-zinc-900/60 uppercase tracking-tighter opacity-40">
+            <span>DIGITAL</span>
+            <span className="text-zinc-800/80">REALITY</span>
+          </div>
         </div>
 
-        <div className="w-full max-w-[400px] mx-auto space-y-8">
-          {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-gradient-to-b from-[#6e3ff3] to-[#aa8ef9] text-white shadow-md shadow-[#6e3ff3]/20">
-              <Store className="size-5" />
-            </div>
-            <span className="font-bold text-lg tracking-tight text-[#6e3ff3]">
-              Berakit Hub
-            </span>
-          </div>
+        {/* Model Photo overlay */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <img
+            src={processedImageSrc}
+            alt="Model Fashion"
+            className="h-[110%] w-auto object-cover object-center max-w-none transform translate-y-12 drop-shadow-[0_35px_35px_rgba(0,0,0,0.6)]"
+          />
+        </div>
 
-          {/* Heading */}
-          <div className="space-y-1.5">
-            <h1 className="text-[28px] sm:text-[32px] font-bold tracking-tight text-gray-900 leading-tight">
-              Selamat Datang
+        {/* Small header/logo at top of left side */}
+        <div className="relative z-10">
+          <span className="text-zinc-500 font-mono tracking-widest text-[10px] uppercase">
+            Berakit Series // Vol. 01
+          </span>
+        </div>
+
+        {/* Brand name bottom-left */}
+        <div className="relative z-10">
+          <span 
+            className="text-[#bef264] font-black text-2xl tracking-tighter uppercase" 
+            style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+          >
+            BERAKIT.
+          </span>
+        </div>
+      </div>
+
+      {/* ─── RIGHT PANEL: LIGHT LOGIN FORM ─── */}
+      <div className="w-full lg:w-1/2 min-h-screen flex flex-col justify-between p-8 sm:p-12 relative bg-[radial-gradient(circle_at_top_right,rgba(190,242,100,0.1),transparent_40%)]">
+        
+        {/* Top bar with back to store button */}
+        <div className="flex justify-start items-center">
+          <button
+            onClick={() => router.push("/")}
+            className="flex items-center gap-2.5 text-zinc-500 hover:text-zinc-900 transition-colors group text-xs font-semibold"
+          >
+            <div className="size-8 rounded-full border border-zinc-200 flex items-center justify-center group-hover:border-zinc-400 group-hover:bg-zinc-50 transition-all">
+              <ArrowLeft className="size-4" />
+            </div>
+            Back to Store
+          </button>
+        </div>
+
+        {/* Center content */}
+        <div className="max-w-[420px] w-full mx-auto my-auto py-12 space-y-8">
+          
+          {/* Headline */}
+          <div className="space-y-3">
+            <h1 className="text-[38px] sm:text-[44px] font-black tracking-tight leading-none uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>
+              ACCESS<br />
+              <span className="text-[#bef264]">YOUR ACCOUNT</span>
             </h1>
-            <p className="text-sm text-gray-500">
-              Masuk dengan akun admin Anda untuk mengelola sistem
+            <p className="text-xs text-zinc-400 leading-relaxed font-medium">
+              Welcome back to the future of fashion. Enter your credentials to continue.
             </p>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-red-200 bg-red-50 text-[13px] text-red-600">
+            <div className="flex items-start gap-2.5 p-4 rounded-2xl border border-red-100 bg-red-50 text-[13px] text-red-600 animate-in fade-in duration-200">
               <AlertCircle className="size-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
+            
             {/* Email Input */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-[18px] text-gray-400" />
+                <User className="absolute left-4.5 top-1/2 -translate-y-1/2 size-4.5 text-zinc-400" />
                 <input
                   required
                   type="email"
-                  placeholder="Email Admin"
+                  placeholder="Email Address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full h-12 pl-11 pr-4 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#6e3ff3] focus:ring-2 focus:ring-[#6e3ff3]/10 transition-all"
+                  className="w-full h-12 pl-12 pr-4 rounded-full border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 transition-all font-medium"
                 />
               </div>
             </div>
 
             {/* Password Input */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-[18px] text-gray-400" />
+                <Lock className="absolute left-4.5 top-1/2 -translate-y-1/2 size-4.5 text-zinc-400" />
                 <input
                   required
                   type={showPassword ? "text" : "password"}
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full h-12 pl-11 pr-12 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[#6e3ff3] focus:ring-2 focus:ring-[#6e3ff3]/10 transition-all"
+                  className="w-full h-12 pl-12 pr-12 rounded-full border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 transition-all font-medium"
                 />
                 <button
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-4.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 transition-colors"
                 >
                   {showPassword ? (
-                    <EyeOff className="size-[18px]" />
+                    <EyeOff className="size-4.5" />
                   ) : (
-                    <Eye className="size-[18px]" />
+                    <Eye className="size-4.5" />
                   )}
                 </button>
               </div>
             </div>
 
-            {/* Remember me & Forgot */}
-            <div className="flex items-center justify-between">
+            {/* Remember & Forgot */}
+            <div className="flex items-center justify-between px-1">
               <label className="flex items-center gap-2 cursor-pointer select-none">
                 <Checkbox
                   checked={rememberMe}
                   onCheckedChange={(v) => setRememberMe(v === true)}
-                  className="data-[state=checked]:bg-[#6e3ff3] data-[state=checked]:border-[#6e3ff3]"
+                  className="data-[state=checked]:bg-[#bef264] data-[state=checked]:border-[#bef264] border-zinc-300"
                 />
-                <span className="text-[13px] text-gray-600">Ingat saya</span>
+                <span className="text-[12px] text-zinc-500 font-semibold">Remember me</span>
               </label>
               <button
                 type="button"
-                className="text-[13px] text-[#6e3ff3] hover:text-[#5a2fd4] font-medium transition-colors"
+                className="text-[12px] text-zinc-400 hover:text-zinc-900 font-semibold transition-colors"
               >
-                Lupa Password?
+                Forgot Password?
               </button>
             </div>
 
-            {/* Buttons */}
-            <div className="flex items-center gap-3 pt-1">
-              <button
+            {/* Submit Button */}
+            <div className="pt-2">
+              <Button
                 type="submit"
                 disabled={loading}
-                className="h-12 px-8 rounded-xl bg-gradient-to-r from-[#6e3ff3] to-[#aa8ef9] text-white font-semibold text-sm shadow-lg shadow-[#6e3ff3]/25 hover:shadow-[#6e3ff3]/40 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+                className="w-full h-12 bg-black hover:bg-zinc-900 text-white font-extrabold uppercase text-xs tracking-widest rounded-full flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-none shadow-md shadow-black/5"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="size-4 animate-spin" />
-                    <span>Memproses...</span>
+                    <Loader2 className="size-4 animate-spin text-[#bef264]" />
+                    <span>Processing...</span>
                   </>
                 ) : (
                   "Login"
                 )}
-              </button>
+              </Button>
             </div>
           </form>
 
-          {/* Demo Info — only visible when Supabase is not configured */}
-          {!isUsingSupabase && (
-            <div className="rounded-xl border border-[#6e3ff3]/15 bg-[#6e3ff3]/[0.03] p-4 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-[#6e3ff3]">
-                <CheckCircle2 className="size-3.5" />
-                <span>Mode Demo — Akun Lokal</span>
+          {/* Social Sign-in Mock to perfectly match references */}
+          <div className="space-y-4">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-zinc-100"></div>
               </div>
-              <div className="bg-white/70 border border-[#6e3ff3]/10 p-3 rounded-lg font-mono text-[12px] text-gray-700 space-y-0.5">
+              <span className="relative px-3 bg-white text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Or</span>
+            </div>
+            
+            <button 
+              type="button"
+              className="w-full h-11 border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50/50 rounded-full flex items-center justify-center gap-2.5 text-xs font-bold text-zinc-700 transition-all"
+            >
+              <svg className="size-4" viewBox="0 0 24 24">
+                <path fill="#EA4335" d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.41 0-6.19-2.78-6.19-6.19 0-3.41 2.78-6.19 6.19-6.19 1.54 0 2.94.57 4.03 1.51l3.07-3.07C18.99 1.83 15.82 1 12.24 1 5.92 1 1 5.92 1 12.24s4.92 11.24 11.24 11.24c5.8 0 10.74-4.14 11.76-9.6H12.24z"/>
+              </svg>
+              Continue with Google
+            </button>
+            <p className="text-[11px] text-zinc-400 text-center font-medium">
+              Don&apos;t have an account? <span className="text-[#bef264] font-bold cursor-pointer hover:underline">Sign up</span>
+            </p>
+          </div>
+
+          {/* Fallback Creds */}
+          {!isUsingSupabase && (
+            <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-4 space-y-2 animate-in fade-in duration-200">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-700">
+                <CheckCircle2 className="size-3.5 text-[#bef264]" />
+                <span>Demo Account</span>
+              </div>
+              <div className="bg-white border border-zinc-100 p-3 rounded-xl font-mono text-[11px] text-zinc-600 space-y-0.5">
                 <div>
-                  Email:{" "}
-                  <span className="font-semibold text-gray-900">
-                    admin@berakit.desa.id
-                  </span>
+                  Email: <span className="font-bold text-zinc-900">admin@berakit.desa.id</span>
                 </div>
                 <div>
-                  Pass:{" "}
-                  <span className="font-semibold text-gray-900">
-                    adminberakit
-                  </span>
+                  Pass: <span className="font-bold text-zinc-900">adminberakit</span>
                 </div>
               </div>
             </div>
           )}
         </div>
-      </div>
 
-      {/* ─── RIGHT SIDE: Purple Decorative Panel ─── */}
-      <div className="hidden lg:flex w-[48%] xl:w-[45%] relative overflow-hidden">
-        {/* Main Purple Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#6e3ff3] via-[#7b4ff5] to-[#9b6dfa]" />
-
-        {/* Organic Curved Shape at the Left Edge */}
-        <svg
-          className="absolute left-0 top-0 h-full w-[120px]"
-          viewBox="0 0 120 900"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M120 0 C60 150, 100 350, 40 450 C-20 550, 80 700, 120 900 L0 900 L0 0 Z"
-            fill="white"
-          />
-        </svg>
-
-        {/* Decorative Glow Circles */}
-        <div className="absolute top-[15%] right-[15%] size-[200px] rounded-full bg-white/5 blur-[60px]" />
-        <div className="absolute bottom-[20%] left-[25%] size-[250px] rounded-full bg-[#aa8ef9]/20 blur-[80px]" />
-
-        {/* Floating Card Stack — Illustration Replacement */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-[320px] h-[220px]">
-            {/* Bottom card */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[280px] h-[180px] rounded-2xl bg-gradient-to-br from-[#f9c74f]/80 to-[#f9844a]/60 shadow-2xl transform rotate-[-6deg] translate-y-3" />
-            {/* Middle card */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[290px] h-[185px] rounded-2xl bg-gradient-to-br from-[#aa8ef9]/60 to-[#6e3ff3]/40 backdrop-blur-md shadow-2xl transform rotate-[-2deg] translate-y-1 border border-white/20" />
-            {/* Top card (Main dashboard preview) */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[300px] h-[190px] rounded-2xl bg-white/95 shadow-2xl backdrop-blur-sm border border-white/50 overflow-hidden transform rotate-[2deg] -translate-y-1">
-              {/* Mini dashboard skeleton */}
-              <div className="p-4 space-y-3">
-                {/* Top bar */}
-                <div className="flex items-center gap-2">
-                  <div className="size-5 rounded bg-gradient-to-br from-[#6e3ff3] to-[#aa8ef9]" />
-                  <div className="h-2.5 w-20 rounded-full bg-gray-200" />
-                  <div className="ml-auto h-2 w-12 rounded-full bg-gray-100" />
-                </div>
-                {/* Stats row */}
-                <div className="flex gap-2">
-                  <div className="flex-1 h-12 rounded-lg bg-[#6e3ff3]/5 p-2">
-                    <div className="h-1.5 w-8 rounded-full bg-[#6e3ff3]/20 mb-1.5" />
-                    <div className="h-3 w-14 rounded-full bg-[#6e3ff3]/30" />
-                  </div>
-                  <div className="flex-1 h-12 rounded-lg bg-[#aa8ef9]/5 p-2">
-                    <div className="h-1.5 w-8 rounded-full bg-[#aa8ef9]/20 mb-1.5" />
-                    <div className="h-3 w-14 rounded-full bg-[#aa8ef9]/30" />
-                  </div>
-                  <div className="flex-1 h-12 rounded-lg bg-emerald-500/5 p-2">
-                    <div className="h-1.5 w-8 rounded-full bg-emerald-500/20 mb-1.5" />
-                    <div className="h-3 w-14 rounded-full bg-emerald-500/30" />
-                  </div>
-                </div>
-                {/* Chart placeholder */}
-                <div className="h-[70px] rounded-lg bg-gray-50 flex items-end gap-1 px-3 pb-2 pt-3">
-                  <div className="flex-1 h-[20%] rounded-sm bg-[#6e3ff3]/15" />
-                  <div className="flex-1 h-[50%] rounded-sm bg-[#6e3ff3]/25" />
-                  <div className="flex-1 h-[35%] rounded-sm bg-[#6e3ff3]/20" />
-                  <div className="flex-1 h-[70%] rounded-sm bg-[#6e3ff3]/35" />
-                  <div className="flex-1 h-[55%] rounded-sm bg-[#6e3ff3]/30" />
-                  <div className="flex-1 h-[85%] rounded-sm bg-gradient-to-t from-[#6e3ff3]/50 to-[#aa8ef9]/30" />
-                  <div className="flex-1 h-[40%] rounded-sm bg-[#6e3ff3]/20" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Text overlay at bottom */}
-        <div className="absolute bottom-10 left-0 right-0 text-center px-8">
-          <p className="text-white/90 font-semibold text-lg">
-            Panel Admin BUMDes
-          </p>
-          <p className="text-white/50 text-sm mt-1">
-            Kelola penjualan dan produk Desa Berakit dengan mudah
+        {/* Footer info */}
+        <div className="text-center">
+          <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-widest">
+            Secured by Supabase
           </p>
         </div>
       </div>
