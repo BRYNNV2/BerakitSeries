@@ -816,7 +816,7 @@ export default function ProductListingPage() {
                 }}
               >
                 {/* Product Card Image Container (white bg, rounded, badge) */}
-                <div className="relative aspect-[4/5] bg-white border border-zinc-200/80 rounded-[28px] overflow-hidden p-6 flex items-center justify-center shadow-xs transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:shadow-lg group-hover:shadow-zinc-200/50 group-hover:border-zinc-300">
+                <div className="relative aspect-[4/5] bg-zinc-100 border border-zinc-200/80 rounded-[28px] overflow-hidden flex items-center justify-center shadow-xs transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:shadow-lg group-hover:shadow-zinc-200/50 group-hover:border-zinc-300">
                   {/* Featured Badge */}
                   <div className="absolute top-5 left-5 z-10">
                     <Badge className="bg-[#bef264] hover:bg-[#bef264] text-black font-bold uppercase tracking-widest text-[9px] px-3 py-1 rounded-full border-none shadow-none">
@@ -829,7 +829,7 @@ export default function ProductListingPage() {
                     src={product.image_url}
                     alt={product.name}
                     loading="lazy"
-                    className="max-h-full max-w-full object-contain transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                    className="w-full h-full object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                   />
                   
                   {/* Smooth Quick View button pop-up (exactly matching reference image) */}
@@ -872,173 +872,7 @@ export default function ProductListingPage() {
 
       </main>
 
-      {/* Footer Section */}
-      <footer 
-        id="footer-section" 
-        className="w-full bg-[#050505] py-16 border-t border-zinc-900 relative z-10 overflow-hidden mt-20"
-      >
-        <style>{`
-          @keyframes marquee {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); }
-          }
-          .animate-marquee-loop {
-            display: flex;
-            width: max-content;
-            animation: marquee 25s linear infinite;
-          }
-        `}</style>
 
-        {/* Marquee Header */}
-        <div className="w-full bg-[#050505] border-y border-zinc-900/60 py-6 mb-16 overflow-hidden relative z-10">
-          <div className="animate-marquee-loop flex items-center gap-16">
-            {Array(10).fill(null).map((_, i) => (
-              <div key={i} className="flex items-center gap-16 shrink-0">
-                <div className="flex items-center gap-4 text-zinc-500 font-bold uppercase tracking-wider text-xl md:text-2xl" style={{ fontFamily: "'Oswald', Impact, sans-serif" }}>
-                  <span>GRAB YOUR OWN STYLE</span>
-                  <div className="size-7 rounded-full bg-[#bef264] flex items-center justify-center text-black">
-                    <ArrowUpRight className="size-4 stroke-[3]" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
-          {/* Top Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-16 text-left relative z-10">
-            {/* Column 1: Logo, Description & Socials */}
-            <div className="lg:col-span-2 space-y-6">
-              <span 
-                className="text-white uppercase tracking-tighter block"
-                style={{
-                  fontFamily: "'Oswald', Impact, sans-serif",
-                  fontWeight: 900,
-                  fontSize: "36px",
-                  lineHeight: "1.0"
-                }}
-              >
-                BERAKIT SERIES<span className="text-[#bef264]">.</span>
-              </span>
-              <p 
-                className="text-zinc-400 text-sm max-w-sm leading-relaxed font-normal"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-              >
-                Premium traditional coastal Batik fashion. Discover the ultimate convergence of cultural heritage and contemporary style.
-              </p>
-              
-              {/* Social icons */}
-              <div className="flex items-center gap-3">
-                <a 
-                  href="#" 
-                  className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
-                >
-                  <Facebook className="size-4" />
-                </a>
-                <a 
-                  href="#" 
-                  className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
-                >
-                  <Twitter className="size-4" />
-                </a>
-                <a 
-                  href="#" 
-                  className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
-                >
-                  <Instagram className="size-4" />
-                </a>
-                <a 
-                  href="#" 
-                  className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
-                >
-                  <Youtube className="size-4" />
-                </a>
-              </div>
-            </div>
-
-            {/* Column 2: SHOP */}
-            <div className="space-y-4">
-              <h5 className="text-xs font-bold text-zinc-300 uppercase tracking-widest" style={{ fontFamily: "Consolas, monospace" }}>
-                SHOP
-              </h5>
-              <ul className="space-y-2 text-sm text-zinc-500 font-medium">
-                <li><a href="/product" className="hover:text-[#bef264] transition-colors">New Arrivals</a></li>
-                <li><a href="/product" className="hover:text-[#bef264] transition-colors">Best Sellers</a></li>
-                <li><a href="/product" className="hover:text-[#bef264] transition-colors">Men</a></li>
-                <li><a href="/product" className="hover:text-[#bef264] transition-colors">Women</a></li>
-                <li><a href="/product" className="hover:text-[#bef264] transition-colors">Accessories</a></li>
-                <li><a href="/product" className="hover:text-[#bef264] transition-colors">Sale</a></li>
-              </ul>
-            </div>
-
-            {/* Column 3: COMPANY */}
-            <div className="space-y-4">
-              <h5 className="text-xs font-bold text-zinc-300 uppercase tracking-widest" style={{ fontFamily: "Consolas, monospace" }}>
-                COMPANY
-              </h5>
-              <ul className="space-y-2 text-sm text-zinc-500 font-medium">
-                <li><a href="/#difference-section" className="hover:text-[#bef264] transition-colors">About Us</a></li>
-                <li><a href="/#difference-section" className="hover:text-[#bef264] transition-colors">Careers</a></li>
-                <li><a href="/#difference-section" className="hover:text-[#bef264] transition-colors">Press</a></li>
-                <li><a href="/#difference-section" className="hover:text-[#bef264] transition-colors">Sustainability</a></li>
-              </ul>
-            </div>
-
-            {/* Column 4: SUPPORT */}
-            <div className="space-y-4">
-              <h5 className="text-xs font-bold text-zinc-300 uppercase tracking-widest" style={{ fontFamily: "Consolas, monospace" }}>
-                SUPPORT
-              </h5>
-              <ul className="space-y-2 text-sm text-zinc-500 font-medium">
-                <li><a href="mailto:mfyansah@student.umrah.ac.id" className="hover:text-[#bef264] transition-colors">Contact Us</a></li>
-                <li><a href="/#faq-section" className="hover:text-[#bef264] transition-colors">FAQs</a></li>
-                <li><a href="/#faq-section" className="hover:text-[#bef264] transition-colors">Shipping</a></li>
-                <li><a href="/#faq-section" className="hover:text-[#bef264] transition-colors">Returns</a></li>
-                <li><a href="/#faq-section" className="hover:text-[#bef264] transition-colors">Size Guide</a></li>
-              </ul>
-            </div>
-
-            {/* Column 5: LEGAL */}
-            <div className="space-y-4">
-              <h5 className="text-xs font-bold text-zinc-300 uppercase tracking-widest" style={{ fontFamily: "Consolas, monospace" }}>
-                LEGAL
-              </h5>
-              <ul className="space-y-2 text-sm text-zinc-500 font-medium">
-                <li><a href="#" className="hover:text-[#bef264] transition-colors">Terms & Conditions</a></li>
-                <li><a href="#" className="hover:text-[#bef264] transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-[#bef264] transition-colors">Cookie Policy</a></li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Bottom Copyright & Built by */}
-          <div className="pt-8 border-t border-zinc-900/60 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
-            <span 
-              className="text-xs text-zinc-600 font-semibold"
-              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-            >
-              © 2026 BERAKIT SERIES. All rights reserved.
-            </span>
-            <span 
-              className="text-xs text-zinc-600 font-semibold"
-              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-            >
-              Designed & Built by <span className="text-[#bef264] font-bold">ThisisAngelo</span>
-            </span>
-          </div>
-        </div>
-
-        {/* Faint Background Watermark */}
-        <div className="absolute inset-x-0 bottom-6 flex justify-center pointer-events-none select-none overflow-hidden z-0">
-          <span 
-            className="text-[18vw] font-black text-white/[0.012] tracking-widest leading-none uppercase" 
-            style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
-          >
-            BERAKIT SERIES
-          </span>
-        </div>
-      </footer>
 
       {/* 1. PRODUCT QUICK VIEW MODAL (DIALOG) */}
       <Dialog open={isQuickViewOpen} onOpenChange={(open) => {
