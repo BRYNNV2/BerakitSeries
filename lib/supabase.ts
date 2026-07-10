@@ -37,28 +37,60 @@ const safeFetch: typeof fetch = async (input, init) => {
   }
 };
 
-export const supabase = hasValidCredentials
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: true,
-        detectSessionInUrl: false,
-      },
-      global: {
-        fetch: safeFetch,
-      },
-    })
-  : (null as any);
+// Cache client instance to prevent multiple GoTrueClient warnings on Next.js HMR/Fast Refresh
+const getSupabaseClient = () => {
+  if (!hasValidCredentials) return null as any;
+  
+  if (typeof window !== "undefined") {
+    const globalObj = globalThis as any;
+    if (!globalObj.__supabaseClient) {
+      globalObj.__supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: true,
+          detectSessionInUrl: false,
+        },
+        global: {
+          fetch: safeFetch,
+        },
+      });
+    }
+    return globalObj.__supabaseClient;
+  }
+  
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+    global: {
+      fetch: safeFetch,
+    },
+  });
+};
 
-export const withTimeout = (promise: Promise<any>, timeoutMs: number = 1500): Promise<any> => {
+export const supabase = getSupabaseClient();
+
+let isSupabaseOffline = false;
+
+export const withTimeout = (promise: any, timeoutMs: number = 8000): Promise<any> => {
+  if (isSupabaseOffline) {
+    return Promise.reject(new Error("Request timeout"));
+  }
+
+  const realPromise = Promise.resolve(promise);
   // Prevent unhandled promise rejection warnings in the browser if the
   // promise rejects in the background after the timeout has already resolved.
-  promise.catch(() => {});
+  realPromise.catch(() => {});
 
   return Promise.race([
-    promise,
+    realPromise,
     new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Request timeout")), timeoutMs)
+      setTimeout(() => {
+        isSupabaseOffline = true;
+        reject(new Error("Request timeout"));
+      }, timeoutMs)
     ),
   ]);
 };

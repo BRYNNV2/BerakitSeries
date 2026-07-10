@@ -84,6 +84,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = React.useState(false);
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(false);
   const [processedImageSrc, setProcessedImageSrc] = React.useState("/batik-center.png");
+  const [imageReady, setImageReady] = React.useState(false);
 
   React.useEffect(() => {
     setIsUsingSupabase(!!supabase);
@@ -97,8 +98,10 @@ export default function LoginPage() {
       try {
         const transparentDataUrl = removeBackground(img);
         setProcessedImageSrc(transparentDataUrl);
+        setImageReady(true);
       } catch (e) {
         console.error("Failed to remove image background on login page", e);
+        setImageReady(true); // Fallback to show original if fails
       }
     };
   }, []);
@@ -154,10 +157,10 @@ export default function LoginPage() {
       {/* ─── LEFT PANEL: DARK MODEL COVER ─── */}
       <div className="hidden lg:flex w-1/2 bg-black relative flex-col justify-between p-12 overflow-hidden select-none">
         {/* Huge Faint Watermark Text */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-          <div className="flex flex-col text-[7vw] font-black leading-[0.8] text-zinc-900/60 uppercase tracking-tighter opacity-40">
-            <span>DIGITAL</span>
-            <span className="text-zinc-800/80">REALITY</span>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-0">
+          <div className="flex flex-col items-center text-[11vw] lg:text-[9.5vw] xl:text-[9vw] font-black leading-[0.8] uppercase tracking-tighter" style={{ fontFamily: "'Inter', sans-serif" }}>
+            <span className="text-[#161616]">DIGITAL</span>
+            <span className="text-[#55732d]">REALITY</span>
           </div>
         </div>
 
@@ -166,7 +169,9 @@ export default function LoginPage() {
           <img
             src={processedImageSrc}
             alt="Model Fashion"
-            className="h-[110%] w-auto object-cover object-center max-w-none transform translate-y-12 drop-shadow-[0_35px_35px_rgba(0,0,0,0.6)]"
+            className={`h-[110%] w-auto object-cover object-center max-w-none transform translate-y-12 drop-shadow-[0_35px_35px_rgba(0,0,0,0.6)] transition-opacity duration-700 ease-out ${
+              imageReady ? "opacity-100" : "opacity-0"
+            }`}
           />
         </div>
 

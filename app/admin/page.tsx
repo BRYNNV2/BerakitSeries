@@ -26,7 +26,7 @@ export default function DashboardPage() {
 
       if (supabase) {
         try {
-          const sessionRes = await withTimeout(supabase.auth.getSession());
+          const sessionRes = await withTimeout(supabase.auth.getSession(), 2000);
           const session = sessionRes?.data?.session;
           if (session) {
             setAuthenticated(true);

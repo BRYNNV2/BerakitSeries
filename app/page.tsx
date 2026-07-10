@@ -47,7 +47,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/lib/supabase";
+import { supabase, withTimeout } from "@/lib/supabase";
 import { toast } from "sonner";
 
 interface Product {
@@ -215,10 +215,13 @@ export default function StorefrontPage() {
     // Load Products
     if (supabase) {
       try {
-        const { data, error } = await supabase
-          .from("products")
-          .select("*")
-          .order("name", { ascending: true });
+        const { data, error } = await withTimeout(
+          supabase
+            .from("products")
+            .select("*")
+            .order("name", { ascending: true }),
+          5000
+        );
         if (!error && data && data.length > 0) {
           dbProducts = data;
         }
@@ -1439,6 +1442,132 @@ export default function StorefrontPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Section 2.5: Featured Products */}
+      <section id="featured-products-section" className="w-full bg-[#fcfcfc] py-16 sm:py-24 border-b border-zinc-200/50">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
+          {/* Header Row */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
+            <div className="space-y-2 text-left max-w-[800px]">
+              <span 
+                className="block uppercase tracking-[0.25em]"
+                style={{
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontWeight: 700,
+                  color: "rgb(110, 63, 243)",
+                  fontSize: "14px",
+                  lineHeight: "20px"
+                }}
+              >
+                Our Highlights
+              </span>
+              <h2 
+                className="uppercase tracking-tight text-black"
+                style={{
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontStyle: "normal",
+                  fontWeight: 900,
+                  fontSize: "clamp(48px, 8vw, 88px)",
+                  lineHeight: "clamp(44px, 8vw, 79px)"
+                }}
+              >
+                <span>Featured</span><br />
+                <span style={{ color: "lab(48.496 0 0)" }}>Products</span>
+                <span className="text-[#bef264]">.</span>
+              </h2>
+            </div>
+            <div>
+              <a 
+                href="/product" 
+                className="inline-flex items-center gap-2 uppercase select-none transition-all duration-300 tracking-[0.2em] hover:tracking-[0.3em] hover:text-[#6e3ff3] text-black"
+                style={{
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  lineHeight: "20px"
+                }}
+              >
+                Browse Shop <ArrowUpRight className="size-4" />
+              </a>
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <Loader2 className="size-8 text-[#6e3ff3] animate-spin" />
+              <span className="text-sm font-semibold text-zinc-500 uppercase tracking-widest">LOADING COLLECTION...</span>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="text-center py-20 text-zinc-500">
+              <p className="text-lg">No products available at the moment.</p>
+              <p className="text-sm mt-1">Please add products in the admin panel.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+              {products.slice(0, 4).map((product) => (
+                <div 
+                  key={product.id} 
+                  className="group flex flex-col cursor-pointer"
+                  onClick={() => router.push(`/product?category=${encodeURIComponent(product.category)}`)}
+                >
+                  {/* Product Card Image Container */}
+                  <div className="relative aspect-[4/5] bg-white border border-zinc-200/80 rounded-[28px] overflow-hidden p-6 flex items-center justify-center shadow-xs transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:shadow-lg group-hover:shadow-zinc-200/50 group-hover:border-zinc-300">
+                    {/* Category Badge */}
+                    <div className="absolute top-5 left-5 z-10">
+                      <Badge className="bg-[#bef264] hover:bg-[#bef264] text-black font-bold uppercase tracking-widest text-[9px] px-3 py-1 rounded-full border-none shadow-none">
+                        {product.category}
+                      </Badge>
+                    </div>
+                    
+                    {/* Main Image */}
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="max-h-full max-w-full object-contain transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                    />
+                    
+                    {/* Add to Cart button overlay */}
+                    <div className="absolute inset-0 bg-black/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] flex items-end justify-center pb-6">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(product);
+                        }}
+                        className="bg-white text-zinc-900 border border-zinc-200/80 hover:border-zinc-300 hover:bg-zinc-50 transition-all duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] shadow-md shadow-zinc-200/80 hover:shadow-lg rounded-full px-6 h-11 flex items-center justify-center gap-2 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto"
+                      >
+                        <ShoppingCart className="size-4 text-zinc-500 stroke-[2.5]" />
+                        <span className="text-[10px] font-extrabold uppercase tracking-widest leading-none">ADD TO CART</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Info Under Card */}
+                  <div className="mt-4 flex flex-col text-left">
+                    <div className="flex justify-between items-start gap-4">
+                      <span 
+                        className="font-bold text-base text-zinc-900 uppercase tracking-tight line-clamp-1 group-hover:text-black transition-colors"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        {product.name}
+                      </span>
+                      <span className="font-bold text-base text-zinc-900 whitespace-nowrap">
+                        Rp {product.price.toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                    <p className="text-xs text-zinc-400 mt-1.5 line-clamp-2 leading-relaxed">
+                      {product.description}
+                    </p>
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mt-2.5 font-mono">
+                      Stok: {product.stock} pcs
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
