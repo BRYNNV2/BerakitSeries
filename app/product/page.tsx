@@ -183,9 +183,33 @@ export default function ProductListingPage() {
   const filterBarRef = React.useRef<HTMLDivElement>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
 
-  // Fetch products
+  // Fetch products with SWR (Stale-While-Revalidate) Cache Optimization
   const fetchProducts = React.useCallback(async () => {
-    setLoading(true);
+    // 1. Try to load from cache immediately to prevent loading lag
+    let cachedProducts: Product[] = [];
+    const localCache = localStorage.getItem("berakit_products_cache");
+    const localCacheTime = localStorage.getItem("berakit_products_cache_time");
+    const now = Date.now();
+    const isCacheFresh = localCache && localCacheTime && (now - parseInt(localCacheTime, 10) < 5 * 60 * 1000); // 5 mins fresh
+
+    if (localCache) {
+      try {
+        cachedProducts = JSON.parse(localCache);
+        setProducts(cachedProducts);
+        // If the cache is still fresh, we can skip showing the loader completely!
+        if (isCacheFresh) {
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Failed to parse local product cache", e);
+      }
+    }
+
+    // Only show loading spinner if we don't have any cached products at all
+    if (cachedProducts.length === 0) {
+      setLoading(true);
+    }
+
     const hasCredentials = !!supabase;
 
     if (hasCredentials) {
@@ -201,16 +225,30 @@ export default function ProductListingPage() {
 
         if (data && data.length > 0) {
           setProducts(data);
+          // Update Cache
+          localStorage.setItem("berakit_products_cache", JSON.stringify(data));
+          localStorage.setItem("berakit_products_cache_time", now.toString());
+          
+          // Sync with general product database
+          localStorage.setItem("berakit_products", JSON.stringify(data));
         } else {
           // If Supabase is empty, load from localStorage fallback
           loadLocalStorageProducts();
         }
       } catch (err) {
         console.warn("Supabase fetch failed, falling back to LocalStorage:", err);
-        loadLocalStorageProducts();
+        if (cachedProducts.length > 0) {
+          setProducts(cachedProducts);
+        } else {
+          loadLocalStorageProducts();
+        }
       }
     } else {
-      loadLocalStorageProducts();
+      if (cachedProducts.length > 0) {
+        setProducts(cachedProducts);
+      } else {
+        loadLocalStorageProducts();
+      }
     }
     setLoading(false);
   }, []);
@@ -790,6 +828,7 @@ export default function ProductListingPage() {
                   <img
                     src={product.image_url}
                     alt={product.name}
+                    loading="lazy"
                     className="max-h-full max-w-full object-contain transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                   />
                   
@@ -1036,6 +1075,7 @@ export default function ProductListingPage() {
                 <img
                   src={selectedProduct.image_url}
                   alt={selectedProduct.name}
+                  loading="lazy"
                   className="max-h-[320px] max-w-full object-contain"
                 />
               </div>
@@ -1199,6 +1239,7 @@ export default function ProductListingPage() {
                       <img 
                         src={item.product.image_url} 
                         alt={item.product.name} 
+                        loading="lazy"
                         className="max-h-full max-w-full object-contain" 
                       />
                     </div>

@@ -161,6 +161,56 @@ export default function StorefrontPage() {
 
   // Storefront state
   const [products, setProducts] = React.useState<Product[]>([]);
+
+  const collectionsData = React.useMemo(() => {
+    const uniqCats = Array.from(new Set(products.map((p) => p.category))).filter(Boolean);
+    
+    // Default categories if nothing is in the database or to fill up slots
+    const defaults = [
+      {
+        name: "Batik Tulis",
+        image: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=1000&auto=format&fit=crop&q=80",
+        tagline: "Exclusive Canting"
+      },
+      {
+        name: "Batik Cap",
+        image: "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=800&auto=format&fit=crop&q=80",
+        tagline: "Modern Stamps"
+      },
+      {
+        name: "Batik Kombinasi",
+        image: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=800&auto=format&fit=crop&q=80",
+        tagline: "Hybrid Fusion"
+      },
+      {
+        name: "Aksesoris Batik",
+        image: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=80",
+        tagline: "Batik Accs"
+      }
+    ];
+
+    const slots = [];
+    for (let i = 0; i < 4; i++) {
+      if (i < uniqCats.length) {
+        const name = uniqCats[i];
+        const prod = products.find((p) => p.category === name);
+        const count = products.filter((p) => p.category === name).length;
+        slots.push({
+          name,
+          image: prod?.image_url || defaults[i].image,
+          tagline: `${count} Items`,
+        });
+      } else {
+        // Fallback to default
+        slots.push({
+          name: defaults[i].name,
+          image: defaults[i].image,
+          tagline: defaults[i].tagline,
+        });
+      }
+    }
+    return slots;
+  }, [products]);
   const [loading, setLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("Semua");
@@ -186,6 +236,7 @@ export default function StorefrontPage() {
   const headerRef = React.useRef<HTMLElement>(null);
   const horizontalWrapperRef = React.useRef<HTMLDivElement>(null);
   const horizontalContainerRef = React.useRef<HTMLDivElement>(null);
+  const syncProgressBarRef = React.useRef<HTMLDivElement>(null);
 
   const [progress, setProgress] = React.useState(0);
   const [processedBatikSrc, setProcessedBatikSrc] = React.useState("/batik-center.png");
@@ -207,12 +258,36 @@ export default function StorefrontPage() {
     shippingRate: 15000,
   });
 
-  // Load Products & Config
+  // Load Products & Config with SWR (Stale-While-Revalidate) Cache Optimization
   const loadStoreData = React.useCallback(async () => {
-    setLoading(true);
+    // 1. Try to load from cache immediately to prevent loading lag
+    let cachedProducts: Product[] = [];
+    const localCache = localStorage.getItem("berakit_products_cache");
+    const localCacheTime = localStorage.getItem("berakit_products_cache_time");
+    const now = Date.now();
+    const isCacheFresh = localCache && localCacheTime && (now - parseInt(localCacheTime, 10) < 5 * 60 * 1000); // 5 mins fresh
+
+    if (localCache) {
+      try {
+        cachedProducts = JSON.parse(localCache);
+        setProducts(cachedProducts);
+        // If the cache is still fresh, we can skip showing the loader completely!
+        if (isCacheFresh) {
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Failed to parse local product cache", e);
+      }
+    }
+
+    // Only show loading spinner if we don't have any cached products at all
+    if (cachedProducts.length === 0) {
+      setLoading(true);
+    }
+
     let dbProducts: Product[] = [];
 
-    // Load Products
+    // 2. Fetch fresh products from Supabase in the background
     if (supabase) {
       try {
         const { data, error } = await withTimeout(
@@ -224,57 +299,69 @@ export default function StorefrontPage() {
         );
         if (!error && data && data.length > 0) {
           dbProducts = data;
+          // Update Cache
+          localStorage.setItem("berakit_products_cache", JSON.stringify(data));
+          localStorage.setItem("berakit_products_cache_time", now.toString());
+          
+          // Sync with general product database
+          localStorage.setItem("berakit_products", JSON.stringify(data));
         }
       } catch (err) {
-        console.error("Failed to load products from Supabase on storefront:", err);
+        console.warn("Failed to load products from Supabase on storefront, utilizing cache/fallback:", err);
       }
     }
 
+    // 3. Fallback to cached or default data if Supabase fetch failed/empty
     if (dbProducts.length === 0) {
-      const local = localStorage.getItem("berakit_products");
-      if (local) {
-        dbProducts = JSON.parse(local);
+      if (cachedProducts.length > 0) {
+        dbProducts = cachedProducts;
       } else {
-        dbProducts = [
-          {
-            id: "prod-1",
-            name: "Batik Tulis Biota Laut",
-            description: "Batik tulis eksklusif dengan motif terumbu karang dan gonggong khas pesisir Berakit. Dibuat menggunakan pewarna alam premium.",
-            price: 450000,
-            stock: 24,
-            image_url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&auto=format&fit=crop&q=80",
-            category: "Batik Tulis",
-          },
-          {
-            id: "prod-2",
-            name: "Batik Cap Mangrove Berakit",
-            description: "Batik cap motif daun mangrove dengan desain geometris modern, sangat cocok untuk pakaian formal dan semi-formal.",
-            price: 195000,
-            stock: 80,
-            image_url: "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=500&auto=format&fit=crop&q=80",
-            category: "Batik Cap",
-          },
-          {
-            id: "prod-3",
-            name: "Batik Kombinasi Semelur",
-            description: "Perpaduan elegan teknik cap dan canting tulis dengan corak ombak samudra biru tua yang menawan.",
-            price: 295000,
-            stock: 5,
-            image_url: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=500&auto=format&fit=crop&q=80",
-            category: "Batik Kombinasi",
-          },
-          {
-            id: "prod-4",
-            name: "Selendang Sutra Batik Berakit",
-            description: "Selendang sutra premium bermotif batik tulis pesisir yang halus, memberikan sentuhan mewah pada penampilan Anda.",
-            price: 150000,
-            stock: 12,
-            image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=80",
-            category: "Aksesoris",
-          },
-        ];
+        const local = localStorage.getItem("berakit_products");
+        if (local) {
+          dbProducts = JSON.parse(local);
+        } else {
+          dbProducts = [
+            {
+              id: "prod-1",
+              name: "Batik Tulis Biota Laut",
+              description: "Batik tulis eksklusif dengan motif terumbu karang dan gonggong khas pesisir Berakit. Dibuat menggunakan pewarna alam premium.",
+              price: 450000,
+              stock: 24,
+              image_url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&auto=format&fit=crop&q=80",
+              category: "Batik Tulis",
+            },
+            {
+              id: "prod-2",
+              name: "Batik Cap Mangrove Berakit",
+              description: "Batik cap motif daun mangrove dengan desain geometris modern, sangat cocok untuk pakaian formal and semi-formal.",
+              price: 195000,
+              stock: 80,
+              image_url: "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=500&auto=format&fit=crop&q=80",
+              category: "Batik Cap",
+            },
+            {
+              id: "prod-3",
+              name: "Batik Kombinasi Semelur",
+              description: "Perpaduan elegan teknik cap dan canting tulis dengan corak ombak samudra biru tua yang menawan.",
+              price: 295000,
+              stock: 5,
+              image_url: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=500&auto=format&fit=crop&q=80",
+              category: "Batik Kombinasi",
+            },
+            {
+              id: "prod-4",
+              name: "Selendang Sutra Batik Berakit",
+              description: "Selendang sutra premium bermotif batik tulis pesisir yang halus, memberikan sentuhan mewah pada penampilan Anda.",
+              price: 150000,
+              stock: 12,
+              image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=80",
+              category: "Aksesoris",
+            },
+          ];
+        }
       }
     }
+
     setProducts(dbProducts);
 
     // Load BUMDes Profil info from settings localstorage if exists
@@ -343,6 +430,7 @@ export default function StorefrontPage() {
     
     const handleScroll = () => {
       if (isHovered) return;
+      if (!marqueeRef.current || !tweenRef.current) return;
       
       const scrollTop = window.scrollY;
       const delta = scrollTop - lastScrollTop;
@@ -365,7 +453,7 @@ export default function StorefrontPage() {
       
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
-        if (!isHovered) {
+        if (!isHovered && marqueeRef.current && tweenRef.current) {
           gsap.to(tweenRef.current, { timeScale: 1, duration: 0.5, ease: "power1.out", overwrite: "auto" });
           gsap.to(marqueeRef.current, { skewX: 0, duration: 0.4, ease: "power2.out", overwrite: "auto" });
         }
@@ -376,6 +464,12 @@ export default function StorefrontPage() {
     return () => {
       window.removeEventListener("scroll", handleScroll);
       clearTimeout(scrollTimeout);
+      if (marqueeRef.current) {
+        gsap.killTweensOf(marqueeRef.current);
+      }
+      if (tweenRef.current) {
+        gsap.killTweensOf(tweenRef.current);
+      }
     };
   }, [isHovered]);
 
@@ -538,9 +632,11 @@ export default function StorefrontPage() {
             end: () => `+=${container.scrollWidth - wrapper.clientWidth}`,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
-              gsap.set("#sync-progress-bar", {
-                width: `${self.progress * 100}%`
-              });
+              if (syncProgressBarRef.current) {
+                gsap.set(syncProgressBarRef.current, {
+                  width: `${self.progress * 100}%`
+                });
+              }
             }
           }
         });
@@ -655,7 +751,7 @@ export default function StorefrontPage() {
         {
           opacity: 0,
           y: 60,
-          scale: 0.95
+          scale: 0.98
         },
         {
           opacity: 1,
@@ -666,7 +762,7 @@ export default function StorefrontPage() {
           scrollTrigger: {
             trigger: "#newsletter-section",
             start: "top 85%",
-            toggleActions: "play reverse play reverse"
+            toggleActions: "play none none none"
           }
         }
       );
@@ -1144,6 +1240,7 @@ export default function StorefrontPage() {
             <img 
               src="/hero-thumbnail.png" 
               alt="Video Preview" 
+              loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
             <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
@@ -1326,13 +1423,17 @@ export default function StorefrontPage() {
           </div>
 
           {/* Cards Grid */}
-          <div className="flex flex-col lg:flex-row gap-8 justify-center items-center lg:items-start max-w-[1800px] mx-auto">
-            {/* Card 1: Forest Honey (Kotak 1) */}
-            <div className="collection-card-animate w-full lg:w-[872.5px] h-[500px] lg:h-[850px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+          <div className="flex flex-col lg:flex-row gap-8 justify-center items-center lg:items-start max-w-[1800px] mx-auto w-full">
+            {/* Card 1: Large (Kotak 1) */}
+            <div 
+              onClick={() => router.push(`/product?category=${encodeURIComponent(collectionsData[0].name)}`)}
+              className="collection-card-animate w-full lg:w-[872.5px] h-[500px] lg:h-[850px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900"
+            >
               {/* Image */}
               <img 
-                src="https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=1000&auto=format&fit=crop&q=80" 
-                alt="Batik Tulis Collection" 
+                src={collectionsData[0].image} 
+                alt={collectionsData[0].name} 
+                loading="lazy"
                 className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
               />
               {/* Bottom gradient overlay */}
@@ -1342,10 +1443,10 @@ export default function StorefrontPage() {
               <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                 <div className="space-y-1.5 text-left">
                   <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
-                    Exclusive Canting
+                    {collectionsData[0].tagline}
                   </span>
                   <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">
-                    Batik Tulis
+                    {collectionsData[0].name}
                   </h3>
                 </div>
                 {/* Arrow Button */}
@@ -1355,12 +1456,16 @@ export default function StorefrontPage() {
               </div>
             </div>
 
-            {/* Card 2: Local Crafts (Kotak 2) */}
-            <div className="collection-card-animate w-full lg:w-[420.25px] h-[500px] lg:h-[850px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+            {/* Card 2: Medium (Kotak 2) */}
+            <div 
+              onClick={() => router.push(`/product?category=${encodeURIComponent(collectionsData[1].name)}`)}
+              className="collection-card-animate w-full lg:w-[420.25px] h-[500px] lg:h-[850px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900"
+            >
               {/* Image */}
               <img 
-                src="https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=800&auto=format&fit=crop&q=80" 
-                alt="Batik Cap Collection" 
+                src={collectionsData[1].image} 
+                alt={collectionsData[1].name} 
+                loading="lazy"
                 className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
               />
               {/* Bottom gradient overlay */}
@@ -1370,10 +1475,10 @@ export default function StorefrontPage() {
               <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                 <div className="space-y-1.5 text-left">
                   <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
-                    Modern Stamps
+                    {collectionsData[1].tagline}
                   </span>
                   <h3 className="text-2xl sm:text-3xl font-black tracking-tight text-white uppercase leading-none">
-                    Batik Cap
+                    {collectionsData[1].name}
                   </h3>
                 </div>
                 {/* Arrow Button */}
@@ -1385,12 +1490,16 @@ export default function StorefrontPage() {
 
             {/* Column 3: Stacked Cards (Kotak 3 & 4) */}
             <div className="flex flex-col gap-8 w-full lg:w-[420.25px]">
-              {/* Card 3: Marine Products (Kotak 3) */}
-              <div className="collection-card-animate w-full lg:w-[420.25px] h-[240px] lg:h-[409px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+              {/* Card 3: Stacked Top (Kotak 3) */}
+              <div 
+                onClick={() => router.push(`/product?category=${encodeURIComponent(collectionsData[2].name)}`)}
+                className="collection-card-animate w-full lg:w-[420.25px] h-[240px] lg:h-[409px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900"
+              >
                 {/* Image */}
                 <img 
-                  src="https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=800&auto=format&fit=crop&q=80" 
-                  alt="Batik Kombinasi Collection" 
+                  src={collectionsData[2].image} 
+                  alt={collectionsData[2].name} 
+                  loading="lazy"
                   className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
                 />
                 {/* Bottom gradient overlay */}
@@ -1400,10 +1509,10 @@ export default function StorefrontPage() {
                 <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                   <div className="space-y-1.5 text-left">
                     <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
-                      Hybrid Fusion
+                      {collectionsData[2].tagline}
                     </span>
                     <h3 className="text-2xl font-black tracking-tight text-white uppercase leading-none">
-                      Batik Kombinasi
+                      {collectionsData[2].name}
                     </h3>
                   </div>
                   {/* Arrow Button */}
@@ -1413,12 +1522,16 @@ export default function StorefrontPage() {
                 </div>
               </div>
 
-              {/* Card 4: Mangrove Ecotourism (Kotak 4) */}
-              <div className="collection-card-animate w-full lg:w-[420.25px] h-[240px] lg:h-[409px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900">
+              {/* Card 4: Stacked Bottom (Kotak 4) */}
+              <div 
+                onClick={() => router.push(`/product?category=${encodeURIComponent(collectionsData[3].name)}`)}
+                className="collection-card-animate w-full lg:w-[420.25px] h-[240px] lg:h-[409px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900"
+              >
                 {/* Image */}
                 <img 
-                  src="https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=80" 
-                  alt="Aksesoris Batik" 
+                  src={collectionsData[3].image} 
+                  alt={collectionsData[3].name} 
+                  loading="lazy"
                   className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
                 />
                 {/* Bottom gradient overlay */}
@@ -1428,10 +1541,10 @@ export default function StorefrontPage() {
                 <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                   <div className="space-y-1.5 text-left">
                     <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">
-                      Batik Accs
+                      {collectionsData[3].tagline}
                     </span>
                     <h3 className="text-2xl font-black tracking-tight text-white uppercase leading-none">
-                      Aksesoris Batik
+                      {collectionsData[3].name}
                     </h3>
                   </div>
                   {/* Arrow Button */}
@@ -1445,131 +1558,7 @@ export default function StorefrontPage() {
         </div>
       </section>
 
-      {/* Section 2.5: Featured Products */}
-      <section id="featured-products-section" className="w-full bg-[#fcfcfc] py-16 sm:py-24 border-b border-zinc-200/50">
-        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
-          {/* Header Row */}
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
-            <div className="space-y-2 text-left max-w-[800px]">
-              <span 
-                className="block uppercase tracking-[0.25em]"
-                style={{
-                  fontFamily: "'Oswald', Impact, sans-serif",
-                  fontWeight: 700,
-                  color: "rgb(110, 63, 243)",
-                  fontSize: "14px",
-                  lineHeight: "20px"
-                }}
-              >
-                Our Highlights
-              </span>
-              <h2 
-                className="uppercase tracking-tight text-black"
-                style={{
-                  fontFamily: "'Oswald', Impact, sans-serif",
-                  fontStyle: "normal",
-                  fontWeight: 900,
-                  fontSize: "clamp(48px, 8vw, 88px)",
-                  lineHeight: "clamp(44px, 8vw, 79px)"
-                }}
-              >
-                <span>Featured</span><br />
-                <span style={{ color: "lab(48.496 0 0)" }}>Products</span>
-                <span className="text-[#bef264]">.</span>
-              </h2>
-            </div>
-            <div>
-              <a 
-                href="/product" 
-                className="inline-flex items-center gap-2 uppercase select-none transition-all duration-300 tracking-[0.2em] hover:tracking-[0.3em] hover:text-[#6e3ff3] text-black"
-                style={{
-                  fontFamily: "'Inter', system-ui, sans-serif",
-                  fontWeight: 700,
-                  fontSize: "14px",
-                  lineHeight: "20px"
-                }}
-              >
-                Browse Shop <ArrowUpRight className="size-4" />
-              </a>
-            </div>
-          </div>
 
-          {/* Products Grid */}
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <Loader2 className="size-8 text-[#6e3ff3] animate-spin" />
-              <span className="text-sm font-semibold text-zinc-500 uppercase tracking-widest">LOADING COLLECTION...</span>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="text-center py-20 text-zinc-500">
-              <p className="text-lg">No products available at the moment.</p>
-              <p className="text-sm mt-1">Please add products in the admin panel.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
-              {products.slice(0, 4).map((product) => (
-                <div 
-                  key={product.id} 
-                  className="group flex flex-col cursor-pointer"
-                  onClick={() => router.push(`/product?category=${encodeURIComponent(product.category)}`)}
-                >
-                  {/* Product Card Image Container */}
-                  <div className="relative aspect-[4/5] bg-white border border-zinc-200/80 rounded-[28px] overflow-hidden p-6 flex items-center justify-center shadow-xs transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:shadow-lg group-hover:shadow-zinc-200/50 group-hover:border-zinc-300">
-                    {/* Category Badge */}
-                    <div className="absolute top-5 left-5 z-10">
-                      <Badge className="bg-[#bef264] hover:bg-[#bef264] text-black font-bold uppercase tracking-widest text-[9px] px-3 py-1 rounded-full border-none shadow-none">
-                        {product.category}
-                      </Badge>
-                    </div>
-                    
-                    {/* Main Image */}
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="max-h-full max-w-full object-contain transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
-                    />
-                    
-                    {/* Add to Cart button overlay */}
-                    <div className="absolute inset-0 bg-black/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] flex items-end justify-center pb-6">
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(product);
-                        }}
-                        className="bg-white text-zinc-900 border border-zinc-200/80 hover:border-zinc-300 hover:bg-zinc-50 transition-all duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] shadow-md shadow-zinc-200/80 hover:shadow-lg rounded-full px-6 h-11 flex items-center justify-center gap-2 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto"
-                      >
-                        <ShoppingCart className="size-4 text-zinc-500 stroke-[2.5]" />
-                        <span className="text-[10px] font-extrabold uppercase tracking-widest leading-none">ADD TO CART</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Info Under Card */}
-                  <div className="mt-4 flex flex-col text-left">
-                    <div className="flex justify-between items-start gap-4">
-                      <span 
-                        className="font-bold text-base text-zinc-900 uppercase tracking-tight line-clamp-1 group-hover:text-black transition-colors"
-                        style={{ fontFamily: "'Inter', sans-serif" }}
-                      >
-                        {product.name}
-                      </span>
-                      <span className="font-bold text-base text-zinc-900 whitespace-nowrap">
-                        Rp {product.price.toLocaleString("id-ID")}
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-400 mt-1.5 line-clamp-2 leading-relaxed">
-                      {product.description}
-                    </p>
-                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mt-2.5 font-mono">
-                      Stok: {product.stock} pcs
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* Section 3: Why Choose Us / The Berakit Difference */}
       <section 
@@ -1821,6 +1810,7 @@ export default function StorefrontPage() {
               </div>
               <div className="w-[180px] h-[3px] bg-zinc-100 rounded-full overflow-hidden">
                 <div 
+                  ref={syncProgressBarRef}
                   id="sync-progress-bar"
                   className="h-full bg-[#bef264] w-0 transition-all duration-75"
                 />
@@ -1912,6 +1902,7 @@ export default function StorefrontPage() {
                         <img 
                           src={card.avatar} 
                           alt={card.user}
+                          loading="lazy"
                           className="size-11 rounded-full object-cover border border-zinc-200 group-hover:border-[#bef264] transition-colors duration-300"
                         />
                         <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-zinc-100">

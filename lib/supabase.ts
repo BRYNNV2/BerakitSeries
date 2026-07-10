@@ -75,21 +75,21 @@ export const supabase = getSupabaseClient();
 let isSupabaseOffline = false;
 
 export const withTimeout = (promise: any, timeoutMs: number = 8000): Promise<any> => {
-  if (isSupabaseOffline) {
-    return Promise.reject(new Error("Request timeout"));
-  }
-
   const realPromise = Promise.resolve(promise);
   // Prevent unhandled promise rejection warnings in the browser if the
-  // promise rejects in the background after the timeout has already resolved.
+  // promise rejects in the background.
   realPromise.catch(() => {});
+
+  if (isSupabaseOffline) {
+    return Promise.resolve({ data: null, error: { message: "Request timeout", isTimeout: true } });
+  }
 
   return Promise.race([
     realPromise,
-    new Promise<never>((_, reject) =>
+    new Promise<any>((resolve) =>
       setTimeout(() => {
         isSupabaseOffline = true;
-        reject(new Error("Request timeout"));
+        resolve({ data: null, error: { message: "Request timeout", isTimeout: true } });
       }, timeoutMs)
     ),
   ]);
