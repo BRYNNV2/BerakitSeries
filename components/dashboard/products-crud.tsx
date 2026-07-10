@@ -80,7 +80,7 @@ export function ProductsCrud() {
   // Check Supabase status & fetch data
   const loadData = React.useCallback(async () => {
     setLoading(true);
-    const hasCredentials = !!supabase;
+    const hasCredentials = !!supabase && localStorage.getItem("berakit_use_local_db") !== "true";
 
     if (hasCredentials) {
       try {
@@ -170,11 +170,15 @@ export function ProductsCrud() {
       try {
         if (editingProduct) {
           // Update Supabase
-          const { error } = await supabase
+          const { data, error } = await supabase
             .from("products")
             .update(newProductData)
-            .eq("id", editingProduct.id);
+            .eq("id", editingProduct.id)
+            .select();
           if (error) throw error;
+          if (!data || data.length === 0) {
+            throw new Error("Kebijakan keamanan RLS memblokir aksi edit.");
+          }
           addActivityLog(
             "Edit Produk",
             `Mengubah data produk '${newProductData.name}' (Supabase)`,
@@ -183,8 +187,14 @@ export function ProductsCrud() {
           toast.success(`Produk '${newProductData.name}' berhasil diperbarui.`);
         } else {
           // Insert Supabase
-          const { error } = await supabase.from("products").insert([newProductData]);
+          const { data, error } = await supabase
+            .from("products")
+            .insert([newProductData])
+            .select();
           if (error) throw error;
+          if (!data || data.length === 0) {
+            throw new Error("Kebijakan keamanan RLS memblokir aksi tambah.");
+          }
           addActivityLog(
             "Tambah Produk",
             `Menambahkan produk baru '${newProductData.name}' dengan harga Rp ${newProductData.price.toLocaleString("id-ID")} dan stok ${newProductData.stock} (Supabase)`,
@@ -194,8 +204,8 @@ export function ProductsCrud() {
         }
         await loadData();
         setIsFormOpen(false);
-      } catch (err) {
-        toast.warning("Gagal menyimpan ke Supabase. Menggunakan penyimpanan lokal sementara.");
+      } catch (err: any) {
+        toast.error(`Gagal menyimpan ke Supabase: ${err.message || err}`);
         console.error(err);
       }
     } else {
@@ -242,11 +252,15 @@ export function ProductsCrud() {
     setSubmitting(true);
     if (isUsingSupabase) {
       try {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("products")
           .delete()
-          .eq("id", deletingProduct.id);
+          .eq("id", deletingProduct.id)
+          .select();
         if (error) throw error;
+        if (!data || data.length === 0) {
+          throw new Error("Kebijakan keamanan RLS memblokir akses hapus.");
+        }
         addActivityLog(
           "Hapus Produk",
           `Menghapus produk '${deletingProduct.name}' (Supabase)`,
@@ -254,9 +268,9 @@ export function ProductsCrud() {
         );
         toast.success(`Produk '${deletingProduct.name}' berhasil dihapus.`);
         await loadData();
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
-        toast.error("Gagal menghapus produk dari Supabase.");
+        toast.error(`Gagal menghapus produk dari Supabase: ${err.message || err}`);
       }
     } else {
       const updated = products.filter((p) => p.id !== deletingProduct.id);
@@ -297,17 +311,32 @@ export function ProductsCrud() {
   return (
     <div className="space-y-4">
       {/* Supabase Status Banner */}
-      <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 text-xs sm:text-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 rounded-lg border bg-muted/30 text-xs sm:text-sm gap-2">
         <div className="flex items-center gap-2">
           <div className={`size-2 rounded-full ${isUsingSupabase ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
           <span className="font-medium">
             Status Database: {isUsingSupabase ? "Tersambung ke Supabase Cloud" : "Penyimpanan Lokal Sementara (Demo)"}
           </span>
         </div>
-        {!isUsingSupabase && (
-          <span className="text-[10px] text-muted-foreground hidden sm:inline">
-            Isi file <code>.env.local</code> untuk menyambungkan ke Supabase.
-          </span>
+        {!!supabase && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-[10px] px-2 py-0 border-zinc-200 dark:border-zinc-800 hover:bg-muted"
+            onClick={() => {
+              const currentVal = localStorage.getItem("berakit_use_local_db") === "true";
+              if (!currentVal) {
+                localStorage.setItem("berakit_use_local_db", "true");
+                toast.info("Beralih ke mode Penyimpanan Lokal.");
+              } else {
+                localStorage.removeItem("berakit_use_local_db");
+                toast.info("Beralih ke mode Supabase Cloud.");
+              }
+              loadData();
+            }}
+          >
+            {isUsingSupabase ? "Gunakan Mode Lokal" : "Gunakan Supabase"}
+          </Button>
         )}
       </div>
 

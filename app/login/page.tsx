@@ -150,18 +150,21 @@ export default function LoginPage() {
         if (authError) {
           if (email === "admin@berakit.desa.id" && password === "adminberakit") {
             localStorage.setItem("berakit_admin_auth", "true");
+            localStorage.setItem("berakit_use_local_db", "true");
             router.push("/admin");
           } else {
             setError(authError.message);
           }
         } else {
           localStorage.removeItem("berakit_admin_auth");
+          localStorage.removeItem("berakit_use_local_db");
           router.push("/admin");
         }
       } catch (err) {
         console.warn("Supabase auth error:", err);
         if (email === "admin@berakit.desa.id" && password === "adminberakit") {
           localStorage.setItem("berakit_admin_auth", "true");
+          localStorage.setItem("berakit_use_local_db", "true");
           router.push("/admin");
         } else {
           setError("Terjadi kesalahan sistem saat menghubungi server Auth.");
@@ -171,6 +174,7 @@ export default function LoginPage() {
       await new Promise((r) => setTimeout(r, 600));
       if (email === "admin@berakit.desa.id" && password === "adminberakit") {
         localStorage.setItem("berakit_admin_auth", "true");
+        localStorage.setItem("berakit_use_local_db", "true");
         router.push("/admin");
       } else {
         setError("Email atau password admin salah!");
