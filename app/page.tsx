@@ -242,7 +242,6 @@ export default function StorefrontPage() {
   const [processedBatikSrc, setProcessedBatikSrc] = React.useState("/batik-center.png");
   const marqueeRef = React.useRef<HTMLDivElement>(null);
   const tweenRef = React.useRef<gsap.core.Tween | null>(null);
-  const [isHovered, setIsHovered] = React.useState(false);
   const [hoveredNavLink, setHoveredNavLink] = React.useState<number | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = React.useState<number | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -408,29 +407,33 @@ export default function StorefrontPage() {
     // Start from -50% to have buffer on left and right
     gsap.set(marqueeEl, { xPercent: -50 });
     
-    // Tween from -50 to -25 to move to the right (speed increased to 12s)
+    // Tween from -50 to -25 to move to the right (speed increased and duration reduced to 7s)
     const tween = gsap.to(marqueeEl, {
       xPercent: -25,
       repeat: -1,
-      duration: 12,
+      duration: 7,
       ease: "none",
       paused: false
     });
     
     tweenRef.current = tween;
     
-    return () => {
-      if (tween) tween.kill();
-    };
-  }, []);
-
-  React.useEffect(() => {
+    let isHoveredLocal = false;
     let lastScrollTop = window.scrollY;
     let scrollTimeout: NodeJS.Timeout;
     
+    const handleMouseEnter = () => {
+      isHoveredLocal = true;
+      gsap.to(tween, { timeScale: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" });
+    };
+    
+    const handleMouseLeave = () => {
+      isHoveredLocal = false;
+      gsap.to(tween, { timeScale: 1, duration: 0.5, ease: "power2.out", overwrite: "auto" });
+    };
+    
     const handleScroll = () => {
-      if (isHovered) return;
-      if (!marqueeRef.current || !tweenRef.current) return;
+      if (isHoveredLocal) return;
       
       const scrollTop = window.scrollY;
       const delta = scrollTop - lastScrollTop;
@@ -441,37 +444,37 @@ export default function StorefrontPage() {
       const skewAmount = Math.min(Math.max(delta * 0.18, -maxSkew), maxSkew);
       
       // Animate skew on scroll
-      gsap.to(marqueeRef.current, { skewX: skewAmount, duration: 0.1, overwrite: "auto" });
+      gsap.to(marqueeEl, { skewX: skewAmount, duration: 0.1, overwrite: "auto" });
       
+      // Set timeScale directly instead of creating a new tween on every scroll tick
       if (delta > 0) {
-        // Scroll down -> move left (timeScale = -2.8)
-        gsap.to(tweenRef.current, { timeScale: -2.8, duration: 0.1, overwrite: "auto" });
+        tween.timeScale(-2.8);
       } else if (delta < 0) {
-        // Scroll up -> move right faster (timeScale = 3.8)
-        gsap.to(tweenRef.current, { timeScale: 3.8, duration: 0.1, overwrite: "auto" });
+        tween.timeScale(3.8);
       }
       
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(() => {
-        if (!isHovered && marqueeRef.current && tweenRef.current) {
-          gsap.to(tweenRef.current, { timeScale: 1, duration: 0.5, ease: "power1.out", overwrite: "auto" });
-          gsap.to(marqueeRef.current, { skewX: 0, duration: 0.4, ease: "power2.out", overwrite: "auto" });
+        if (!isHoveredLocal) {
+          gsap.to(tween, { timeScale: 1, duration: 0.5, ease: "power1.out", overwrite: "auto" });
+          gsap.to(marqueeEl, { skewX: 0, duration: 0.4, ease: "power2.out", overwrite: "auto" });
         }
       }, 100);
     };
-
+    
+    marqueeEl.addEventListener("mouseenter", handleMouseEnter);
+    marqueeEl.addEventListener("mouseleave", handleMouseLeave);
     window.addEventListener("scroll", handleScroll, { passive: true });
+    
     return () => {
+      if (tween) tween.kill();
+      marqueeEl.removeEventListener("mouseenter", handleMouseEnter);
+      marqueeEl.removeEventListener("mouseleave", handleMouseLeave);
       window.removeEventListener("scroll", handleScroll);
       clearTimeout(scrollTimeout);
-      if (marqueeRef.current) {
-        gsap.killTweensOf(marqueeRef.current);
-      }
-      if (tweenRef.current) {
-        gsap.killTweensOf(tweenRef.current);
-      }
+      gsap.killTweensOf(marqueeEl);
     };
-  }, [isHovered]);
+  }, []);
 
   useGSAP(() => {
     const obj = { val: 0 };
@@ -1271,21 +1274,13 @@ export default function StorefrontPage() {
         
         <div 
           className="select-none relative w-full flex items-center overflow-hidden py-4 cursor-pointer"
-          onMouseEnter={() => {
-            setIsHovered(true);
-            gsap.to(tweenRef.current, { timeScale: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" });
-          }}
-          onMouseLeave={() => {
-            setIsHovered(false);
-            gsap.to(tweenRef.current, { timeScale: 1, duration: 0.5, ease: "power2.out", overwrite: "auto" });
-          }}
         >
           <div 
             className="flex whitespace-nowrap min-w-full" 
             ref={marqueeRef}
           >
             {/* Set 1 */}
-            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12">
+            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12 shrink-0">
               {marqueeBrands.map((brand, i) => (
                 <span 
                   key={`s1-${i}`} 
@@ -1302,7 +1297,7 @@ export default function StorefrontPage() {
               ))}
             </div>
             {/* Set 2 */}
-            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12">
+            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12 shrink-0">
               {marqueeBrands.map((brand, i) => (
                 <span 
                   key={`s2-${i}`} 
@@ -1319,7 +1314,7 @@ export default function StorefrontPage() {
               ))}
             </div>
             {/* Set 3 */}
-            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12">
+            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12 shrink-0">
               {marqueeBrands.map((brand, i) => (
                 <span 
                   key={`s3-${i}`} 
@@ -1336,7 +1331,7 @@ export default function StorefrontPage() {
               ))}
             </div>
             {/* Set 4 */}
-            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12">
+            <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12 shrink-0">
               {marqueeBrands.map((brand, i) => (
                 <span 
                   key={`s4-${i}`} 
