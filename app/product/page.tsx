@@ -70,62 +70,7 @@ interface CartItem {
   quantity: number;
 }
 
-const DEFAULT_PRODUCTS: Product[] = [
-  {
-    id: "prod-1",
-    name: "Batik Tulis Biota Laut",
-    description: "Batik tulis eksklusif dengan motif terumbu karang dan gonggong khas pesisir Berakit. Dibuat menggunakan pewarna alam premium.",
-    price: 450000,
-    stock: 24,
-    image_url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=1000&auto=format&fit=crop&q=80",
-    category: "Batik Tulis",
-  },
-  {
-    id: "prod-2",
-    name: "Batik Mangrove Pesisir",
-    description: "Batik bermotif mangrove unik khas pesisir Desa Berakit. Dibuat menggunakan pewarna alami berbahan dasar buah mangrove bakau.",
-    price: 245000,
-    stock: 45,
-    image_url: "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=800&auto=format&fit=crop&q=80",
-    category: "Batik Mangrove",
-  },
-  {
-    id: "prod-3",
-    name: "Batik Eco Print Daun Ketapang",
-    description: "Batik ramah lingkungan yang dibuat dengan teknik cetak langsung (Eco Print) menggunakan daun ketapang dan jati lokal.",
-    price: 220000,
-    stock: 15,
-    image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=80",
-    category: "Batik Eco Print",
-  },
-  {
-    id: "prod-4",
-    name: "Batik Cap Daun Mangrove",
-    description: "Batik cap motif daun mangrove dengan desain geometris modern, sangat cocok untuk pakaian formal dan semi-formal.",
-    price: 195000,
-    stock: 80,
-    image_url: "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=800&auto=format&fit=crop&q=80",
-    category: "Batik Cap",
-  },
-  {
-    id: "prod-5",
-    name: "Batik Kombinasi Semelur",
-    description: "Perpaduan elegan teknik cap dan canting tulis dengan corak ombak samudra biru tua yang menawan.",
-    price: 295000,
-    stock: 5,
-    image_url: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=800&auto=format&fit=crop&q=80",
-    category: "Batik Kombinasi",
-  },
-  {
-    id: "prod-6",
-    name: "Selendang Sutra Batik Berakit",
-    description: "Selendang sutra premium bermotif batik tulis pesisir yang halus, memberikan sentuhan mewah pada penampilan Anda.",
-    price: 150000,
-    stock: 12,
-    image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800&auto=format&fit=crop&q=80",
-    category: "Aksesoris",
-  },
-];
+const DEFAULT_PRODUCTS: Product[] = [];
 
 export default function ProductListingPage() {
   const router = useRouter();
@@ -223,7 +168,7 @@ export default function ProductListingPage() {
 
         if (error) throw error;
 
-        if (data && data.length > 0) {
+        if (data) {
           setProducts(data);
           // Update Cache
           localStorage.setItem("berakit_products_cache", JSON.stringify(data));

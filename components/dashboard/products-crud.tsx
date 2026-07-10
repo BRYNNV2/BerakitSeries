@@ -53,44 +53,7 @@ interface Product {
   created_at?: string;
 }
 
-const DEFAULT_PRODUCTS: Product[] = [
-  {
-    id: "prod-1",
-    name: "Batik Tulis Biota Laut",
-    description: "Batik tulis eksklusif dengan motif terumbu karang dan gonggong khas pesisir Berakit. Dibuat menggunakan pewarna alam premium.",
-    price: 450000,
-    stock: 24,
-    image_url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&auto=format&fit=crop&q=60",
-    category: "Batik Tulis",
-  },
-  {
-    id: "prod-2",
-    name: "Batik Cap Mangrove Berakit",
-    description: "Batik cap motif daun mangrove dengan desain geometris modern, sangat cocok untuk pakaian formal dan semi-formal.",
-    price: 195000,
-    stock: 80,
-    image_url: "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=500&auto=format&fit=crop&q=60",
-    category: "Batik Cap",
-  },
-  {
-    id: "prod-3",
-    name: "Batik Kombinasi Semelur",
-    description: "Perpaduan elegan teknik cap dan canting tulis dengan corak ombak samudra biru tua yang menawan.",
-    price: 295000,
-    stock: 5,
-    image_url: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=500&auto=format&fit=crop&q=60",
-    category: "Batik Kombinasi",
-  },
-  {
-    id: "prod-4",
-    name: "Selendang Sutra Batik Berakit",
-    description: "Selendang sutra premium bermotif batik tulis pesisir yang halus, memberikan sentuhan mewah pada penampilan Anda.",
-    price: 150000,
-    stock: 12,
-    image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=60",
-    category: "Aksesoris",
-  },
-];
+const DEFAULT_PRODUCTS: Product[] = [];
 
 export function ProductsCrud() {
   const [products, setProducts] = React.useState<Product[]>([]);
@@ -130,26 +93,7 @@ export function ProductsCrud() {
 
         if (error) throw error;
 
-        if (data && data.length === 0) {
-          // Auto-seed default products to make the database instantly alive
-          const seedData = DEFAULT_PRODUCTS.map(({ name, description, price, stock, image_url, category }) => ({
-            name, description, price, stock, image_url, category
-          }));
-          const { error: seedError } = await supabase.from("products").insert(seedData);
-          if (!seedError) {
-            const { data: refetched } = await withTimeout(
-              supabase
-                .from("products")
-                .select("*")
-                .order("created_at", { ascending: false })
-            );
-            setProducts(refetched || []);
-          } else {
-            setProducts([]);
-          }
-        } else {
-          setProducts(data || []);
-        }
+        setProducts(data || []);
         setIsUsingSupabase(true);
       } catch (err) {
         console.warn("Supabase fetch failed, falling back to LocalStorage:", err);
@@ -171,8 +115,8 @@ export function ProductsCrud() {
     if (local) {
       setProducts(JSON.parse(local));
     } else {
-      localStorage.setItem("berakit_products", JSON.stringify(DEFAULT_PRODUCTS));
-      setProducts(DEFAULT_PRODUCTS);
+      localStorage.setItem("berakit_products", JSON.stringify([]));
+      setProducts([]);
     }
   };
 
