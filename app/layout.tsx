@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import { Inter, Geist_Mono, Oswald } from "next/font/google";
 import "./globals.css";
 import "lenis/dist/lenis.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -15,6 +15,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const oswald = Oswald({
+  variable: "--font-oswald",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "block",
+});
+
 export const metadata: Metadata = {
   title: "Dashboard - Cliento CRM",
   description: "A modern CRM dashboard",
@@ -28,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${geistMono.variable} ${oswald.variable} antialiased`}
         suppressHydrationWarning
       >
         <ThemeProvider

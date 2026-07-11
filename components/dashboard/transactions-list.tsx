@@ -27,6 +27,14 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Search,
   CreditCard,
   Loader2,
@@ -37,6 +45,8 @@ import {
   Ban,
   TrendingUp,
   MessageSquare,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase, withTimeout } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
@@ -51,58 +61,21 @@ interface Transaction {
   total_amount: number;
   status: "Pending" | "Diproses" | "Selesai" | "Dibatalkan";
   payment_method: string;
+  receipt_url?: string | null;
   created_at: string;
 }
-
-const DEFAULT_TRANSACTIONS: Transaction[] = [
-  {
-    id: "tx-1",
-    customer_name: "Budi Santoso",
-    customer_phone: "081234567890",
-    address: "Jl. Raya Berakit No. 12, Desa Berakit",
-    total_amount: 170000,
-    status: "Selesai",
-    payment_method: "Transfer Bank",
-    created_at: "2026-07-06T10:30:00Z",
-  },
-  {
-    id: "tx-2",
-    customer_name: "Siti Rahma",
-    customer_phone: "089876543210",
-    address: "RT 02 / RW 01, Dusun 2 Desa Berakit",
-    total_amount: 35000,
-    status: "Pending",
-    payment_method: "COD",
-    created_at: "2026-07-07T03:15:00Z",
-  },
-  {
-    id: "tx-3",
-    customer_name: "Andi Wijaya",
-    customer_phone: "085299887766",
-    address: "Penginapan Berakit Indah, RT 01",
-    total_amount: 250000,
-    status: "Diproses",
-    payment_method: "Transfer Bank",
-    created_at: "2026-07-07T05:40:00Z",
-  },
-  {
-    id: "tx-4",
-    customer_name: "Rina Kartika",
-    customer_phone: "087711223344",
-    address: "Kavling Nelayan, Desa Berakit",
-    total_amount: 65000,
-    status: "Dibatalkan",
-    payment_method: "COD",
-    created_at: "2026-07-05T08:20:00Z",
-  },
-];
 
 export function TransactionsList() {
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
   const [loading, setLoading] = React.useState(true);
-  const [isUsingSupabase, setIsUsingSupabase] = React.useState(false);
+  const [isUsingSupabase, setIsUsingSupabase] = React.useState(!!supabase);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState("all");
+
+  // Delete confirmation dialog states
+  const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
+  const [deletingTx, setDeletingTx] = React.useState<Transaction | null>(null);
+  const [deleteLoading, setDeleteLoading] = React.useState(false);
 
   // Check Supabase credentials & load data
   const loadData = React.useCallback(async () => {
@@ -120,33 +93,16 @@ export function TransactionsList() {
 
         if (error) throw error;
 
-        if (data && data.length === 0) {
-          // Auto-seed default transactions to make the database instantly alive
-          const seedData = DEFAULT_TRANSACTIONS.map(({ customer_name, customer_phone, address, total_amount, status, payment_method, created_at }) => ({
-            customer_name, customer_phone, address, total_amount, status, payment_method, created_at
-          }));
-          const { error: seedError } = await supabase.from("orders").insert(seedData);
-          if (!seedError) {
-            const { data: refetched } = await withTimeout(
-              supabase
-                .from("orders")
-                .select("*")
-                .order("created_at", { ascending: false })
-            );
-            setTransactions(refetched || []);
-          } else {
-            setTransactions([]);
-          }
-        } else {
-          setTransactions(data || []);
-        }
+        setTransactions(data || []);
         setIsUsingSupabase(true);
       } catch (err) {
-        console.warn("Supabase fetch failed, falling back to LocalStorage:", err);
-        loadLocalStorage();
+        console.error("Supabase fetch failed:", err);
+        setTransactions([]);
+        setIsUsingSupabase(false);
       }
     } else {
-      loadLocalStorage();
+      setIsUsingSupabase(false);
+      setTransactions([]);
     }
     setLoading(false);
   }, []);
@@ -155,27 +111,21 @@ export function TransactionsList() {
     loadData();
   }, [loadData]);
 
-  const loadLocalStorage = () => {
-    setIsUsingSupabase(false);
-    const local = localStorage.getItem("berakit_transactions");
-    if (local) {
-      setTransactions(JSON.parse(local));
-    } else {
-      localStorage.setItem("berakit_transactions", JSON.stringify(DEFAULT_TRANSACTIONS));
-      setTransactions(DEFAULT_TRANSACTIONS);
-    }
-  };
-
-  // Update transaction status
   const handleUpdateStatus = async (id: string, newStatus: Transaction["status"]) => {
-    if (isUsingSupabase) {
+    if (isUsingSupabase && supabase) {
       try {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("orders")
           .update({ status: newStatus })
-          .eq("id", id);
+          .eq("id", id)
+          .select();
 
         if (error) throw error;
+
+        if (!data || data.length === 0) {
+          throw new Error("Pembaruan status diblokir oleh kebijakan keamanan RLS Supabase.");
+        }
+
         addActivityLog(
           "Update Status Transaksi",
           `Mengubah status transaksi #${id} menjadi '${newStatus}' (Supabase)`,
@@ -183,22 +133,12 @@ export function TransactionsList() {
         );
         toast.success(`Status transaksi #${id} berhasil diubah menjadi '${newStatus}'`);
         await loadData();
-      } catch (err) {
+      } catch (err: any) {
         console.error("Gagal update status di Supabase:", err);
-        toast.error("Gagal memperbarui status transaksi.");
+        toast.error("Gagal memperbarui status transaksi: " + (err.message || err));
       }
     } else {
-      const updated = transactions.map((t) =>
-        t.id === id ? { ...t, status: newStatus } : t
-      );
-      setTransactions(updated);
-      localStorage.setItem("berakit_transactions", JSON.stringify(updated));
-      addActivityLog(
-        "Update Status Transaksi",
-        `Mengubah status transaksi #${id} menjadi '${newStatus}' (Lokal)`,
-        "transaction"
-      );
-      toast.success(`Status transaksi #${id} berhasil diubah menjadi '${newStatus}' (Lokal)`);
+      toast.error("Supabase tidak tersambung. Aksi dibatalkan.");
     }
   };
 
@@ -222,6 +162,48 @@ export function TransactionsList() {
       "transaction"
     );
     window.open(url, "_blank");
+  };
+
+  const handleDeleteClick = (tx: Transaction) => {
+    setDeletingTx(tx);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingTx) return;
+
+    setDeleteLoading(true);
+    if (isUsingSupabase && supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .delete()
+          .eq("id", deletingTx.id)
+          .select();
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          throw new Error("Penghapusan diblokir oleh kebijakan keamanan RLS Supabase.");
+        }
+
+        addActivityLog(
+          "Hapus Transaksi",
+          `Menghapus data transaksi #${deletingTx.id} dari pembeli '${deletingTx.customer_name}' (Supabase)`,
+          "transaction"
+        );
+        toast.success(`Transaksi pembeli '${deletingTx.customer_name}' berhasil dihapus.`);
+        setIsDeleteOpen(false);
+        setDeletingTx(null);
+        await loadData();
+      } catch (err: any) {
+        console.error("Gagal menghapus transaksi di Supabase:", err);
+        toast.error("Gagal menghapus transaksi: " + (err.message || err));
+      }
+    } else {
+      toast.error("Supabase tidak tersambung. Aksi dibatalkan.");
+    }
+    setDeleteLoading(false);
   };
 
   // Filtered transactions
@@ -387,8 +369,18 @@ export function TransactionsList() {
                     <TableCell className="hidden md:table-cell max-w-[200px] text-xs text-muted-foreground truncate">
                       {tx.address}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground font-medium">
-                      {tx.payment_method}
+                    <TableCell className="text-xs font-medium">
+                      <div className="text-muted-foreground">{tx.payment_method}</div>
+                      {tx.receipt_url && (
+                        <a 
+                          href={tx.receipt_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[10px] text-emerald-500 hover:text-emerald-400 font-bold block mt-1 transition-colors"
+                        >
+                          Lihat Bukti Transfer ↗
+                        </a>
+                      )}
                     </TableCell>
                     <TableCell className="font-medium text-sm tabular-nums">
                       Rp {tx.total_amount.toLocaleString("id-ID")}
@@ -405,22 +397,34 @@ export function TransactionsList() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Diproses")}>
-                            <TrendingUp className="size-4 mr-2 text-blue-500" />
-                            Tandai Diproses
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Selesai")}>
-                            <CheckCircle2 className="size-4 mr-2 text-emerald-500" />
-                            Tandai Selesai
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Dibatalkan")}>
-                            <Ban className="size-4 mr-2 text-rose-500" />
-                            Tandai Batal / Reject
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
+                          {tx.status !== "Selesai" && tx.status !== "Dibatalkan" && (
+                            <>
+                              <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Diproses")}>
+                                <TrendingUp className="size-4 mr-2 text-blue-500" />
+                                Tandai Diproses
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Selesai")}>
+                                <CheckCircle2 className="size-4 mr-2 text-emerald-500" />
+                                Tandai Selesai
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Dibatalkan")}>
+                                <Ban className="size-4 mr-2 text-rose-500" />
+                                Tandai Batal / Reject
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
                           <DropdownMenuItem onClick={() => handleWhatsAppContact(tx)} className="text-emerald-600 hover:text-emerald-600 focus:text-emerald-600 cursor-pointer">
                             <MessageSquare className="size-4 mr-2 text-emerald-500" />
                             Hubungi WhatsApp
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => handleDeleteClick(tx)} 
+                            className="text-rose-600 hover:text-rose-600 focus:text-rose-600 cursor-pointer"
+                          >
+                            <Trash2 className="size-4 mr-2 text-rose-500" />
+                            Hapus Transaksi
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -432,6 +436,54 @@ export function TransactionsList() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent className="max-w-[400px] border-border/80">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold flex items-center gap-2 text-rose-500">
+              <AlertTriangle className="size-4 shrink-0" />
+              Hapus Data Transaksi?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1.5 leading-relaxed">
+              Tindakan ini akan menghapus data transaksi pembeli{" "}
+              <strong className="text-foreground font-semibold">
+                {deletingTx?.customer_name}
+              </strong>{" "}
+              sebesar{" "}
+              <strong className="text-[#6e3ff3] font-bold">
+                Rp {deletingTx?.total_amount.toLocaleString("id-ID")}
+              </strong>{" "}
+              secara permanen dari database. Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row justify-end gap-2.5 pt-4 border-t mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={deleteLoading}
+              onClick={() => setIsDeleteOpen(false)}
+              className="h-8 text-xs font-semibold px-3 py-1"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleteLoading}
+              onClick={handleConfirmDelete}
+              className="h-8 text-xs font-semibold px-3.5 py-1 gap-1.5"
+            >
+              {deleteLoading ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Trash2 className="size-3" />
+              )}
+              {deleteLoading ? "Menghapus..." : "Hapus Permanen"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

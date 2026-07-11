@@ -51,15 +51,8 @@ export function StatsCards() {
         if (oError) throw oError;
         transactionsList = oData || [];
       } catch (err) {
-        console.warn("Failed to fetch stats from Supabase, fallback to localStorage:", err);
-        const { localProducts, localTransactions } = loadLocalStorage();
-        productsList = localProducts;
-        transactionsList = localTransactions;
+        console.error("Failed to fetch stats from Supabase:", err);
       }
-    } else {
-      const { localProducts, localTransactions } = loadLocalStorage();
-      productsList = localProducts;
-      transactionsList = localTransactions;
     }
 
     // Calculate metrics
@@ -79,19 +72,6 @@ export function StatsCards() {
     });
     setLoading(false);
   }, []);
-
-  const loadLocalStorage = () => {
-    let localProducts: Product[] = [];
-    let localTransactions: Transaction[] = [];
-
-    const products = localStorage.getItem("berakit_products");
-    if (products) localProducts = JSON.parse(products);
-
-    const transactions = localStorage.getItem("berakit_transactions");
-    if (transactions) localTransactions = JSON.parse(transactions);
-
-    return { localProducts, localTransactions };
-  };
 
   React.useEffect(() => {
     loadStats();

@@ -90,7 +90,10 @@ export function SettingsPanel() {
   // Database tools state
   const [dbLoading, setDbLoading] = React.useState(false);
   const [dbMessage, setDbMessage] = React.useState<{ text: string; type: "success" | "error" | "" }>({ text: "", type: "" });
-  const [isUsingSupabase, setIsUsingSupabase] = React.useState(false);
+  const [isUsingSupabase, setIsUsingSupabase] = React.useState(!!supabase);
+
+  // Sync edit state with store changes
+  const [uploading, setUploading] = React.useState(false);
 
   // Sync edit state with store changes
   React.useEffect(() => {
@@ -99,16 +102,69 @@ export function SettingsPanel() {
     setProfileAvatar(adminAvatar);
   }, [adminName, adminEmail, adminAvatar]);
 
+  // Load settings and profile from Supabase on mount
+  const loadSupabaseSettings = React.useCallback(async () => {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from("settings")
+        .select("*")
+        .eq("id", "bumdes_config")
+        .single();
+      
+      if (error) {
+        console.warn("Could not load settings from Supabase, table might not be created yet:", error.message);
+        return;
+      }
+
+      if (data) {
+        const loadedSettings: BumdesSettings = {
+          name: data.name || DEFAULT_SETTINGS.name,
+          email: data.email || DEFAULT_SETTINGS.email,
+          phone: data.phone || DEFAULT_SETTINGS.phone,
+          address: data.address || DEFAULT_SETTINGS.address,
+          enableCod: data.enable_cod ?? DEFAULT_SETTINGS.enableCod,
+          enableBankTransfer: data.enable_bank_transfer ?? DEFAULT_SETTINGS.enableBankTransfer,
+          bankName: data.bank_name || DEFAULT_SETTINGS.bankName,
+          accountNumber: data.account_number || DEFAULT_SETTINGS.accountNumber,
+          accountHolder: data.account_holder || DEFAULT_SETTINGS.accountHolder,
+          flatShippingRate: Number(data.flat_shipping_rate) ?? DEFAULT_SETTINGS.flatShippingRate,
+          minFreeShipping: Number(data.min_free_shipping) ?? DEFAULT_SETTINGS.minFreeShipping,
+        };
+        setSettings(loadedSettings);
+        localStorage.setItem("berakit_settings", JSON.stringify(loadedSettings));
+
+        const loadedProfile = {
+          name: data.admin_name || adminName,
+          email: data.admin_email || adminEmail,
+          avatar: data.admin_avatar || adminAvatar,
+        };
+        setAdminProfile(loadedProfile);
+        localStorage.setItem("berakit_admin_profile", JSON.stringify(loadedProfile));
+
+        setProfileName(loadedProfile.name);
+        setProfileEmail(loadedProfile.email);
+        setProfileAvatar(loadedProfile.avatar);
+      }
+    } catch (err) {
+      console.warn("Error loading settings from Supabase:", err);
+    }
+  }, [adminName, adminEmail, adminAvatar, setAdminProfile]);
+
   React.useEffect(() => {
     setIsUsingSupabase(!!supabase);
-    // Load BUMDes settings from localStorage if exist
+    
+    // Load local storage first
     const local = localStorage.getItem("berakit_settings");
     if (local) {
       setSettings(JSON.parse(local));
     } else {
       localStorage.setItem("berakit_settings", JSON.stringify(DEFAULT_SETTINGS));
     }
-  }, []);
+
+    // Try loading from Supabase
+    loadSupabaseSettings();
+  }, [loadSupabaseSettings]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,23 +185,6 @@ export function SettingsPanel() {
         `Mengubah nama profil admin menjadi '${profileName}' dan email menjadi '${profileEmail}'`,
         "settings"
       );
-
-      // Persist to Supabase database (Auth User Metadata) if active
-      if (isUsingSupabase && supabase) {
-        try {
-          const { error: authError } = await supabase.auth.updateUser({
-            data: {
-              full_name: profileName,
-              avatar_url: profileAvatar,
-            },
-          });
-          if (authError) {
-            console.error("Failed to update user profile in Supabase:", authError.message);
-          }
-        } catch (err) {
-          console.error("Error updating profile in Supabase:", err);
-        }
-      }
     } else {
       // Save BUMDes cooperative configurations
       localStorage.setItem("berakit_settings", JSON.stringify(settings));
@@ -161,6 +200,38 @@ export function SettingsPanel() {
       );
     }
 
+    // Persist all settings and profile details to Supabase settings table
+    if (isUsingSupabase && supabase) {
+      try {
+        const { error } = await supabase
+          .from("settings")
+          .upsert({
+            id: "bumdes_config",
+            name: settings.name,
+            email: settings.email,
+            phone: settings.phone,
+            address: settings.address,
+            enable_cod: settings.enableCod,
+            enable_bank_transfer: settings.enableBankTransfer,
+            bank_name: settings.bankName,
+            account_number: settings.accountNumber,
+            account_holder: settings.accountHolder,
+            flat_shipping_rate: settings.flatShippingRate,
+            min_free_shipping: settings.minFreeShipping,
+            admin_name: profileName,
+            admin_email: profileEmail,
+            admin_avatar: profileAvatar,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (error) {
+          console.warn("Failed to persist settings in Supabase:", error.message);
+        }
+      } catch (err) {
+        console.warn("Error persisting settings in Supabase:", err);
+      }
+    }
+
     // Simulate network delay
     await new Promise((r) => setTimeout(r, 600));
 
@@ -173,16 +244,39 @@ export function SettingsPanel() {
     }, 3000);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          setProfileAvatar(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > 1024 * 1024) {
+      toast.error("Ukuran file tidak boleh melebihi 1MB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `admin-avatar-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      // Upload directly to the existing public "gallery" bucket
+      const { error: uploadError } = await supabase.storage
+        .from("gallery")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("gallery")
+        .getPublicUrl(filePath);
+
+      setProfileAvatar(publicUrl);
+      toast.success("Foto profil berhasil diunggah ke Supabase Storage!");
+    } catch (err: any) {
+      console.error("Gagal mengunggah foto profil:", err);
+      toast.error("Gagal mengunggah foto: " + (err.message || err));
+    } finally {
+      setUploading(false);
     }
   };
 

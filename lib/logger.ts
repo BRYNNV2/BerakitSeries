@@ -2,7 +2,7 @@ export interface ActivityLog {
   id: string;
   action: string;
   details: string;
-  type: "product" | "transaction" | "settings" | "system";
+  type: "product" | "transaction" | "settings" | "system" | "gallery";
   timestamp: string;
   adminName: string;
 }
@@ -60,7 +60,7 @@ export const getActivityLogs = (): ActivityLog[] => {
 export const addActivityLog = (
   action: string,
   details: string,
-  type: "product" | "transaction" | "settings" | "system"
+  type: "product" | "transaction" | "settings" | "system" | "gallery"
 ): void => {
   if (typeof window === "undefined") return;
   const logs = getActivityLogs();

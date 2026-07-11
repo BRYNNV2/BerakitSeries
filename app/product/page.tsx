@@ -118,6 +118,8 @@ export default function ProductListingPage() {
   const [customerPhone, setCustomerPhone] = React.useState("");
   const [customerAddress, setCustomerAddress] = React.useState("");
   const [paymentMethod, setPaymentMethod] = React.useState("COD");
+  const [receiptFile, setReceiptFile] = React.useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = React.useState(false);
   const [lastCreatedOrderId, setLastCreatedOrderId] = React.useState("");
@@ -127,6 +129,7 @@ export default function ProductListingPage() {
   const titleSectionRef = React.useRef<HTMLDivElement>(null);
   const filterBarRef = React.useRef<HTMLDivElement>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
+  const hasAnimated = React.useRef(false);
 
   // Fetch products with SWR (Stale-While-Revalidate) Cache Optimization
   const fetchProducts = React.useCallback(async () => {
@@ -235,38 +238,23 @@ export default function ProductListingPage() {
     localStorage.setItem("berakit_cart", JSON.stringify(newCart));
   };
 
-  // GSAP Entry Animations
+  // GSAP Entry Animations — runs only once on initial data load
   React.useEffect(() => {
-    if (!loading && products.length > 0) {
-      const ctx = gsap.context(() => {
-        // Fade in header
-        gsap.fromTo(
-          headerRef.current,
-          { y: -20, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.6, ease: "power2.out" }
-        );
+    if (!loading && products.length > 0 && !hasAnimated.current) {
+      hasAnimated.current = true;
 
-        // Title and filters reveal
-        gsap.fromTo(
-          titleSectionRef.current,
-          { y: 30, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.6, delay: 0.1, ease: "power2.out" }
-        );
+      // Set initial hidden states via GSAP (not React inline styles)
+      gsap.set(headerRef.current, { y: -20, opacity: 0 });
+      gsap.set(titleSectionRef.current, { y: 30, opacity: 0 });
+      gsap.set(filterBarRef.current, { y: 20, opacity: 0 });
+      gsap.set(".product-card-animate", { y: 40, opacity: 0 });
 
-        gsap.fromTo(
-          filterBarRef.current,
-          { y: 20, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.6, delay: 0.2, ease: "power2.out" }
-        );
-
-        // Grid cards staggered reveal
-        gsap.fromTo(
-          ".product-card-animate",
-          { y: 40, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.6, delay: 0.3, stagger: 0.08, ease: "power2.out" }
-        );
-      });
-      return () => ctx.revert();
+      // Animate in — no clearProps on layout elements so opacity:1 persists through re-renders
+      gsap.to(headerRef.current, { y: 0, opacity: 1, duration: 0.6, ease: "power2.out" });
+      gsap.to(titleSectionRef.current, { y: 0, opacity: 1, duration: 0.6, delay: 0.1, ease: "power2.out" });
+      gsap.to(filterBarRef.current, { y: 0, opacity: 1, duration: 0.6, delay: 0.2, ease: "power2.out" });
+      // Cards keep clearProps so hover transforms are unaffected
+      gsap.to(".product-card-animate", { y: 0, opacity: 1, duration: 0.6, delay: 0.3, stagger: 0.08, ease: "power2.out", clearProps: "transform" });
     }
   }, [loading, products]);
 
@@ -353,16 +341,48 @@ export default function ProductListingPage() {
       return;
     }
 
+    if (paymentMethod === "Transfer" && !receiptFile) {
+      toast.error("Harap unggah bukti transfer pembayaran Anda");
+      return;
+    }
+
     setIsSubmitting(true);
     const orderId = `BRKT-${Date.now().toString().slice(-6)}`;
 
-    // Structure transaction object
+    let finalReceiptUrl = null;
+    if (paymentMethod === "Transfer" && receiptFile && supabase) {
+      try {
+        const fileExt = receiptFile.name.split(".").pop();
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("receipts")
+          .upload(filePath, receiptFile, {
+            cacheControl: "3600",
+            upsert: false,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("receipts")
+          .getPublicUrl(filePath);
+        finalReceiptUrl = publicUrl;
+      } catch (err: any) {
+        console.error("Gagal mengunggah bukti transfer ke Supabase:", err);
+        toast.error(`Gagal mengunggah bukti transfer: ${err.message || err}`);
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    // Structure transaction object matching public.orders schema
     const orderData = {
-      order_id: orderId,
       customer_name: customerName,
       customer_phone: customerPhone,
-      customer_address: customerAddress,
-      payment_method: paymentMethod,
+      address: customerAddress,
+      payment_method: paymentMethod === "Transfer" ? "Transfer Bank" : "COD",
       items: cart.map((item) => ({
         product_id: item.product.id,
         name: item.product.name,
@@ -371,13 +391,17 @@ export default function ProductListingPage() {
       })),
       total_amount: cartSubtotal,
       status: "Pending",
+      receipt_url: finalReceiptUrl,
       created_at: new Date().toISOString(),
     };
 
     if (supabase) {
       try {
-        // Insert into sales transactions
-        const { error } = await supabase.from("sales").insert([orderData]);
+        // Insert into orders table
+        const { data, error } = await supabase
+          .from("orders")
+          .insert([orderData])
+          .select();
         if (error) throw error;
 
         // Deduct stocks in Supabase
@@ -386,45 +410,20 @@ export default function ProductListingPage() {
           await supabase.from("products").update({ stock: newStock }).eq("id", item.product.id);
         }
 
-        setLastCreatedOrderId(orderId);
+        const insertedId = data && data[0] ? data[0].id : orderId;
+        setLastCreatedOrderId(insertedId);
         setCheckoutSuccess(true);
         updateCart([]); // Clear cart
-      } catch (err) {
-        console.error("Supabase checkout failed, fallback to local:", err);
-        saveLocalOrder(orderData);
+      } catch (err: any) {
+        console.error("Supabase checkout failed:", err);
+        toast.error(`Gagal membuat pesanan: ${err.message || err}`);
       } finally {
         setIsSubmitting(false);
       }
     } else {
-      // Local fallback checkout
-      saveLocalOrder(orderData);
+      toast.error("Supabase belum terkonfigurasi. Tidak dapat memproses pesanan.");
       setIsSubmitting(false);
     }
-  };
-
-  const saveLocalOrder = (orderData: any) => {
-    const localOrders = localStorage.getItem("berakit_orders");
-    const currentOrders = localOrders ? JSON.parse(localOrders) : [];
-    localStorage.setItem("berakit_orders", JSON.stringify([orderData, ...currentOrders]));
-
-    // Deduct stocks in LocalStorage products
-    const localProducts = localStorage.getItem("berakit_products");
-    if (localProducts) {
-      const parsedProds = JSON.parse(localProducts) as Product[];
-      const updatedProds = parsedProds.map((prod) => {
-        const cartItem = cart.find((item) => item.product.id === prod.id);
-        if (cartItem) {
-          return { ...prod, stock: Math.max(0, prod.stock - cartItem.quantity) };
-        }
-        return prod;
-      });
-      localStorage.setItem("berakit_products", JSON.stringify(updatedProds));
-      setProducts(updatedProds);
-    }
-
-    setLastCreatedOrderId(orderData.order_id);
-    setCheckoutSuccess(true);
-    updateCart([]); // Clear cart
   };
 
   const handleCheckoutClose = () => {
@@ -433,6 +432,9 @@ export default function ProductListingPage() {
     setCustomerName("");
     setCustomerPhone("");
     setCustomerAddress("");
+    setPaymentMethod("COD");
+    setReceiptFile(null);
+    setReceiptPreview(null);
     fetchProducts(); // Refresh products with updated stocks
   };
 
@@ -460,6 +462,7 @@ export default function ProductListingPage() {
             {[
               { label: "Collections", href: "/product" },
               { label: "New Arrivals", href: "/#katalog" },
+              { label: "Gallery", href: "/gallery" },
               { label: "Why Us", href: "/#profil" },
               { label: "News Letter", href: "/#hubungi-kami" },
             ].map((link, idx) => (
@@ -556,6 +559,7 @@ export default function ProductListingPage() {
               {[
                 { label: "Collections", href: "/product" },
                 { label: "New Arrivals", href: "/#katalog" },
+                { label: "Gallery", href: "/gallery" },
                 { label: "Why Us", href: "/#profil" },
                 { label: "News Letter", href: "/#hubungi-kami" },
               ].map((link, idx) => (
@@ -596,13 +600,13 @@ export default function ProductListingPage() {
         <div ref={titleSectionRef} className="space-y-1 mb-8 text-left">
           <span 
             className="text-[11px] font-bold tracking-widest text-[#94a3b8] uppercase block"
-            style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+            style={{ fontFamily: "var(--font-sans), system-ui, sans-serif" }}
           >
             THE ARCHIVE
           </span>
           <h1 
             className="uppercase tracking-tight text-black text-4xl sm:text-5xl lg:text-6xl font-black leading-none"
-            style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+            style={{ fontFamily: "var(--font-oswald), sans-serif" }}
           >
             EXPLORE COLLECTION<span className="text-[#bef264]">.</span>
           </h1>
@@ -750,7 +754,7 @@ export default function ProductListingPage() {
             </Button>
           </div>
         ) : (
-          <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-10">
+          <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6 sm:gap-x-6 sm:gap-y-10">
             {filteredProducts.map((product) => (
               <div 
                 key={product.id} 
@@ -760,11 +764,11 @@ export default function ProductListingPage() {
                   setIsQuickViewOpen(true);
                 }}
               >
-                {/* Product Card Image Container (white bg, rounded, badge) */}
-                <div className="relative aspect-[4/5] bg-zinc-100 border border-zinc-200/80 rounded-[28px] overflow-hidden flex items-center justify-center shadow-xs transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:shadow-lg group-hover:shadow-zinc-200/50 group-hover:border-zinc-300">
+                {/* Product Card Image Container */}
+                <div className="relative aspect-[4/5] bg-zinc-100 border border-zinc-200/80 rounded-2xl sm:rounded-[28px] overflow-hidden flex items-center justify-center shadow-xs transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:shadow-lg group-hover:shadow-zinc-200/50 group-hover:border-zinc-300">
                   {/* Featured Badge */}
-                  <div className="absolute top-5 left-5 z-10">
-                    <Badge className="bg-[#bef264] hover:bg-[#bef264] text-black font-bold uppercase tracking-widest text-[9px] px-3 py-1 rounded-full border-none shadow-none">
+                  <div className="absolute top-2.5 left-2.5 sm:top-5 sm:left-5 z-10">
+                    <Badge className="bg-[#bef264] hover:bg-[#bef264] text-black font-bold uppercase tracking-widest text-[7px] sm:text-[9px] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border-none shadow-none">
                       FEATURED
                     </Badge>
                   </div>
@@ -777,8 +781,8 @@ export default function ProductListingPage() {
                     className="w-full h-full object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                   />
                   
-                  {/* Smooth Quick View button pop-up (exactly matching reference image) */}
-                  <div className="absolute inset-0 bg-black/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] flex items-end justify-center pb-6">
+                  {/* Quick View button — hidden on mobile tap-first UX, shown on hover desktop */}
+                  <div className="absolute inset-0 bg-black/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] hidden sm:flex items-end justify-center pb-6">
                     <div 
                       onClick={(e) => {
                         e.stopPropagation();
@@ -793,20 +797,20 @@ export default function ProductListingPage() {
                   </div>
                 </div>
 
-                {/* Info Under Card (Title & Price left/right align, Category sub) */}
-                <div className="mt-4 flex flex-col text-left">
-                  <div className="flex justify-between items-start gap-4">
+                {/* Info Under Card */}
+                <div className="mt-2.5 sm:mt-4 flex flex-col text-left">
+                  <div className="flex justify-between items-start gap-1 sm:gap-4">
                     <span 
-                      className="font-bold text-base text-zinc-900 uppercase tracking-tight line-clamp-1 group-hover:text-black transition-colors"
+                      className="font-bold text-[11px] sm:text-base text-zinc-900 uppercase tracking-tight line-clamp-2 sm:line-clamp-1 group-hover:text-black transition-colors leading-tight"
                       style={{ fontFamily: "'Inter', sans-serif" }}
                     >
                       {product.name}
                     </span>
-                    <span className="font-bold text-base text-zinc-900 whitespace-nowrap">
+                    <span className="font-bold text-[10px] sm:text-base text-zinc-900 whitespace-nowrap shrink-0">
                       Rp {product.price.toLocaleString("id-ID")}
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mt-1.5 font-mono">
+                  <span className="text-[9px] sm:text-[11px] font-bold text-zinc-400 uppercase tracking-wider mt-1 font-mono">
                     {product.category}
                   </span>
                 </div>
@@ -1214,6 +1218,104 @@ export default function ProductListingPage() {
                     </button>
                   </div>
                 </div>
+
+                {/* Bank Details & Proof of Transfer (If Transfer selected) */}
+                {paymentMethod === "Transfer" && (
+                  <div className="space-y-4 pt-2 border-t border-zinc-800 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Rekening Tujuan Transfer</span>
+                      
+                      {/* Bank 1 */}
+                      <div className="flex items-center justify-between text-xs py-1 border-b border-zinc-800/50">
+                        <div>
+                          <div className="font-extrabold text-zinc-300">BANK BRI</div>
+                          <div className="text-[10px] text-zinc-500 font-mono mt-0.5">0033-01-001234-56-7</div>
+                          <div className="text-[10px] text-zinc-400">a.n BUMDes Berakit Maju</div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-[10px] text-[#bef264] hover:text-[#bef264] hover:bg-[#bef264]/10 rounded-lg px-2 border-none"
+                          onClick={() => {
+                            navigator.clipboard.writeText("003301001234567");
+                            toast.success("Nomor rekening BRI disalin!");
+                          }}
+                        >
+                          Salin
+                        </Button>
+                      </div>
+
+                      {/* Bank 2 */}
+                      <div className="flex items-center justify-between text-xs py-1">
+                        <div>
+                          <div className="font-extrabold text-zinc-300">BANK RIAU KEPRI SYARIAH</div>
+                          <div className="text-[10px] text-zinc-500 font-mono mt-0.5">109-20-12345</div>
+                          <div className="text-[10px] text-zinc-400">a.n BUMDes Berakit Maju</div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-[10px] text-[#bef264] hover:text-[#bef264] hover:bg-[#bef264]/10 rounded-lg px-2 border-none"
+                          onClick={() => {
+                            navigator.clipboard.writeText("1092012345");
+                            toast.success("Nomor rekening Riau Kepri disalin!");
+                          }}
+                        >
+                          Salin
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Bukti Transfer Upload */}
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Unggah Bukti Transfer (Wajib)</label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          required
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setReceiptFile(file);
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setReceiptPreview(reader.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="hidden"
+                          id="receipt-upload"
+                        />
+                        <label
+                          htmlFor="receipt-upload"
+                          className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/50 rounded-2xl p-4 cursor-pointer hover:bg-zinc-900 transition-all text-center gap-1.5"
+                        >
+                          {receiptPreview ? (
+                            <div className="space-y-2">
+                              <img src={receiptPreview} className="max-h-24 object-contain rounded-lg mx-auto" alt="Preview" />
+                              <span className="text-[10px] text-zinc-400 font-mono block truncate max-w-[200px]">
+                                {receiptFile?.name}
+                              </span>
+                              <span className="text-[10px] text-[#bef264] font-extrabold uppercase tracking-wider block">Ganti Bukti</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="size-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 mx-auto">
+                                <Plus className="size-4" />
+                              </div>
+                              <span className="text-xs text-zinc-300 font-bold">Pilih Gambar Bukti Transfer</span>
+                              <span className="text-[10px] text-zinc-500">Maks. 5MB (Format: JPG, PNG, WEBP)</span>
+                            </>
+                          )}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Submit Buttons */}

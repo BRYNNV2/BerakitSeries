@@ -51,18 +51,18 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 
 // Fallback template values to ensure UI looks beautiful even when no orders exist yet
 const BASE_MOCK_DATA = [
-  { month: "Jan", thisYear: 120000, prevYear: 110000 },
-  { month: "Feb", thisYear: 180000, prevYear: 140000 },
-  { month: "Mar", thisYear: 250000, prevYear: 190000 },
-  { month: "Apr", thisYear: 310000, prevYear: 220000 },
-  { month: "May", thisYear: 450000, prevYear: 300000 },
-  { month: "Jun", thisYear: 520000, prevYear: 380000 },
-  { month: "Jul", thisYear: 610000, prevYear: 420000 },
-  { month: "Aug", thisYear: 580000, prevYear: 450000 },
-  { month: "Sep", thisYear: 640000, prevYear: 490000 },
-  { month: "Oct", thisYear: 720000, prevYear: 510000 },
-  { month: "Nov", thisYear: 810000, prevYear: 580000 },
-  { month: "Dec", thisYear: 950000, prevYear: 620000 },
+  { month: "Jan", thisYear: 0, prevYear: 0 },
+  { month: "Feb", thisYear: 0, prevYear: 0 },
+  { month: "Mar", thisYear: 0, prevYear: 0 },
+  { month: "Apr", thisYear: 0, prevYear: 0 },
+  { month: "May", thisYear: 0, prevYear: 0 },
+  { month: "Jun", thisYear: 0, prevYear: 0 },
+  { month: "Jul", thisYear: 0, prevYear: 0 },
+  { month: "Aug", thisYear: 0, prevYear: 0 },
+  { month: "Sep", thisYear: 0, prevYear: 0 },
+  { month: "Oct", thisYear: 0, prevYear: 0 },
+  { month: "Nov", thisYear: 0, prevYear: 0 },
+  { month: "Dec", thisYear: 0, prevYear: 0 },
 ];
 
 function CustomTooltip({
@@ -136,14 +136,11 @@ export function RevenueFlowChart() {
         if (error) throw error;
         transactionsList = data || [];
       } catch (err) {
-        console.warn("Failed to load revenue data from Supabase, fallback to localStorage:", err);
-        transactionsList = loadLocalStorage();
+        console.error("Failed to load revenue data from Supabase:", err);
       }
-    } else {
-      transactionsList = loadLocalStorage();
     }
 
-    // Initialize 12 months with basic mock values as baseline, then overlay real calculations
+    // Initialize 12 months with basic values as baseline, then overlay real calculations
     const monthlyData = BASE_MOCK_DATA.map((item) => ({ ...item }));
 
     // Extract current year
@@ -177,14 +174,6 @@ export function RevenueFlowChart() {
     setChartData(last6Months);
     setLoading(false);
   }, []);
-
-  const loadLocalStorage = () => {
-    const transactions = localStorage.getItem("berakit_transactions");
-    if (transactions) {
-      return JSON.parse(transactions);
-    }
-    return [];
-  };
 
   React.useEffect(() => {
     loadData();

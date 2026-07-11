@@ -31,6 +31,7 @@ import {
   ChevronsUpDown,
   Store,
   History,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/dashboard-store";
 import { useRouter } from "next/navigation";
@@ -46,6 +47,11 @@ const menuItems = [
     title: "Produk Desa",
     icon: ShoppingBag,
     tab: "products" as const,
+  },
+  {
+    title: "Galeri Desa",
+    icon: ImageIcon,
+    tab: "gallery" as const,
   },
   {
     title: "Transaksi",

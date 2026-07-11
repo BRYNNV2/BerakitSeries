@@ -1048,6 +1048,7 @@ export default function StorefrontPage() {
             {[
               { label: "Collections", href: "/product" },
               { label: "New Arrivals", href: "/product" },
+              { label: "Gallery", href: "/gallery" },
               { label: "Why Us", href: "#profil" },
               { label: "News Letter", href: "#hubungi-kami" },
             ].map((link, idx) => (
@@ -1144,6 +1145,7 @@ export default function StorefrontPage() {
               {[
                 { label: "Collections", href: "/product" },
                 { label: "New Arrivals", href: "/product" },
+                { label: "Gallery", href: "/gallery" },
                 { label: "Why Us", href: "#profil" },
                 { label: "News Letter", href: "#hubungi-kami" },
               ].map((link, idx) => (
@@ -2158,27 +2160,24 @@ export default function StorefrontPage() {
                     COORDINATES
                   </span>
                   <h4 
-                    className="transition-colors duration-300 group-hover:text-black uppercase" 
+                    className="transition-colors duration-300 group-hover:text-black uppercase text-xl sm:text-2xl" 
                     style={{ 
                       fontFamily: "'Oswald', Impact, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 700,
-                      fontSize: "24px",
-                      lineHeight: "32px",
+                      lineHeight: "1.3",
                       color: "rgb(24, 24, 27)"
                     }}
                   >
                     BUMDES BERAKIT HQ
                   </h4>
                   <p 
-                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal max-w-sm" 
+                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal max-w-sm text-sm sm:text-base leading-relaxed" 
                     style={{ 
                       fontFamily: "'Inter', system-ui, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 400,
-                      color: "lab(48.496 0 0)",
-                      fontSize: "16px",
-                      lineHeight: "26px"
+                      color: "lab(48.496 0 0)"
                     }}
                   >
                     Jalan Bhatin Muhammad Ali, Gang Asiah No. 20, RT 06 / RW 03, Semelur Desa Berakit Kecamatan Teluk Sebong Kabupaten Bintan, Kepulauan Riau
@@ -2208,27 +2207,24 @@ export default function StorefrontPage() {
                     OFFLINE ACCESS
                   </span>
                   <h4 
-                    className="transition-colors duration-300 group-hover:text-black uppercase" 
+                    className="transition-colors duration-300 group-hover:text-black uppercase text-xl sm:text-2xl" 
                     style={{ 
                       fontFamily: "'Oswald', Impact, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 700,
-                      fontSize: "24px",
-                      lineHeight: "32px",
+                      lineHeight: "1.3",
                       color: "rgb(24, 24, 27)"
                     }}
                   >
                     08:00 - 17:00
                   </h4>
                   <p 
-                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal" 
+                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal text-sm sm:text-base leading-relaxed" 
                     style={{ 
                       fontFamily: "'Inter', system-ui, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 400,
-                      color: "lab(48.496 0 0)",
-                      fontSize: "16px",
-                      lineHeight: "26px"
+                      color: "lab(48.496 0 0)"
                     }}
                   >
                     Local Time / GMT+7
@@ -2258,27 +2254,24 @@ export default function StorefrontPage() {
                     DIGITAL COMM
                   </span>
                   <h4 
-                    className="transition-colors duration-300 group-hover:text-black uppercase" 
+                    className="transition-colors duration-300 group-hover:text-black uppercase text-xl sm:text-2xl break-all sm:break-normal" 
                     style={{ 
                       fontFamily: "'Oswald', Impact, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 700,
-                      fontSize: "24px",
-                      lineHeight: "32px",
+                      lineHeight: "1.3",
                       color: "rgb(24, 24, 27)"
                     }}
                   >
                     mfyansah@student.umrah.ac.id
                   </h4>
                   <p 
-                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal" 
+                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal text-sm sm:text-base leading-relaxed" 
                     style={{ 
                       fontFamily: "'Inter', system-ui, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 400,
-                      color: "lab(48.496 0 0)",
-                      fontSize: "16px",
-                      lineHeight: "26px"
+                      color: "lab(48.496 0 0)"
                     }}
                   >
                     24/7 Secure Contact Channel
@@ -2570,7 +2563,7 @@ export default function StorefrontPage() {
               className="text-xs text-zinc-600 font-semibold"
               style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
             >
-              Designed & Built by <span className="text-[#bef264] font-bold">ThisisAngelo</span>
+              Designed & Built by <span className="text-[#bef264] font-bold">BERAKIT SERIES</span>
             </span>
           </div>
         </div>

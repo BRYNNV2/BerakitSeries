@@ -31,79 +31,27 @@ export function RecentSales() {
     let dbProducts: Product[] = [];
     let dbOrders: any[] = [];
 
-    // 1. Fetch Products
     if (supabase) {
       try {
-        const { data, error } = await withTimeout(supabase.from("products").select("id, name, price, image_url, category").limit(4));
-        if (!error && data && data.length > 0) {
-          dbProducts = data;
+        // Fetch all products
+        const { data: pData, error: pError } = await withTimeout(
+          supabase.from("products").select("id, name, price, image_url, category")
+        );
+        if (!pError && pData) {
+          dbProducts = pData;
+        }
+
+        // Fetch all orders
+        const { data: oData, error: oError } = await withTimeout(
+          supabase.from("orders").select("items, status, created_at")
+        );
+        if (!oError && oData) {
+          dbOrders = oData;
         }
       } catch (err) {
-        console.warn("Supabase failed in RecentSales products fetch:", err);
+        console.error("Supabase failed in RecentSales load:", err);
       }
     }
-
-    // Fallback if Supabase is empty/fails
-    if (dbProducts.length === 0) {
-      const local = localStorage.getItem("berakit_products");
-      if (local) {
-        dbProducts = JSON.parse(local).slice(0, 4);
-      } else {
-        dbProducts = [
-          {
-            id: "prod-1",
-            name: "Batik Tulis Biota Laut",
-            price: 450000,
-            image_url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&auto=format&fit=crop&q=80",
-            category: "Batik Tulis",
-          },
-          {
-            id: "prod-2",
-            name: "Batik Cap Mangrove Berakit",
-            price: 195000,
-            image_url: "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=500&auto=format&fit=crop&q=80",
-            category: "Batik Cap",
-          },
-          {
-            id: "prod-3",
-            name: "Batik Kombinasi Semelur",
-            price: 295000,
-            image_url: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=500&auto=format&fit=crop&q=80",
-            category: "Batik Kombinasi",
-          },
-          {
-            id: "prod-4",
-            name: "Selendang Sutra Batik Berakit",
-            price: 150000,
-            image_url: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=80",
-            category: "Aksesoris",
-          },
-        ];
-      }
-    }
-
-    // 2. Fetch Orders
-    if (supabase) {
-      try {
-        const { data, error } = await withTimeout(supabase.from("orders").select("created_at, status").order("created_at", { ascending: false }));
-        if (!error && data) {
-          dbOrders = data;
-        }
-      } catch (err) {
-        console.warn("Supabase failed in RecentSales orders fetch:", err);
-      }
-    }
-
-    if (dbOrders.length === 0) {
-      const localOrders = localStorage.getItem("berakit_transactions");
-      if (localOrders) {
-        dbOrders = JSON.parse(localOrders);
-      }
-    }
-
-    // Sort orders for timestamps
-    const completedOrders = dbOrders.filter((o) => o.status === "Selesai");
-    const completedCount = completedOrders.length;
 
     // Helper for relative time
     const getRelativeTime = (dateStr: string) => {
@@ -129,33 +77,64 @@ export function RecentSales() {
       }
     };
 
-    const staticTimes = ["Baru", "2 hari lalu", "5 hari lalu", "1 minggu lalu"];
+    // Calculate actual sales counts and find last purchase times per product
+    const salesMap: Record<string, number> = {};
+    const lastPurchaseMap: Record<string, string> = {};
 
-    // Map to SalesItems with dynamic calculations
-    const mappedSales: SalesItem[] = dbProducts.map((p, idx) => {
-      // Calculate dynamic sales count based on order history and product ID seed
-      const seedId = p.id.replace(/\D/g, "");
-      const numericBase = seedId ? parseInt(seedId, 10) : p.name.length;
-      const baseSales = (numericBase % 45) + 8;
-      const dynamicCount = baseSales + (completedCount * 3);
+    dbOrders.forEach((order) => {
+      if (order.status === "Dibatalkan") return;
 
-      // Determine dynamic relative time from transaction history timestamps
-      let timeAgo = staticTimes[idx % staticTimes.length];
-      if (dbOrders[idx] && dbOrders[idx].created_at) {
-        timeAgo = getRelativeTime(dbOrders[idx].created_at);
+      let itemsArray: any[] = [];
+      if (typeof order.items === "string") {
+        try {
+          itemsArray = JSON.parse(order.items);
+        } catch (e) {
+          itemsArray = [];
+        }
+      } else if (Array.isArray(order.items)) {
+        itemsArray = order.items;
       }
+
+      itemsArray.forEach((item: any) => {
+        const pId = item.product_id || item.id;
+        if (pId) {
+          const qty = Number(item.quantity) || 1;
+          salesMap[pId] = (salesMap[pId] || 0) + qty;
+          
+          // Keep track of latest purchase time
+          if (order.created_at) {
+            const currentLast = lastPurchaseMap[pId];
+            if (!currentLast || new Date(order.created_at) > new Date(currentLast)) {
+              lastPurchaseMap[pId] = order.created_at;
+            }
+          }
+        }
+      });
+    });
+
+    // Map each product to its real sales item details
+    const mappedSales = dbProducts.map((p) => {
+      const totalSold = salesMap[p.id] || 0;
+      const lastTime = lastPurchaseMap[p.id];
+      const timeAgo = lastTime ? getRelativeTime(lastTime) : "Belum terjual";
 
       return {
         id: p.id,
         name: p.name,
         price: p.price,
         image_url: p.image_url,
-        salesCount: `${dynamicCount} terjual`,
+        salesCount: `${totalSold} terjual`,
         timeAgo,
+        _totalSold: totalSold,
       };
     });
 
-    setSales(mappedSales);
+    // Sort descending by totalSold and get top 4
+    const topSales = mappedSales
+      .sort((a, b) => b._totalSold - a._totalSold)
+      .slice(0, 4);
+
+    setSales(topSales);
     setLoading(false);
   }, []);
 

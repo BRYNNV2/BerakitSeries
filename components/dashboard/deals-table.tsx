@@ -43,51 +43,9 @@ interface Transaction {
   total_amount: number;
   status: "Pending" | "Diproses" | "Selesai" | "Dibatalkan";
   payment_method: string;
+  receipt_url?: string | null;
   created_at: string;
 }
-
-const DEFAULT_TRANSACTIONS: Transaction[] = [
-  {
-    id: "tx-1",
-    customer_name: "Budi Santoso",
-    customer_phone: "081234567890",
-    address: "Jl. Raya Berakit No. 12, Desa Berakit",
-    total_amount: 170000,
-    status: "Selesai",
-    payment_method: "Transfer Bank",
-    created_at: "2026-07-06T10:30:00Z",
-  },
-  {
-    id: "tx-2",
-    customer_name: "Siti Rahma",
-    customer_phone: "089876543210",
-    address: "RT 02 / RW 01, Dusun 2 Desa Berakit",
-    total_amount: 35000,
-    status: "Pending",
-    payment_method: "COD",
-    created_at: "2026-07-07T03:15:00Z",
-  },
-  {
-    id: "tx-3",
-    customer_name: "Andi Wijaya",
-    customer_phone: "085299887766",
-    address: "Penginapan Berakit Indah, RT 01",
-    total_amount: 250000,
-    status: "Diproses",
-    payment_method: "Transfer Bank",
-    created_at: "2026-07-07T05:40:00Z",
-  },
-  {
-    id: "tx-4",
-    customer_name: "Rina Kartika",
-    customer_phone: "087711223344",
-    address: "Kavling Nelayan, Desa Berakit",
-    total_amount: 65000,
-    status: "Dibatalkan",
-    payment_method: "COD",
-    created_at: "2026-07-05T08:20:00Z",
-  },
-];
 
 export function DealsTable() {
   const [orders, setOrders] = React.useState<Transaction[]>([]);
@@ -114,32 +72,23 @@ export function DealsTable() {
         setOrders(data || []);
         setIsUsingSupabase(true);
       } catch (err) {
-        console.warn("Supabase load failed in DealsTable, falling back to LocalStorage:", err);
-        loadLocalStorage();
+        console.error("Supabase load failed in DealsTable:", err);
+        setOrders([]);
+        setIsUsingSupabase(false);
       }
     } else {
-      loadLocalStorage();
+      setIsUsingSupabase(false);
+      setOrders([]);
     }
     setLoading(false);
   }, []);
-
-  const loadLocalStorage = () => {
-    setIsUsingSupabase(false);
-    const local = localStorage.getItem("berakit_transactions");
-    if (local) {
-      setOrders(JSON.parse(local).slice(0, 10));
-    } else {
-      localStorage.setItem("berakit_transactions", JSON.stringify(DEFAULT_TRANSACTIONS));
-      setOrders(DEFAULT_TRANSACTIONS.slice(0, 10));
-    }
-  };
 
   React.useEffect(() => {
     loadData();
   }, [loadData]);
 
   const handleUpdateStatus = async (id: string, newStatus: Transaction["status"]) => {
-    if (isUsingSupabase) {
+    if (isUsingSupabase && supabase) {
       try {
         const { error } = await supabase
           .from("orders")
@@ -154,21 +103,7 @@ export function DealsTable() {
         toast.error("Gagal memperbarui status transaksi.");
       }
     } else {
-      // Local fallbacks
-      const local = localStorage.getItem("berakit_transactions");
-      let allTx: Transaction[] = [];
-      if (local) {
-        allTx = JSON.parse(local);
-      } else {
-        allTx = DEFAULT_TRANSACTIONS;
-      }
-
-      const updated = allTx.map((t) =>
-        t.id === id ? { ...t, status: newStatus } : t
-      );
-      localStorage.setItem("berakit_transactions", JSON.stringify(updated));
-      setOrders(updated.slice(0, 10));
-      toast.success(`Status transaksi #${id} berhasil diubah menjadi '${newStatus}' (Lokal)`);
+      toast.error("Supabase tidak tersambung. Aksi dibatalkan.");
     }
   };
 
@@ -299,8 +234,18 @@ export function DealsTable() {
                   <TableCell className="hidden md:table-cell max-w-[200px] text-xs text-muted-foreground truncate">
                     {order.address}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground font-medium">
-                    {order.payment_method}
+                  <TableCell className="text-xs font-medium">
+                    <div className="text-muted-foreground">{order.payment_method}</div>
+                    {order.receipt_url && (
+                      <a 
+                        href={order.receipt_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-emerald-500 hover:text-emerald-400 font-bold block mt-1 transition-colors"
+                      >
+                        Lihat Bukti Transfer ↗
+                      </a>
+                    )}
                   </TableCell>
                   <TableCell className="font-medium text-xs sm:text-sm tabular-nums">
                     Rp {order.total_amount.toLocaleString("id-ID")}

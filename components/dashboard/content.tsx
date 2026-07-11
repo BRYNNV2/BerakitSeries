@@ -8,6 +8,7 @@ import { RevenueFlowChart } from "./revenue-flow-chart";
 import { DealsTable } from "./deals-table";
 import { RecentSales } from "./recent-sales";
 import { ProductsCrud } from "./products-crud";
+import { GalleryCrud } from "./gallery-crud";
 import { TransactionsList } from "./transactions-list";
 import { SettingsPanel } from "./settings-panel";
 import { ActivityLogs } from "./activity-logs";
@@ -17,36 +18,42 @@ export function DashboardContent() {
 
   return (
     <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6 bg-background w-full">
-      <div className={activeTab === "dashboard" ? "space-y-4 sm:space-y-6" : "hidden"}>
-        <WelcomeSection />
-        <StatsCards />
-        <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
-          <LeadSourcesChart />
-          <RevenueFlowChart />
-        </div>
-        <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
-          <div className="flex-1 xl:max-w-[65%] min-w-0">
-            <DealsTable />
+      {activeTab === "dashboard" && (
+        <div className="space-y-4 sm:space-y-6">
+          <WelcomeSection />
+          <StatsCards />
+          <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
+            <LeadSourcesChart />
+            <RevenueFlowChart />
           </div>
-          <div className="w-full xl:max-w-[35%] shrink-0 min-w-0">
-            <RecentSales />
+          <div className="flex flex-col xl:flex-row gap-4 sm:gap-6">
+            <div className="flex-1 xl:max-w-[65%] min-w-0">
+              <DealsTable />
+            </div>
+            <div className="w-full xl:max-w-[35%] shrink-0 min-w-0">
+              <RecentSales />
+            </div>
           </div>
         </div>
-      </div>
+      )}
       
-      <div className={activeTab === "products" ? "" : "hidden"}>
+      <div key="products-tab" className={activeTab === "products" ? "" : "hidden"}>
         <ProductsCrud />
       </div>
+
+      <div key="gallery-tab" className={activeTab === "gallery" ? "" : "hidden"}>
+        <GalleryCrud />
+      </div>
       
-      <div className={activeTab === "transactions" ? "" : "hidden"}>
+      <div key="transactions-tab" className={activeTab === "transactions" ? "" : "hidden"}>
         <TransactionsList />
       </div>
 
-      <div className={activeTab === "logs" ? "" : "hidden"}>
+      <div key="logs-tab" className={activeTab === "logs" ? "" : "hidden"}>
         <ActivityLogs />
       </div>
       
-      <div className={activeTab === "settings" ? "" : "hidden"}>
+      <div key="settings-tab" className={activeTab === "settings" ? "" : "hidden"}>
         <SettingsPanel />
       </div>
     </main>

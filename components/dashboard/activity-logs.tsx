@@ -14,6 +14,7 @@ import {
   Download,
   RefreshCw,
   User,
+  Image as ImageIcon,
 } from "lucide-react";
 import { getActivityLogs, clearActivityLogs, ActivityLog } from "@/lib/logger";
 import {
@@ -31,6 +32,11 @@ const logTypeConfig = {
     icon: ShoppingBag,
     color: "text-purple-500 bg-purple-500/10 border-purple-500/20",
     label: "Produk",
+  },
+  gallery: {
+    icon: ImageIcon,
+    color: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
+    label: "Galeri",
   },
   transaction: {
     icon: CreditCard,
@@ -194,6 +200,7 @@ export function ActivityLogs() {
           {[
             { id: "all", label: "Semua" },
             { id: "product", label: "Produk" },
+            { id: "gallery", label: "Galeri" },
             { id: "transaction", label: "Transaksi" },
             { id: "settings", label: "Pengaturan" },
             { id: "system", label: "Sistem" },

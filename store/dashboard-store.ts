@@ -1,8 +1,8 @@
 import { create } from "zustand";
 
 interface DashboardState {
-  activeTab: "dashboard" | "products" | "transactions" | "settings" | "logs";
-  setActiveTab: (tab: "dashboard" | "products" | "transactions" | "settings" | "logs") => void;
+  activeTab: "dashboard" | "products" | "transactions" | "settings" | "logs" | "gallery";
+  setActiveTab: (tab: "dashboard" | "products" | "transactions" | "settings" | "logs" | "gallery") => void;
   searchQuery: string;
   stageFilter: string;
   ownerFilter: string;

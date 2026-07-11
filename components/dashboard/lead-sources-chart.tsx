@@ -41,11 +41,8 @@ export function LeadSourcesChart() {
         if (error) throw error;
         productsList = pData || [];
       } catch (err) {
-        console.warn("Failed to load products for categories chart from Supabase, fallback to localStorage:", err);
-        productsList = loadLocalStorage();
+        console.error("Failed to load products for categories chart from Supabase:", err);
       }
-    } else {
-      productsList = loadLocalStorage();
     }
 
     // Process categories
@@ -74,14 +71,6 @@ export function LeadSourcesChart() {
     setData(chartData);
     setLoading(false);
   }, []);
-
-  const loadLocalStorage = () => {
-    const products = localStorage.getItem("berakit_products");
-    if (products) {
-      return JSON.parse(products);
-    }
-    return [];
-  };
 
   React.useEffect(() => {
     loadData();
