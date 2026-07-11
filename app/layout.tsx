@@ -23,8 +23,8 @@ const oswald = Oswald({
 });
 
 export const metadata: Metadata = {
-  title: "Dashboard - Cliento CRM",
-  description: "A modern CRM dashboard",
+  title: "BERAKIT SERIES",
+  description: "BUMDES Desa Berakit - Elevate Your Style in Every Reality.",
 };
 
 export default function RootLayout({
