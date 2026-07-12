@@ -158,6 +158,15 @@ export default function StorefrontPage() {
 
   // Initialize Lenis Smooth Scroll and sync with GSAP ScrollTrigger
   React.useEffect(() => {
+    // Skip Lenis smooth scroll on touch/mobile screens to preserve native momentum scroll and save CPU
+    const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0 || window.innerWidth < 1024;
+    if (isTouch) {
+      ScrollTrigger.addEventListener("refresh", () => ScrollTrigger.update());
+      return () => {
+        ScrollTrigger.removeEventListener("refresh", () => ScrollTrigger.update());
+      };
+    }
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -413,6 +422,9 @@ export default function StorefrontPage() {
   }, [loadStoreData]);
 
   React.useEffect(() => {
+    // Skip CPU-heavy canvas background removal on mobile to prevent freeze/lag on load
+    if (window.innerWidth < 1024) return;
+
     const img = new Image();
     img.src = "/batik-center.png";
     img.crossOrigin = "anonymous";
@@ -562,21 +574,23 @@ export default function StorefrontPage() {
       "-=0.4"
     );
 
-    // 8. Scroll exit animation (starts after reveal is complete)
-    tl.add(() => {
-      gsap.to(".hero-centerpiece", {
-        scale: 0.85,
-        opacity: 0,
-        y: -80,
-        scrollTrigger: {
-          trigger: "#hero-section",
-          start: "top top",
-          end: "bottom 30%",
-          scrub: true,
-          invalidateOnRefresh: true
-        }
+    // 8. Scroll exit animation (starts after reveal is complete — skip on mobile for performance)
+    if (window.innerWidth >= 1024) {
+      tl.add(() => {
+        gsap.to(".hero-centerpiece", {
+          scale: 0.85,
+          opacity: 0,
+          y: -80,
+          scrollTrigger: {
+            trigger: "#hero-section",
+            start: "top top",
+            end: "bottom 30%",
+            scrub: true,
+            invalidateOnRefresh: true
+          }
+        });
       });
-    });
+    }
 
     // 8. Collections ScrollTrigger Animation
     gsap.fromTo(
@@ -594,7 +608,7 @@ export default function StorefrontPage() {
         scrollTrigger: {
           trigger: "#collections-section",
           start: "top 82%",
-          toggleActions: "play reverse play reverse"
+          toggleActions: "play none none none"
         }
       }
     );
@@ -604,7 +618,7 @@ export default function StorefrontPage() {
       scrollTrigger: {
         trigger: "#difference-section",
         start: "top 80%",
-        toggleActions: "play reverse play reverse"
+        toggleActions: "play none none none"
       }
     });
 
@@ -686,7 +700,7 @@ export default function StorefrontPage() {
           scrollTrigger: {
             trigger: "#voices-section",
             start: "top 80%",
-            toggleActions: "play reverse play reverse"
+            toggleActions: "play none none none"
           }
         }
       );
@@ -709,7 +723,7 @@ export default function StorefrontPage() {
           scrollTrigger: {
             trigger: "#voices-section",
             start: "top 80%",
-            toggleActions: "play reverse play reverse"
+            toggleActions: "play none none none"
           }
         }
       );
@@ -728,7 +742,7 @@ export default function StorefrontPage() {
           scrollTrigger: {
             trigger: "#faq-section",
             start: "top 80%",
-            toggleActions: "play reverse play reverse"
+            toggleActions: "play none none none"
           }
         }
       );
@@ -748,7 +762,7 @@ export default function StorefrontPage() {
           scrollTrigger: {
             trigger: "#hub-section",
             start: "top 80%",
-            toggleActions: "play reverse play reverse"
+            toggleActions: "play none none none"
           }
         }
       );
@@ -769,7 +783,7 @@ export default function StorefrontPage() {
           scrollTrigger: {
             trigger: "#hub-section",
             start: "top 80%",
-            toggleActions: "play reverse play reverse"
+            toggleActions: "play none none none"
           }
         }
       );
@@ -811,7 +825,7 @@ export default function StorefrontPage() {
           scrollTrigger: {
             trigger: "#footer-section",
             start: "top 95%",
-            toggleActions: "play reverse play reverse"
+            toggleActions: "play none none none"
           }
         }
       );

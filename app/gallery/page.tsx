@@ -168,6 +168,15 @@ export default function GalleryPage() {
 
   // Lenis smooth scroll
   React.useEffect(() => {
+    // Skip Lenis smooth scroll on touch/mobile screens to preserve native momentum scroll and save CPU
+    const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0 || window.innerWidth < 1024;
+    if (isTouch) {
+      ScrollTrigger.addEventListener("refresh", () => ScrollTrigger.update());
+      return () => {
+        ScrollTrigger.removeEventListener("refresh", () => ScrollTrigger.update());
+      };
+    }
+
     const lenis = new Lenis({
       duration: 1.4,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
