@@ -17,6 +17,9 @@ interface DashboardState {
   adminEmail: string;
   adminAvatar: string;
   setAdminProfile: (profile: { name: string; email: string; avatar: string }) => void;
+  // Item highlighting
+  highlightItemId: string | null;
+  setHighlightItemId: (id: string | null) => void;
 }
 
 export const useDashboardStore = create<DashboardState>((set) => ({
@@ -45,5 +48,7 @@ export const useDashboardStore = create<DashboardState>((set) => ({
     adminEmail: profile.email,
     adminAvatar: profile.avatar,
   }),
+  highlightItemId: null,
+  setHighlightItemId: (id) => set({ highlightItemId: id }),
 }));
 

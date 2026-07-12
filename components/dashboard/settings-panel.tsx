@@ -106,6 +106,10 @@ export function SettingsPanel() {
   const loadSupabaseSettings = React.useCallback(async () => {
     if (!supabase) return;
     try {
+      // Get the logged in user's email from auth
+      const { data: userData } = await supabase.auth.getUser();
+      const currentLoggedInEmail = userData?.user?.email || adminEmail;
+
       const { data, error } = await supabase
         .from("settings")
         .select("*")
@@ -136,7 +140,7 @@ export function SettingsPanel() {
 
         const loadedProfile = {
           name: data.admin_name || adminName,
-          email: data.admin_email || adminEmail,
+          email: currentLoggedInEmail,
           avatar: data.admin_avatar || adminAvatar,
         };
         setAdminProfile(loadedProfile);
@@ -151,7 +155,12 @@ export function SettingsPanel() {
     }
   }, [adminName, adminEmail, adminAvatar, setAdminProfile]);
 
+  const hasLoadedRef = React.useRef(false);
+
   React.useEffect(() => {
+    if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
+
     setIsUsingSupabase(!!supabase);
     
     // Load local storage first
@@ -203,6 +212,14 @@ export function SettingsPanel() {
     // Persist all settings and profile details to Supabase settings table
     if (isUsingSupabase && supabase) {
       try {
+        // Also update the logged-in user metadata in Supabase Auth so it is permanently saved in Auth db
+        await supabase.auth.updateUser({
+          data: {
+            full_name: profileName,
+            avatar_url: profileAvatar,
+          }
+        });
+
         const { error } = await supabase
           .from("settings")
           .upsert({
@@ -433,6 +450,25 @@ export function SettingsPanel() {
     setDbLoading(false);
   };
 
+  const hasEnvCredentials = 
+    !!process.env.NEXT_PUBLIC_SUPABASE_URL && 
+    process.env.NEXT_PUBLIC_SUPABASE_URL !== "" && 
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== "your_supabase_anon_key_here";
+
+  const handleToggleDbMode = () => {
+    const nextMode = !isUsingSupabase;
+    if (nextMode) {
+      localStorage.removeItem("berakit_force_local_db");
+      toast.success("Beralih ke Database Supabase Cloud.");
+    } else {
+      localStorage.setItem("berakit_force_local_db", "true");
+      toast.success("Beralih ke Penyimpanan Lokal (LocalStorage).");
+    }
+    setTimeout(() => {
+      window.location.reload();
+    }, 800);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row gap-6">
@@ -485,18 +521,6 @@ export function SettingsPanel() {
           >
             <Truck className="size-4" />
             Tarif Ongkos Kirim
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSubTab("database")}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
-              activeSubTab === "database"
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-            }`}
-          >
-            <Database className="size-4" />
-            Pemeliharaan Data
           </button>
         </div>
 
@@ -785,140 +809,28 @@ export function SettingsPanel() {
               </div>
             )}
 
-            {/* SUBTAB 4: Database Maintenance Tools */}
-            {activeSubTab === "database" && (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-base font-semibold">Alat Pemeliharaan Database</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Kelola dan perbarui data contoh untuk keperluan presentasi atau migrasi.
-                  </p>
-                </div>
-
-                <div className="pt-2 space-y-4">
-                  <div className="flex items-center justify-between p-3.5 rounded-lg border bg-muted/20">
-                    <div className="space-y-0.5">
-                      <span className="text-xs font-semibold block">Tipe Database Terdeteksi</span>
-                      <span className="text-sm font-bold text-[#6e3ff3]">
-                        {isUsingSupabase ? "Supabase Cloud API" : "LocalStorage (Simulasi Web)"}
-                      </span>
-                    </div>
-                    <Badge variant={isUsingSupabase ? "default" : "secondary"}>
-                      {isUsingSupabase ? "Live Cloud" : "Offline Sandbox"}
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <div className="rounded-lg border p-4 space-y-3 flex flex-col justify-between">
-                      <div className="space-y-1">
-                        <span className="text-sm font-semibold block">Seed Data Awal</span>
-                        <span className="text-xs text-muted-foreground block">
-                          Masukkan 4 produk Melayu asli Berakit dan 4 transaksi penjualan contoh ke database Anda.
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={handleSeedDatabase}
-                        disabled={dbLoading}
-                        className="w-full h-9 text-xs sm:text-sm font-semibold gap-1.5"
-                      >
-                        {dbLoading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                        Masukkan Data Contoh
-                      </Button>
-                    </div>
-
-                    <div className="rounded-lg border border-rose-100 p-4 space-y-3 flex flex-col justify-between">
-                      <div className="space-y-1">
-                        <span className="text-sm font-semibold text-rose-500 block">Kosongkan Database</span>
-                        <span className="text-xs text-muted-foreground block">
-                          Hapus bersih semua data produk dan data transaksi dari database saat ini.
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        onClick={() => setIsWipeDialogOpen(true)}
-                        disabled={dbLoading}
-                        className="w-full h-9 text-xs sm:text-sm font-semibold gap-1.5"
-                      >
-                        {dbLoading ? <Loader2 className="size-4 animate-spin" /> : <AlertTriangle className="size-4" />}
-                        Kosongkan Seluruh Data
-                      </Button>
-                    </div>
-                  </div>
-
-                  {dbMessage.text && (
-                    <div
-                      className={`p-3 rounded-lg border text-xs sm:text-sm font-medium animate-in fade-in duration-200 ${
-                        dbMessage.type === "success"
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-600"
-                          : "border-rose-200 bg-rose-50 text-rose-600"
-                      }`}
-                    >
-                      {dbMessage.text}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Save Buttons Footer (visible on all tabs except database) */}
-            {activeSubTab !== "database" && (
-              <div className="flex items-center gap-3 pt-4 border-t">
-                <Button type="submit" disabled={loading} className="gap-2 h-9 sm:h-10 text-xs sm:text-sm">
-                  {loading ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : saveSuccess ? (
-                    <CheckCircle2 className="size-4 text-white" />
-                  ) : (
-                    <Save className="size-4" />
-                  )}
-                  {loading ? "Menyimpan..." : saveSuccess ? "Tersimpan!" : "Simpan Pengaturan"}
-                </Button>
-
-                {saveSuccess && (
-                  <span className="text-xs font-semibold text-emerald-500 animate-in fade-in duration-200">
-                    Konfigurasi berhasil disimpan!
-                  </span>
+            {/* Save Buttons Footer */}
+            <div className="flex items-center gap-3 pt-4 border-t">
+              <Button type="submit" disabled={loading} className="gap-2 h-9 sm:h-10 text-xs sm:text-sm">
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : saveSuccess ? (
+                  <CheckCircle2 className="size-4 text-white" />
+                ) : (
+                  <Save className="size-4" />
                 )}
-              </div>
-            )}
+                {loading ? "Menyimpan..." : saveSuccess ? "Tersimpan!" : "Simpan Pengaturan"}
+              </Button>
+
+              {saveSuccess && (
+                <span className="text-xs font-semibold text-emerald-500 animate-in fade-in duration-200">
+                  Konfigurasi berhasil disimpan!
+                </span>
+              )}
+            </div>
           </form>
         </div>
       </div>
-
-      {/* Wipe Confirmation Dialog */}
-      <Dialog open={isWipeDialogOpen} onOpenChange={setIsWipeDialogOpen}>
-        <DialogContent className="max-w-[400px] border-border/80">
-          <DialogHeader>
-            <DialogTitle className="text-sm font-bold flex items-center gap-2 text-rose-500">
-              <AlertTriangle className="h-4 w-4" />
-              Kosongkan Database BUMDes
-            </DialogTitle>
-            <DialogDescription className="text-xs mt-2 text-muted-foreground leading-relaxed">
-              Apakah Anda yakin ingin menghapus SEMUA data produk dan data pesanan? Tindakan ini bersifat permanen dan tidak dapat dibatalkan.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4 flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsWipeDialogOpen(false)}
-              className="text-xs"
-            >
-              Batal
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleClearDatabase}
-              className="text-xs"
-            >
-              Ya, Kosongkan Data
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

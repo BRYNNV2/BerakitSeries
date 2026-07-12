@@ -9,6 +9,8 @@ import { DashboardContent } from "@/components/dashboard/content";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { LoadingLottie } from "@/components/ui/loading-lottie";
 
+import { useDashboardStore } from "@/store/dashboard-store";
+
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -16,6 +18,25 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const checkUser = async () => {
+      // Sync user email to store from auth
+      if (supabase) {
+        try {
+          const userRes = await supabase.auth.getUser();
+          const user = userRes?.data?.user;
+          if (user?.email) {
+            const currentProfile = localStorage.getItem("berakit_admin_profile");
+            const parsed = currentProfile ? JSON.parse(currentProfile) : {};
+            useDashboardStore.getState().setAdminProfile({
+              name: parsed.name || "Admin BUMDes",
+              email: user.email,
+              avatar: parsed.avatar || "https://api.dicebear.com/9.x/glass/svg?seed=Berakit"
+            });
+          }
+        } catch (e) {
+          console.warn("Failed syncing user to store:", e);
+        }
+      }
+
       // Check local storage fallback first
       const localAuth = localStorage.getItem("berakit_admin_auth");
       if (localAuth === "true") {

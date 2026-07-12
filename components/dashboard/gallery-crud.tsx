@@ -39,7 +39,7 @@ import {
   X,
   Image as ImageIcon,
 } from "lucide-react";
-import { supabase, withTimeout } from "@/lib/supabase";
+import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
 import { LoadingLottie } from "@/components/ui/loading-lottie";
 import { toast } from "sonner";
@@ -95,12 +95,17 @@ const DEFAULT_GALLERY: GalleryItem[] = [
 
 const categories = ["Proses Pembuatan", "Produk", "Acara", "Komunitas"];
 
+import { useDashboardStore } from "@/store/dashboard-store";
+
 export function GalleryCrud() {
   const [gallery, setGallery] = React.useState<GalleryItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [showSpinner, setShowSpinner] = React.useState(false);
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(!!supabase);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const searchQuery = useDashboardStore((state) => state.searchQuery);
+  const setSearchQuery = useDashboardStore((state) => state.setSearchQuery);
+  const highlightItemId = useDashboardStore((state) => state.highlightItemId);
+  const setHighlightItemId = useDashboardStore((state) => state.setHighlightItemId);
   const [categoryFilter, setCategoryFilter] = React.useState("all");
 
   // Form Dialog States
@@ -154,7 +159,7 @@ export function GalleryCrud() {
         setGallery(data || []);
         setIsUsingSupabase(true);
       } catch (err: any) {
-        console.error("Supabase gallery fetch failed:", err);
+        handleSupabaseError("GalleryCrud.loadData", err);
         toast.error("Gagal memuat data dari Supabase. Periksa koneksi atau skema database.");
         setGallery([]);
         setIsUsingSupabase(false);
@@ -169,6 +174,25 @@ export function GalleryCrud() {
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  React.useEffect(() => {
+    if (highlightItemId && gallery.length > 0) {
+      const exists = gallery.some((g) => g.id === highlightItemId);
+      if (exists) {
+        const timer = setTimeout(() => {
+          const el = document.getElementById(`gallery-${highlightItemId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            const clearTimer = setTimeout(() => {
+              setHighlightItemId(null);
+            }, 4000);
+            return () => clearTimeout(clearTimer);
+          }
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [highlightItemId, gallery, setHighlightItemId]);
 
   // Open Form for Add
   const handleAddClick = () => {
@@ -503,7 +527,11 @@ export function GalleryCrud() {
                 </TableHeader>
                 <TableBody>
                   {filteredGallery.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow
+                      key={item.id}
+                      id={`gallery-${item.id}`}
+                      className={highlightItemId === item.id ? "item-highlight transition-all duration-500" : "transition-all duration-300"}
+                    >
                       <TableCell>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img

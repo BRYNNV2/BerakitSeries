@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -16,45 +17,196 @@ import {
   UserPlus,
   Command,
   MoreVertical,
+  Package,
+  Image as ImageIcon,
+  ArrowRight,
 } from "lucide-react";
-import Link from "next/link";
+import { useDashboardStore } from "@/store/dashboard-store";
+import { supabase } from "@/lib/supabase";
 
 export function DashboardHeader() {
+  const searchQuery = useDashboardStore((state) => state.searchQuery);
+  const setSearchQuery = useDashboardStore((state) => state.setSearchQuery);
+  const setActiveTab = useDashboardStore((state) => state.setActiveTab);
+  const setHighlightItemId = useDashboardStore((state) => state.setHighlightItemId);
+
+  const [products, setProducts] = React.useState<any[]>([]);
+  const [gallery, setGallery] = React.useState<any[]>([]);
+  const [filteredProducts, setFilteredProducts] = React.useState<any[]>([]);
+  const [filteredGallery, setFilteredGallery] = React.useState<any[]>([]);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  const loadSearchData = async () => {
+    try {
+      const hasCredentials = !!supabase;
+      if (hasCredentials) {
+        const { data: prodData } = await supabase
+          .from("products")
+          .select("id, name, category, price, image_url");
+        const { data: gallData } = await supabase
+          .from("gallery")
+          .select("id, title, category, image_url");
+        setProducts(prodData || []);
+        setGallery(gallData || []);
+      } else {
+        const localProducts = JSON.parse(localStorage.getItem("berakit_products") || "[]");
+        const localGallery = JSON.parse(localStorage.getItem("berakit_gallery") || "[]");
+        setProducts(localProducts);
+        setGallery(localGallery);
+      }
+    } catch (err) {
+      console.warn("Failed to load search data:", err);
+    }
+  };
+
+  React.useEffect(() => {
+    loadSearchData();
+  }, []);
+
+  React.useEffect(() => {
+    if (!searchQuery || searchQuery.trim().length < 2) {
+      setFilteredProducts([]);
+      setFilteredGallery([]);
+      return;
+    }
+
+    const q = searchQuery.toLowerCase();
+    const matchesProd = products.filter(
+      (p) =>
+        p.name?.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q)
+    );
+    const matchesGall = gallery.filter(
+      (g) =>
+        g.title?.toLowerCase().includes(q) ||
+        g.category?.toLowerCase().includes(q)
+    );
+
+    setFilteredProducts(matchesProd.slice(0, 5));
+    setFilteredGallery(matchesGall.slice(0, 5));
+  }, [searchQuery, products, gallery]);
+
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleItemClick = (tab: "products" | "gallery", id: string) => {
+    setActiveTab(tab);
+    setHighlightItemId(id);
+    setIsOpen(false);
+  };
+
   return (
     <header className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3 sm:py-4 border-b bg-card sticky top-0 z-10 w-full">
       <SidebarTrigger className="-ml-1 sm:-ml-2" />
       <h1 className="text-base sm:text-lg font-medium flex-1 truncate">Dashboard</h1>
 
-      <div className="hidden md:block relative">
+      <div className="hidden md:block relative" ref={dropdownRef}>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
         <Input
-          placeholder="Search Anything..."
-          className="pl-10 pr-14 w-[180px] lg:w-[220px] h-9 bg-card border"
+          placeholder="Cari produk / galeri..."
+          className="pl-10 pr-14 w-[200px] lg:w-[260px] h-9 bg-card border"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => {
+            loadSearchData();
+            setIsOpen(true);
+          }}
         />
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-muted px-1 py-0.5 rounded text-xs text-muted-foreground">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-muted px-1 py-0.5 rounded text-xs text-muted-foreground pointer-events-none">
           <Command className="size-3" />
           <span>K</span>
         </div>
+
+        {/* Floating Autocomplete Dropdown */}
+        {isOpen && (filteredProducts.length > 0 || filteredGallery.length > 0) && (
+          <div className="absolute top-11 left-0 w-[380px] bg-white dark:bg-zinc-950 border rounded-xl shadow-2xl p-4 space-y-4 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            {/* Products Category */}
+            {filteredProducts.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
+                  Produk Desa ({filteredProducts.length})
+                </span>
+                <div className="space-y-1">
+                  {filteredProducts.map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => handleItemClick("products", p.id)}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900 cursor-pointer group transition-all"
+                    >
+                      <div className="size-8 rounded-md bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center overflow-hidden shrink-0 border">
+                        {p.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.image_url} alt="" className="size-full object-cover" />
+                        ) : (
+                          <Package className="size-4 text-zinc-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-zinc-950 dark:text-zinc-50 truncate">
+                          {p.name}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">
+                          {p.category}
+                        </p>
+                      </div>
+                      <ArrowRight className="size-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-zinc-500" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Gallery Category */}
+            {filteredGallery.length > 0 && (
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
+                  Galeri Dokumentasi ({filteredGallery.length})
+                </span>
+                <div className="space-y-1">
+                  {filteredGallery.map((g) => (
+                    <div
+                      key={g.id}
+                      onClick={() => handleItemClick("gallery", g.id)}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900 cursor-pointer group transition-all"
+                    >
+                      <div className="size-8 rounded-md bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center overflow-hidden shrink-0 border">
+                        {g.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={g.image_url} alt="" className="size-full object-cover" />
+                        ) : (
+                          <ImageIcon className="size-4 text-zinc-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-zinc-950 dark:text-zinc-50 truncate">
+                          {g.title}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 truncate">
+                          {g.category}
+                        </p>
+                      </div>
+                      <ArrowRight className="size-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-zinc-500" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <ThemeToggle />
-
-      <Button variant="ghost" size="icon" className="hidden sm:flex" asChild>
-        <Link
-          href="https://github.com/ln-dev7/square-ui/tree/master/templates/dashboard-2"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            className="size-5"
-          >
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-          </svg>
-        </Link>
-      </Button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -74,23 +226,6 @@ export function DashboardHeader() {
           <DropdownMenuItem>
             <UserPlus className="size-4 mr-2" />
             Invite
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link
-              href="https://github.com/ln-dev7/square-ui/tree/master/templates/dashboard-2"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="size-4 mr-2"
-              >
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-              </svg>
-              GitHub
-            </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

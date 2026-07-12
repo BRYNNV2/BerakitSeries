@@ -39,7 +39,7 @@ import {
   UploadCloud,
   X,
 } from "lucide-react";
-import { supabase, withTimeout } from "@/lib/supabase";
+import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
 import { LoadingLottie } from "@/components/ui/loading-lottie";
 import { toast } from "sonner";
@@ -64,14 +64,25 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
+const formatRupiah = (val: string | number) => {
+  const numString = String(val).replace(/\D/g, "");
+  if (!numString) return "";
+  return new Intl.NumberFormat("id-ID").format(Number(numString));
+};
+
 const DEFAULT_PRODUCTS: Product[] = [];
+
+import { useDashboardStore } from "@/store/dashboard-store";
 
 export function ProductsCrud() {
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [showSpinner, setShowSpinner] = React.useState(false);
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(!!supabase);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const searchQuery = useDashboardStore((state) => state.searchQuery);
+  const setSearchQuery = useDashboardStore((state) => state.setSearchQuery);
+  const highlightItemId = useDashboardStore((state) => state.highlightItemId);
+  const setHighlightItemId = useDashboardStore((state) => state.setHighlightItemId);
   const [categoryFilter, setCategoryFilter] = React.useState("all");
 
   // Form Dialog States
@@ -79,7 +90,7 @@ export function ProductsCrud() {
   const [editingProduct, setEditingProduct] = React.useState<Product | null>(null);
   const [formName, setFormName] = React.useState("");
   const [formDescription, setFormDescription] = React.useState("");
-  const [formPrice, setFormPrice] = React.useState(0);
+  const [formPrice, setFormPrice] = React.useState<string>("");
   const [formStock, setFormStock] = React.useState(0);
   const [formCategory, setFormCategory] = React.useState("Batik Tulis");
   const [formImageUrl, setFormImageUrl] = React.useState("");
@@ -127,7 +138,7 @@ export function ProductsCrud() {
         setProducts(data || []);
         setIsUsingSupabase(true);
       } catch (err: any) {
-        console.error("Supabase fetch failed:", err);
+        handleSupabaseError("ProductsCrud.loadData", err);
         toast.error(`Gagal mengambil data dari Supabase: ${err.message || err.details || err}`);
         setProducts([]);
         setIsUsingSupabase(false);
@@ -141,6 +152,25 @@ export function ProductsCrud() {
   React.useEffect(() => {
     loadData();
   }, [loadData]);
+
+  React.useEffect(() => {
+    if (highlightItemId && products.length > 0) {
+      const exists = products.some((p) => p.id === highlightItemId);
+      if (exists) {
+        const timer = setTimeout(() => {
+          const el = document.getElementById(`product-${highlightItemId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            const clearTimer = setTimeout(() => {
+              setHighlightItemId(null);
+            }, 4000);
+            return () => clearTimeout(clearTimer);
+          }
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [highlightItemId, products, setHighlightItemId]);
 
   const loadLocalStorage = () => {
     setIsUsingSupabase(false);
@@ -165,7 +195,7 @@ export function ProductsCrud() {
     setEditingProduct(null);
     setFormName("");
     setFormDescription("");
-    setFormPrice(0);
+    setFormPrice("");
     setFormStock(0);
     setFormCategory("Batik Tulis");
     setFormImageUrl("");
@@ -180,7 +210,7 @@ export function ProductsCrud() {
     setEditingProduct(product);
     setFormName(product.name);
     setFormDescription(product.description || "");
-    setFormPrice(product.price);
+    setFormPrice(formatRupiah(product.price));
     setFormStock(product.stock);
     setFormCategory(product.category || "Batik Tulis");
     setFormImageUrl(product.image_url || "");
@@ -300,7 +330,7 @@ export function ProductsCrud() {
     const newProductData = {
       name: formName,
       description: formDescription,
-      price: Number(formPrice),
+      price: Number(String(formPrice).replace(/\D/g, "")),
       stock: Number(formStock),
       category: formCategory,
       image_url: finalImageUrl,
@@ -542,7 +572,11 @@ export function ProductsCrud() {
                 </TableHeader>
                 <TableBody>
                   {filteredProducts.map((product) => (
-                    <TableRow key={product.id}>
+                    <TableRow
+                      key={product.id}
+                      id={`product-${product.id}`}
+                      className={highlightItemId === product.id ? "item-highlight transition-all duration-500" : "transition-all duration-300"}
+                    >
                       <TableCell>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -660,11 +694,13 @@ export function ProductsCrud() {
                 <label className="text-xs font-semibold">Harga Jual (Rupiah) *</label>
                 <Input
                   required
-                  type="number"
-                  min="0"
-                  placeholder="Rp 0"
+                  type="text"
+                  placeholder="Contoh: 12.000"
                   value={formPrice}
-                  onChange={(e) => setFormPrice(Number(e.target.value))}
+                  onChange={(e) => {
+                    const formatted = formatRupiah(e.target.value);
+                    setFormPrice(formatted);
+                  }}
                 />
               </div>
 

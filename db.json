@@ -1,0 +1,106 @@
+{
+  "products": [
+    {
+      "id": "prod-1",
+      "name": "Batik Tulis Biota Laut",
+      "description": "Batik tulis eksklusif dengan motif terumbu karang dan gonggong khas pesisir Berakit. Dibuat menggunakan pewarna alam premium.",
+      "price": 450000,
+      "stock": 24,
+      "image_url": "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=500&auto=format&fit=crop&q=60",
+      "category": "Batik Tulis",
+      "created_at": "2026-07-07T16:34:40.846Z"
+    },
+    {
+      "id": "prod-2",
+      "name": "Batik Cap Mangrove Berakit",
+      "description": "Batik cap motif daun mangrove dengan desain geometris modern, sangat cocok untuk pakaian formal.",
+      "price": 195000,
+      "stock": 80,
+      "image_url": "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=500&auto=format&fit=crop&q=60",
+      "category": "Batik Cap",
+      "created_at": "2026-07-08T16:34:40.846Z"
+    },
+    {
+      "id": "prod-3",
+      "name": "Batik Kombinasi Semelur",
+      "description": "Perpaduan elegan teknik cap dan canting tulis dengan corak ombak samudra biru tua.",
+      "price": 295000,
+      "stock": 5,
+      "image_url": "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=500&auto=format&fit=crop&q=60",
+      "category": "Batik Kombinasi",
+      "created_at": "2026-07-09T16:34:40.846Z"
+    },
+    {
+      "id": "prod-4",
+      "name": "Selendang Sutra Batik",
+      "description": "Selendang sutra premium bermotif batik tulis pesisir yang halus.",
+      "price": 150000,
+      "stock": 12,
+      "image_url": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=500&auto=format&fit=crop&q=60",
+      "category": "Aksesoris",
+      "created_at": "2026-07-10T16:34:40.846Z"
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord-1",
+      "customer_name": "Budi Santoso",
+      "customer_phone": "081234567890",
+      "address": "Jl. Raya Berakit No. 12, Desa Berakit",
+      "payment_method": "Transfer Bank",
+      "total_amount": 170000,
+      "status": "Selesai",
+      "items": [
+        {
+          "name": "Batik Cap Mangrove Berakit",
+          "price": 195000,
+          "quantity": 1
+        }
+      ],
+      "created_at": "2026-07-11T16:34:40.846Z"
+    },
+    {
+      "id": "ord-2",
+      "customer_name": "Siti Rahma",
+      "customer_phone": "089876543210",
+      "address": "RT 02 / RW 01, Dusun 2 Desa Berakit",
+      "payment_method": "COD",
+      "total_amount": 150000,
+      "status": "Pending",
+      "items": [
+        {
+          "name": "Selendang Sutra Batik",
+          "price": 150000,
+          "quantity": 1
+        }
+      ],
+      "created_at": "2026-07-12T16:34:40.846Z"
+    }
+  ],
+  "settings": [
+    {
+      "id": "bumdes_config",
+      "name": "BUMDes Berakit",
+      "email": "bumdes@berakit.desa.id",
+      "phone": "081234567890",
+      "address": "Desa Wisata Berakit, Bintan, Kepulauan Riau",
+      "enable_cod": true,
+      "enable_bank_transfer": true,
+      "bank_name": "Bank Riau Kepri Syariah",
+      "account_number": "1092003841",
+      "account_holder": "BUMDES BERAKIT UTAMA",
+      "flat_shipping_rate": 15000,
+      "min_free_shipping": 300000
+    }
+  ],
+  "gallery": [
+    {
+      "id": "id-88n2mqw7n",
+      "created_at": "2026-07-12T16:53:22.808Z",
+      "title": "Jihuuu",
+      "description": "",
+      "category": "Acara",
+      "image_url": "/batik-center.png"
+    }
+  ]
+}

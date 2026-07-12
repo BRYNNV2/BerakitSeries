@@ -4,7 +4,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { PieChart, Pie, Cell, ResponsiveContainer, Sector } from "recharts";
 import { ShoppingBag, Loader2, RefreshCw } from "lucide-react";
-import { supabase, withTimeout } from "@/lib/supabase";
+import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { useDashboardStore } from "@/store/dashboard-store";
 
 interface Product {
@@ -41,7 +41,7 @@ export function LeadSourcesChart() {
         if (error) throw error;
         productsList = pData || [];
       } catch (err) {
-        console.error("Failed to load products for categories chart from Supabase:", err);
+        handleSupabaseError("LeadSourcesChart.loadData", err);
       }
     }
 

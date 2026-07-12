@@ -18,88 +18,7 @@ import {
 } from "lucide-react";
 import { supabase, withTimeout } from "@/lib/supabase";
 
-function removeBackground(img: HTMLImageElement): string {
-  const canvas = document.createElement('canvas');
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return img.src;
-  ctx.drawImage(img, 0, 0);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-  const width = canvas.width;
-  const height = canvas.height;
-  
-  const visited = new Uint8Array(width * height);
-  const queue: number[] = [];
-  
-  const pushPixel = (x: number, y: number) => {
-    const idx = y * width + x;
-    if (visited[idx]) return;
-    visited[idx] = 1;
-    queue.push(idx);
-  };
-  
-  for (let x = 0; x < width; x++) {
-    pushPixel(x, 0);
-    pushPixel(x, height - 1);
-  }
-  for (let y = 0; y < height; y++) {
-    pushPixel(0, y);
-    pushPixel(width - 1, y);
-  }
-  
-  let head = 0;
-  while (head < queue.length) {
-    const idx = queue[head++];
-    const x = idx % width;
-    const y = Math.floor(idx / width);
-    
-    const rIdx = idx * 4;
-    const r = data[rIdx];
-    const g = data[rIdx + 1];
-    const b = data[rIdx + 2];
-    
-    if (r > 190 && g > 190 && b > 190) {
-      data[rIdx + 3] = 0;
-      
-      if (x > 0) pushPixel(x - 1, y);
-      if (x < width - 1) pushPixel(x + 1, y);
-      if (y > 0) pushPixel(x, y - 1);
-      if (y < height - 1) pushPixel(x, y + 1);
-    }
-  }
 
-  // Second pass: Feather the edges of the background to remove white halos
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const idx = y * width + x;
-      const rIdx = idx * 4;
-      
-      if (data[rIdx + 3] > 0) {
-        const hasTransparentNeighbor =
-          data[((y - 1) * width + x) * 4 + 3] === 0 ||
-          data[((y + 1) * width + x) * 4 + 3] === 0 ||
-          data[(y * width + (x - 1)) * 4 + 3] === 0 ||
-          data[(y * width + (x + 1)) * 4 + 3] === 0;
-
-        if (hasTransparentNeighbor) {
-          const r = data[rIdx];
-          const g = data[rIdx + 1];
-          const b = data[rIdx + 2];
-          const brightness = (r + g + b) / 3;
-          if (brightness > 150) {
-            const alphaFactor = (255 - brightness) / (255 - 150);
-            data[rIdx + 3] = Math.max(0, Math.min(255, Math.round(data[rIdx + 3] * alphaFactor)));
-          }
-        }
-      }
-    }
-  }
-  
-  ctx.putImageData(imageData, 0, 0);
-  return canvas.toDataURL('image/png');
-}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -118,19 +37,7 @@ export default function LoginPage() {
   }, []);
 
   React.useEffect(() => {
-    const img = new Image();
-    img.src = "/batik-center.png";
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const transparentDataUrl = removeBackground(img);
-        setProcessedImageSrc(transparentDataUrl);
-        setImageReady(true);
-      } catch (e) {
-        console.error("Failed to remove image background on login page", e);
-        setImageReady(true); // Fallback to show original if fails
-      }
-    };
+    setImageReady(true);
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -315,6 +222,7 @@ export default function LoginPage() {
               </label>
               <button
                 type="button"
+                onClick={() => router.push("/forgot-password")}
                 className="text-[12px] text-zinc-400 hover:text-zinc-900 font-semibold transition-colors"
               >
                 Forgot Password?

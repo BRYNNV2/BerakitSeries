@@ -174,14 +174,12 @@ export default function StorefrontPage() {
   const [activeProfileTab, setActiveProfileTab] = React.useState<"profile" | "collaboration" | "focus">("profile");
 
   // GSAP Refs & States
-  const preloaderRef = React.useRef<HTMLDivElement>(null);
   const heroCtaRef = React.useRef<HTMLDivElement>(null);
   const headerRef = React.useRef<HTMLElement>(null);
   const horizontalWrapperRef = React.useRef<HTMLDivElement>(null);
   const horizontalContainerRef = React.useRef<HTMLDivElement>(null);
   const syncProgressBarRef = React.useRef<HTMLDivElement>(null);
 
-  const [progress, setProgress] = React.useState(0);
   const [processedBatikSrc, setProcessedBatikSrc] = React.useState("/batik-center.png");
   const marqueeRef = React.useRef<HTMLDivElement>(null);
   const tweenRef = React.useRef<gsap.core.Tween | null>(null);
@@ -367,35 +365,15 @@ export default function StorefrontPage() {
   }, []);
 
   useGSAP(() => {
-    const obj = { val: 0 };
     const tl = gsap.timeline();
 
-    const preloaderTarget = preloaderRef.current || "#preloader";
     const headerTarget = headerRef.current || "header";
     const heroCtaTarget = heroCtaRef.current || ".hero-cta-container";
-
-    // 1. Preload counter animation
-    tl.to(obj, {
-      val: 100,
-      duration: 2.0,
-      ease: "power2.out",
-      onUpdate: () => {
-        setProgress(Math.floor(obj.val));
-      }
-    });
-
-    // 2. Preloader slide out
-    tl.to(preloaderTarget, {
-      yPercent: -100,
-      duration: 0.85,
-      ease: "power4.inOut",
-    });
 
     // 3. Header reveal
     tl.fromTo(headerTarget, 
       { y: -60, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" },
-      "-=0.4"
+      { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" }
     );
 
     // 4. Hero Background Text reveal
@@ -847,34 +825,7 @@ export default function StorefrontPage() {
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 flex flex-col font-sans overflow-x-hidden relative">
-      
-      <div 
-        ref={preloaderRef}
-        id="preloader"
-        className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center select-none"
-      >
-        <div className="space-y-6 text-center animate-in fade-in duration-500">
-          <div className="flex items-center gap-2.5 justify-center">
-            <svg viewBox="0 0 24 24" className="size-8 text-white stroke-current fill-none stroke-[2]" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-4-8c0-2.21 1.79-4 4-4s4 1.79 4 4-1.79 4-4 4-4-1.79-4-4z" />
-            </svg>
-            <span className="font-bold text-xl tracking-widest text-white uppercase">
-              BERAKIT SERIES
-            </span>
-          </div>
 
-          <div className="text-4xl sm:text-5xl font-extrabold text-white/95 font-mono tracking-tighter">
-            {progress}%
-          </div>
-
-          <div className="w-[180px] sm:w-[240px] h-[2px] bg-zinc-900 rounded-full overflow-hidden mx-auto">
-            <div 
-              className="h-full bg-white transition-all duration-75"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      </div>
 
       {/* Top Banner Navigation */}
       <header ref={headerRef} className="fixed top-0 inset-x-0 z-40 w-full border-b border-zinc-200/50 bg-white md:bg-white/90 md:backdrop-blur-md">

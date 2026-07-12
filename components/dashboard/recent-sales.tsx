@@ -3,7 +3,7 @@
 import * as React from "react";
 import { TrendingUp, ArrowUpRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase, withTimeout } from "@/lib/supabase";
+import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 
 interface Product {
   id: string;
@@ -49,7 +49,7 @@ export function RecentSales() {
           dbOrders = oData;
         }
       } catch (err) {
-        console.error("Supabase failed in RecentSales load:", err);
+        handleSupabaseError("RecentSales.loadSales", err);
       }
     }
 

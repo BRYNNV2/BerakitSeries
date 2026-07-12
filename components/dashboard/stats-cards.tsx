@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Coins, Package, ClipboardList, AlertTriangle, Loader2 } from "lucide-react";
-import { supabase, withTimeout } from "@/lib/supabase";
+import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 
 interface Product {
   id: string;
@@ -51,7 +51,7 @@ export function StatsCards() {
         if (oError) throw oError;
         transactionsList = oData || [];
       } catch (err) {
-        console.error("Failed to fetch stats from Supabase:", err);
+        handleSupabaseError("StatsCards.loadStats", err);
       }
     }
 

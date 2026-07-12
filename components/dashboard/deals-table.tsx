@@ -31,7 +31,7 @@ import {
   RefreshCw,
   MessageSquare,
 } from "lucide-react";
-import { supabase, withTimeout } from "@/lib/supabase";
+import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { LoadingLottie } from "@/components/ui/loading-lottie";
 import { toast } from "sonner";
 
@@ -47,11 +47,14 @@ interface Transaction {
   created_at: string;
 }
 
+import { useDashboardStore } from "@/store/dashboard-store";
+
 export function DealsTable() {
   const [orders, setOrders] = React.useState<Transaction[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const searchQuery = useDashboardStore((state) => state.searchQuery);
+  const setSearchQuery = useDashboardStore((state) => state.setSearchQuery);
 
   const loadData = React.useCallback(async () => {
     setLoading(true);
@@ -72,7 +75,7 @@ export function DealsTable() {
         setOrders(data || []);
         setIsUsingSupabase(true);
       } catch (err) {
-        console.error("Supabase load failed in DealsTable:", err);
+        handleSupabaseError("DealsTable.loadData", err);
         setOrders([]);
         setIsUsingSupabase(false);
       }

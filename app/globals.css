@@ -141,3 +141,23 @@ html.lenis, html.lenis body {
 .lenis.lenis-smooth iframe {
   pointer-events: none;
 }
+
+@keyframes highlightPulse {
+  0% {
+    background-color: rgba(190, 242, 100, 0.4);
+    box-shadow: 0 0 15px rgba(190, 242, 100, 0.5);
+  }
+  50% {
+    background-color: rgba(190, 242, 100, 0.2);
+    box-shadow: 0 0 8px rgba(190, 242, 100, 0.25);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.item-highlight {
+  animation: highlightPulse 3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  border: 2px solid rgb(190, 242, 100) !important;
+}

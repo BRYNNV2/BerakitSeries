@@ -37,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { supabase, withTimeout } from "@/lib/supabase";
+import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { useDashboardStore } from "@/store/dashboard-store";
 
 interface Transaction {
@@ -136,7 +136,7 @@ export function RevenueFlowChart() {
         if (error) throw error;
         transactionsList = data || [];
       } catch (err) {
-        console.error("Failed to load revenue data from Supabase:", err);
+        handleSupabaseError("RevenueFlowChart.loadData", err);
       }
     }
 

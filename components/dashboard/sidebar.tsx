@@ -125,14 +125,12 @@ export function DashboardSidebar({
       try {
         await supabase.auth.signOut();
         localStorage.removeItem("berakit_admin_auth");
-        localStorage.removeItem("berakit_admin_profile");
         router.push("/login");
       } catch (err) {
         console.error("Sign out error:", err);
       }
     } else {
       localStorage.removeItem("berakit_admin_auth");
-      localStorage.removeItem("berakit_admin_profile");
       router.push("/login");
     }
   };

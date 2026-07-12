@@ -48,7 +48,7 @@ import {
   Trash2,
   AlertTriangle,
 } from "lucide-react";
-import { supabase, withTimeout } from "@/lib/supabase";
+import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
 import { LoadingLottie } from "@/components/ui/loading-lottie";
 import { toast } from "sonner";
@@ -65,11 +65,14 @@ interface Transaction {
   created_at: string;
 }
 
+import { useDashboardStore } from "@/store/dashboard-store";
+
 export function TransactionsList() {
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(!!supabase);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const searchQuery = useDashboardStore((state) => state.searchQuery);
+  const setSearchQuery = useDashboardStore((state) => state.setSearchQuery);
   const [statusFilter, setStatusFilter] = React.useState("all");
 
   // Delete confirmation dialog states
@@ -96,7 +99,7 @@ export function TransactionsList() {
         setTransactions(data || []);
         setIsUsingSupabase(true);
       } catch (err) {
-        console.error("Supabase fetch failed:", err);
+        handleSupabaseError("TransactionsList.loadData", err);
         setTransactions([]);
         setIsUsingSupabase(false);
       }
