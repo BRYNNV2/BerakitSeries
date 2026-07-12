@@ -64,95 +64,6 @@ interface CartItem {
   quantity: number;
 }
 
-// Helper to remove white background from the centerpiece image dynamically in client canvas
-function removeBackground(img: HTMLImageElement): string {
-  const canvas = document.createElement('canvas');
-  canvas.width = img.naturalWidth;
-  canvas.height = img.naturalHeight;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return img.src;
-  ctx.drawImage(img, 0, 0);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imageData.data;
-  const width = canvas.width;
-  const height = canvas.height;
-  
-  // Flood fill visited array
-  const visited = new Uint8Array(width * height);
-  const queue: number[] = [];
-  
-  const pushPixel = (x: number, y: number) => {
-    const idx = y * width + x;
-    if (visited[idx]) return;
-    visited[idx] = 1;
-    queue.push(idx);
-  };
-  
-  // Push all boundary pixels
-  for (let x = 0; x < width; x++) {
-    pushPixel(x, 0);
-    pushPixel(x, height - 1);
-  }
-  for (let y = 0; y < height; y++) {
-    pushPixel(0, y);
-    pushPixel(width - 1, y);
-  }
-  
-  // BFS
-  let head = 0;
-  while (head < queue.length) {
-    const idx = queue[head++];
-    const x = idx % width;
-    const y = Math.floor(idx / width);
-    
-    const rIdx = idx * 4;
-    const r = data[rIdx];
-    const g = data[rIdx + 1];
-    const b = data[rIdx + 2];
-    
-    // If pixel is near-white (threshold > 190), make it transparent and propagate
-    if (r > 190 && g > 190 && b > 190) {
-      data[rIdx + 3] = 0; // Set alpha to 0
-      
-      // Propagate 4-way
-      if (x > 0) pushPixel(x - 1, y);
-      if (x < width - 1) pushPixel(x + 1, y);
-      if (y > 0) pushPixel(x, y - 1);
-      if (y < height - 1) pushPixel(x, y + 1);
-    }
-  }
-
-  // Second pass: Feather the edges of the background to remove white halos
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      const idx = y * width + x;
-      const rIdx = idx * 4;
-      
-      if (data[rIdx + 3] > 0) {
-        const hasTransparentNeighbor =
-          data[((y - 1) * width + x) * 4 + 3] === 0 ||
-          data[((y + 1) * width + x) * 4 + 3] === 0 ||
-          data[(y * width + (x - 1)) * 4 + 3] === 0 ||
-          data[(y * width + (x + 1)) * 4 + 3] === 0;
-
-        if (hasTransparentNeighbor) {
-          const r = data[rIdx];
-          const g = data[rIdx + 1];
-          const b = data[rIdx + 2];
-          const brightness = (r + g + b) / 3;
-          if (brightness > 150) {
-            const alphaFactor = (255 - brightness) / (255 - 150);
-            data[rIdx + 3] = Math.max(0, Math.min(255, Math.round(data[rIdx + 3] * alphaFactor)));
-          }
-        }
-      }
-    }
-  }
-  
-  ctx.putImageData(imageData, 0, 0);
-  return canvas.toDataURL('image/png');
-}
-
 export default function StorefrontPage() {
   const router = useRouter();
 
@@ -161,10 +72,7 @@ export default function StorefrontPage() {
     // Skip Lenis smooth scroll on touch/mobile screens to preserve native momentum scroll and save CPU
     const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0 || window.innerWidth < 1024;
     if (isTouch) {
-      ScrollTrigger.addEventListener("refresh", () => ScrollTrigger.update());
-      return () => {
-        ScrollTrigger.removeEventListener("refresh", () => ScrollTrigger.update());
-      };
+      return;
     }
 
     const lenis = new Lenis({
@@ -422,94 +330,38 @@ export default function StorefrontPage() {
   }, [loadStoreData]);
 
   React.useEffect(() => {
-    // Skip CPU-heavy canvas background removal on mobile to prevent freeze/lag on load
-    if (window.innerWidth < 1024) return;
-
-    const img = new Image();
-    img.src = "/batik-center.png";
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      try {
-        const transparentDataUrl = removeBackground(img);
-        setProcessedBatikSrc(transparentDataUrl);
-      } catch (e) {
-        console.error("Failed to remove image background", e);
-      }
-    };
-  }, []);
-
-  React.useEffect(() => {
     const marqueeEl = marqueeRef.current;
     if (!marqueeEl) return;
     
     // Start from -50% to have buffer on left and right
     gsap.set(marqueeEl, { xPercent: -50 });
     
-    // Tween from -50 to -25 to move to the right (speed increased and duration reduced to 7s)
+    // Tween from -50 to -25 to move to the right (speed adjusted to be clean and elegant)
     const tween = gsap.to(marqueeEl, {
       xPercent: -25,
       repeat: -1,
-      duration: 7,
+      duration: 10,
       ease: "none",
       paused: false
     });
     
     tweenRef.current = tween;
     
-    let isHoveredLocal = false;
-    let lastScrollTop = window.scrollY;
-    let scrollTimeout: NodeJS.Timeout;
-    
     const handleMouseEnter = () => {
-      isHoveredLocal = true;
       gsap.to(tween, { timeScale: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" });
     };
     
     const handleMouseLeave = () => {
-      isHoveredLocal = false;
       gsap.to(tween, { timeScale: 1, duration: 0.5, ease: "power2.out", overwrite: "auto" });
-    };
-    
-    const handleScroll = () => {
-      if (isHoveredLocal) return;
-      
-      const scrollTop = window.scrollY;
-      const delta = scrollTop - lastScrollTop;
-      lastScrollTop = scrollTop;
-      
-      // Calculate velocity-based skew angle (clamp to max 12 degrees)
-      const maxSkew = 12;
-      const skewAmount = Math.min(Math.max(delta * 0.18, -maxSkew), maxSkew);
-      
-      // Animate skew on scroll
-      gsap.to(marqueeEl, { skewX: skewAmount, duration: 0.1, overwrite: "auto" });
-      
-      // Set timeScale directly instead of creating a new tween on every scroll tick
-      if (delta > 0) {
-        tween.timeScale(-2.8);
-      } else if (delta < 0) {
-        tween.timeScale(3.8);
-      }
-      
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        if (!isHoveredLocal) {
-          gsap.to(tween, { timeScale: 1, duration: 0.5, ease: "power1.out", overwrite: "auto" });
-          gsap.to(marqueeEl, { skewX: 0, duration: 0.4, ease: "power2.out", overwrite: "auto" });
-        }
-      }, 100);
     };
     
     marqueeEl.addEventListener("mouseenter", handleMouseEnter);
     marqueeEl.addEventListener("mouseleave", handleMouseLeave);
-    window.addEventListener("scroll", handleScroll, { passive: true });
     
     return () => {
       if (tween) tween.kill();
       marqueeEl.removeEventListener("mouseenter", handleMouseEnter);
       marqueeEl.removeEventListener("mouseleave", handleMouseLeave);
-      window.removeEventListener("scroll", handleScroll);
-      clearTimeout(scrollTimeout);
       gsap.killTweensOf(marqueeEl);
     };
   }, []);
@@ -574,23 +426,7 @@ export default function StorefrontPage() {
       "-=0.4"
     );
 
-    // 8. Scroll exit animation (starts after reveal is complete — skip on mobile for performance)
-    if (window.innerWidth >= 1024) {
-      tl.add(() => {
-        gsap.to(".hero-centerpiece", {
-          scale: 0.85,
-          opacity: 0,
-          y: -80,
-          scrollTrigger: {
-            trigger: "#hero-section",
-            start: "top top",
-            end: "bottom 30%",
-            scrub: true,
-            invalidateOnRefresh: true
-          }
-        });
-      });
-    }
+
 
     // 8. Collections ScrollTrigger Animation
     gsap.fromTo(
@@ -1041,7 +877,7 @@ export default function StorefrontPage() {
       </div>
 
       {/* Top Banner Navigation */}
-      <header ref={headerRef} className="fixed top-0 inset-x-0 z-40 w-full border-b border-zinc-200/50 bg-white/90 backdrop-blur-md">
+      <header ref={headerRef} className="fixed top-0 inset-x-0 z-40 w-full border-b border-zinc-200/50 bg-white md:bg-white/90 md:backdrop-blur-md">
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
           <span 
             className="uppercase tracking-normal cursor-pointer select-none"
@@ -1200,7 +1036,7 @@ export default function StorefrontPage() {
       >
         {/* Soft yellow-lime radial gradient behind layout */}
         <div className="absolute inset-x-0 top-0 h-[65%] bg-[radial-gradient(ellipse_at_top,rgba(197,255,46,0.22)_0%,transparent_70%)] pointer-events-none -z-10" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#bef264]/10 rounded-full blur-[120px] pointer-events-none -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(190,242,100,0.1)_0%,rgba(190,242,100,0)_70%)] rounded-full pointer-events-none -z-10" />
 
         {/* Big Background Typography (Placed below the header with custom spacing) */}
         <div className="w-full text-center pt-8 pb-4 relative z-0">
@@ -1238,7 +1074,7 @@ export default function StorefrontPage() {
         <div className="absolute left-1/2 top-[56%] -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none select-none">
           <div className="relative hero-centerpiece-container">
             {/* Ambient product glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#bef264]/20 rounded-full blur-[100px] opacity-75 pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(190,242,100,0.25)_0%,rgba(190,242,100,0)_70%)] rounded-full opacity-75 pointer-events-none" />
             <img 
               src={processedBatikSrc} 
               alt="BERAKIT SERIES Centerpiece" 
@@ -2356,8 +2192,8 @@ export default function StorefrontPage() {
             className="w-full bg-zinc-950 rounded-[32px] p-8 sm:p-12 lg:p-16 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12 border border-zinc-800 shadow-2xl"
           >
             {/* Subtle background gradient glow */}
-            <div className="absolute right-0 top-0 w-[500px] h-[500px] bg-[#bef264]/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute left-0 bottom-0 w-[300px] h-[300px] bg-zinc-800/20 rounded-full blur-[80px] pointer-events-none" />
+            <div className="absolute right-0 top-0 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(190,242,100,0.1)_0%,rgba(190,242,100,0)_70%)] rounded-full pointer-events-none" />
+            <div className="absolute left-0 bottom-0 w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(63,63,70,0.2)_0%,rgba(63,63,70,0)_70%)] rounded-full pointer-events-none" />
 
             {/* Left Column: Heading */}
             <div className="w-full lg:max-w-xl text-left space-y-2 relative z-10">
