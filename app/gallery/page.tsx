@@ -168,23 +168,66 @@ export default function GalleryPage() {
 
   // Lenis smooth scroll
   React.useEffect(() => {
-    // Skip Lenis smooth scroll on touch/mobile screens to preserve native momentum scroll and save CPU
-    const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0 || window.innerWidth < 1024;
-    if (isTouch) {
-      return;
-    }
+    let lenisInstance: Lenis | null = null;
+    let updateRaf: ((time: number) => void) | null = null;
 
-    const lenis = new Lenis({
-      duration: 1.4,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: "vertical",
-      smoothWheel: true,
-    });
-    lenis.on("scroll", () => { ScrollTrigger.update(); });
-    const updateRaf = (time: number) => { lenis.raf(time * 1000); };
-    gsap.ticker.add(updateRaf);
-    gsap.ticker.lagSmoothing(0);
-    return () => { gsap.ticker.remove(updateRaf); lenis.destroy(); };
+    const initLenis = () => {
+      // 1. Destroy existing instance if active
+      if (lenisInstance) {
+        if (updateRaf) {
+          gsap.ticker.remove(updateRaf);
+          updateRaf = null;
+        }
+        lenisInstance.destroy();
+        lenisInstance = null;
+      }
+
+      // 2. Skip smooth scroll on mobile/tablet viewports (< 1024px)
+      const isMobileViewport = window.innerWidth < 1024;
+      if (isMobileViewport) {
+        return;
+      }
+
+      lenisInstance = new Lenis({
+        duration: 1.4,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: "vertical",
+        smoothWheel: true,
+      });
+
+      lenisInstance.on("scroll", () => {
+        ScrollTrigger.update();
+      });
+
+      updateRaf = (time: number) => {
+        if (lenisInstance) {
+          lenisInstance.raf(time * 1000);
+        }
+      };
+
+      gsap.ticker.add(updateRaf);
+      gsap.ticker.lagSmoothing(0);
+    };
+
+    initLenis();
+
+    // Re-evaluate on resize to handle F12 mobile layout toggle without manual page refreshes
+    const handleResize = () => {
+      initLenis();
+      ScrollTrigger.refresh();
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (updateRaf) {
+        gsap.ticker.remove(updateRaf);
+      }
+      if (lenisInstance) {
+        lenisInstance.destroy();
+      }
+    };
   }, []);
 
   const filteredGallery = React.useMemo(() => {
@@ -313,7 +356,7 @@ export default function GalleryPage() {
       </header>
 
       {/* Mobile Drawer */}
-      <div className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden ${isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`} onClick={() => setIsMobileMenuOpen(false)}>
+      <div className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden overflow-hidden ${isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`} onClick={() => setIsMobileMenuOpen(false)}>
         <div className={`absolute top-0 right-0 w-[80%] max-w-[300px] h-full bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col justify-between ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}`} onClick={(e) => e.stopPropagation()}>
           <div>
             <div className="flex items-center justify-between mb-8">

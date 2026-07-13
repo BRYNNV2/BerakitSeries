@@ -69,36 +69,68 @@ export default function StorefrontPage() {
 
   // Initialize Lenis Smooth Scroll and sync with GSAP ScrollTrigger
   React.useEffect(() => {
-    // Skip Lenis smooth scroll on touch/mobile screens to preserve native momentum scroll and save CPU
-    const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0 || window.innerWidth < 1024;
-    if (isTouch) {
-      return;
-    }
+    let lenisInstance: Lenis | null = null;
+    let updateRaf: ((time: number) => void) | null = null;
 
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: "vertical",
-      gestureOrientation: "vertical",
-      smoothWheel: true,
-      wheelMultiplier: 1.0,
-      touchMultiplier: 1.5,
-    });
+    const initLenis = () => {
+      // 1. Destroy existing instance if active
+      if (lenisInstance) {
+        if (updateRaf) {
+          gsap.ticker.remove(updateRaf);
+          updateRaf = null;
+        }
+        lenisInstance.destroy();
+        lenisInstance = null;
+      }
 
-    lenis.on("scroll", () => {
-      ScrollTrigger.update();
-    });
+      // 2. Skip smooth scroll on mobile/tablet viewports (< 1024px)
+      const isMobileViewport = window.innerWidth < 1024;
+      if (isMobileViewport) {
+        return;
+      }
 
-    const updateRaf = (time: number) => {
-      lenis.raf(time * 1000);
+      lenisInstance = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        orientation: "vertical",
+        gestureOrientation: "vertical",
+        smoothWheel: true,
+        wheelMultiplier: 1.0,
+        touchMultiplier: 1.5,
+      });
+
+      lenisInstance.on("scroll", () => {
+        ScrollTrigger.update();
+      });
+
+      updateRaf = (time: number) => {
+        if (lenisInstance) {
+          lenisInstance.raf(time * 1000);
+        }
+      };
+
+      gsap.ticker.add(updateRaf);
+      gsap.ticker.lagSmoothing(0);
     };
 
-    gsap.ticker.add(updateRaf);
-    gsap.ticker.lagSmoothing(0);
+    initLenis();
+
+    // Re-evaluate on resize to handle F12 mobile layout toggle without manual page refreshes
+    const handleResize = () => {
+      initLenis();
+      ScrollTrigger.refresh();
+    };
+
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      gsap.ticker.remove(updateRaf);
-      lenis.destroy();
+      window.removeEventListener("resize", handleResize);
+      if (updateRaf) {
+        gsap.ticker.remove(updateRaf);
+      }
+      if (lenisInstance) {
+        lenisInstance.destroy();
+      }
     };
   }, []);
 
@@ -419,6 +451,7 @@ export default function StorefrontPage() {
         duration: 1.1,
         stagger: 0.15,
         ease: "power3.out",
+        clearProps: "all",
         scrollTrigger: {
           trigger: "#collections-section",
           start: "top 82%",
@@ -446,7 +479,8 @@ export default function StorefrontPage() {
         y: 0,
         opacity: 1,
         duration: 1.0,
-        ease: "power3.out"
+        ease: "power3.out",
+        clearProps: "all"
       }
     ).fromTo(
       ".difference-card-animate",
@@ -459,7 +493,8 @@ export default function StorefrontPage() {
         opacity: 1,
         duration: 1.0,
         stagger: 0.15,
-        ease: "power3.out"
+        ease: "power3.out",
+        clearProps: "all"
       },
       "-=0.5"
     );
@@ -511,6 +546,7 @@ export default function StorefrontPage() {
           x: 0,
           duration: 1,
           ease: "power2.out",
+          clearProps: "all",
           scrollTrigger: {
             trigger: "#voices-section",
             start: "top 80%",
@@ -534,6 +570,7 @@ export default function StorefrontPage() {
           duration: 0.8,
           stagger: 0.1,
           ease: "power2.out",
+          clearProps: "all",
           scrollTrigger: {
             trigger: "#voices-section",
             start: "top 80%",
@@ -912,7 +949,7 @@ export default function StorefrontPage() {
 
       {/* Mobile Navigation Drawer */}
       <div 
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden ${
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden overflow-hidden ${
           isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsMobileMenuOpen(false)}
@@ -983,14 +1020,14 @@ export default function StorefrontPage() {
       {/* Hero Section */}
       <section 
         id="hero-section"
-        className="relative overflow-hidden min-h-[90vh] flex flex-col justify-between bg-white pt-24 pb-12 px-4 sm:px-12 border-b border-zinc-200/50"
+        className="relative overflow-hidden min-h-[90vh] flex flex-col justify-between bg-white pt-24 pb-12 border-b border-zinc-200/50"
       >
         {/* Soft yellow-lime radial gradient behind layout */}
         <div className="absolute inset-x-0 top-0 h-[65%] bg-[radial-gradient(ellipse_at_top,rgba(197,255,46,0.22)_0%,transparent_70%)] pointer-events-none -z-10" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(190,242,100,0.1)_0%,rgba(190,242,100,0)_70%)] rounded-full pointer-events-none -z-10" />
 
         {/* Big Background Typography (Placed below the header with custom spacing) */}
-        <div className="w-full text-center pt-8 pb-4 relative z-0">
+        <div className="w-full text-center pt-8 pb-4 relative z-0 px-4 sm:px-8 lg:px-12">
           <h1 
             className="flex flex-col items-center select-none"
             style={{
@@ -1035,7 +1072,7 @@ export default function StorefrontPage() {
         </div>
 
         {/* Bottom Row containing Info Card (Left), CTAs (Center), and Video Thumbnail (Right) */}
-        <div className="w-full max-w-[1800px] mx-auto px-4 relative z-20 flex flex-col lg:flex-row items-center lg:items-end justify-between mt-auto gap-8">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 relative z-20 flex flex-col lg:flex-row items-center lg:items-end justify-between mt-auto gap-8">
           {/* Bottom Left Card */}
           <div className="hero-bottom-left-card hidden lg:flex flex-col bg-gradient-to-br from-[#f8faf2] to-white border border-zinc-200/50 rounded-3xl p-5 max-w-[280px] space-y-4 shadow-md text-left">
             <div className="flex -space-x-1.5">
@@ -1439,7 +1476,7 @@ export default function StorefrontPage() {
           {/* Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Card 1 */}
-            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-all duration-500 hover:-translate-y-2 relative cursor-pointer">
+            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-[border-color,background-color,box-shadow,transform] duration-500 hover:-translate-y-2 relative cursor-pointer">
               {/* Faint Watermark */}
               <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
                 01
@@ -1475,7 +1512,7 @@ export default function StorefrontPage() {
             </div>
 
             {/* Card 2 */}
-            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-all duration-500 hover:-translate-y-2 relative cursor-pointer">
+            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-[border-color,background-color,box-shadow,transform] duration-500 hover:-translate-y-2 relative cursor-pointer">
               {/* Faint Watermark */}
               <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
                 02
@@ -1511,7 +1548,7 @@ export default function StorefrontPage() {
             </div>
 
             {/* Card 3 */}
-            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-all duration-500 hover:-translate-y-2 relative cursor-pointer">
+            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-[border-color,background-color,box-shadow,transform] duration-500 hover:-translate-y-2 relative cursor-pointer">
               {/* Faint Watermark */}
               <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
                 03
@@ -1547,7 +1584,7 @@ export default function StorefrontPage() {
             </div>
 
             {/* Card 4 */}
-            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-all duration-500 hover:-translate-y-2 relative cursor-pointer">
+            <div className="difference-card-animate group bg-[#f8f9fa] border border-zinc-100 hover:border-[#bef264]/60 hover:bg-[#bef264]/5 hover:shadow-xl rounded-[24px] p-8 h-[340px] flex flex-col justify-between transition-[border-color,background-color,box-shadow,transform] duration-500 hover:-translate-y-2 relative cursor-pointer">
               {/* Faint Watermark */}
               <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
                 04
@@ -1646,7 +1683,7 @@ export default function StorefrontPage() {
           <div className="w-full lg:flex-1 overflow-x-auto lg:overflow-hidden relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" ref={horizontalWrapperRef}>
             <div 
               ref={horizontalContainerRef}
-              className="flex gap-8 pl-4 pr-16 py-12 animate-in fade-in zoom-in duration-500"
+              className="flex gap-8 pl-4 pr-16 py-12"
               style={{ width: "fit-content" }}
             >
               {[
@@ -1683,7 +1720,7 @@ export default function StorefrontPage() {
               ].map((card, idx) => (
                 <div 
                   key={idx}
-                  className="voices-card-animate group bg-white border border-zinc-100 hover:border-[#bef264]/80 hover:shadow-[0_0_35px_-5px_rgba(190,242,100,0.35)] rounded-[28px] p-8 w-[380px] sm:w-[420px] h-[440px] flex flex-col justify-between transition-all duration-300 relative cursor-pointer select-none shrink-0"
+                  className="voices-card-animate group bg-white border border-zinc-100 hover:border-[#bef264]/80 hover:shadow-[0_0_35px_-5px_rgba(190,242,100,0.35)] rounded-[28px] p-8 w-[380px] sm:w-[420px] h-[440px] flex flex-col justify-between transition-colors transition-shadow duration-300 relative cursor-pointer select-none shrink-0"
                 >
                   {/* Corner Crosshairs */}
                   <div className="absolute top-4 left-4 text-[10px] font-light text-zinc-300 group-hover:text-[#bef264] transition-colors duration-300 select-none pointer-events-none">+</div>
@@ -2092,7 +2129,7 @@ export default function StorefrontPage() {
               {/* Map iframe */}
               <iframe 
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4731.657649311793!2d104.5499708!3d1.210686!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31dbd9beffe89e77%3A0x8496e2d6a6e327df!2sWisata%20Mangrove%20Tanjung%20Berakit!5e1!3m2!1sid!2sid!4v1783596097087!5m2!1sid!2sid" 
-                className="w-full h-full border-0 absolute inset-0"
+                className="w-full h-full border-0 absolute inset-0 pointer-events-none lg:pointer-events-auto"
                 allowFullScreen={true}
                 loading="lazy" 
                 referrerPolicy="no-referrer-when-downgrade"

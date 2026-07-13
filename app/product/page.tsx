@@ -241,20 +241,24 @@ export default function ProductListingPage() {
   // GSAP Entry Animations — runs only once on initial data load
   React.useEffect(() => {
     if (!loading && products.length > 0 && !hasAnimated.current) {
+      const cardEls = document.querySelectorAll(".product-card-animate");
       hasAnimated.current = true;
 
       // Set initial hidden states via GSAP (not React inline styles)
       gsap.set(headerRef.current, { y: -20, opacity: 0 });
       gsap.set(titleSectionRef.current, { y: 30, opacity: 0 });
       gsap.set(filterBarRef.current, { y: 20, opacity: 0 });
-      gsap.set(".product-card-animate", { y: 40, opacity: 0 });
 
       // Animate in — no clearProps on layout elements so opacity:1 persists through re-renders
       gsap.to(headerRef.current, { y: 0, opacity: 1, duration: 0.6, ease: "power2.out" });
       gsap.to(titleSectionRef.current, { y: 0, opacity: 1, duration: 0.6, delay: 0.1, ease: "power2.out" });
       gsap.to(filterBarRef.current, { y: 0, opacity: 1, duration: 0.6, delay: 0.2, ease: "power2.out" });
-      // Cards keep clearProps so hover transforms are unaffected
-      gsap.to(".product-card-animate", { y: 0, opacity: 1, duration: 0.6, delay: 0.3, stagger: 0.08, ease: "power2.out", clearProps: "transform" });
+
+      if (cardEls.length > 0) {
+        gsap.set(cardEls, { y: 40, opacity: 0 });
+        // Cards keep clearProps so hover transforms are unaffected
+        gsap.to(cardEls, { y: 0, opacity: 1, duration: 0.6, delay: 0.3, stagger: 0.08, ease: "power2.out", clearProps: "transform" });
+      }
     }
   }, [loading, products]);
 
@@ -525,7 +529,7 @@ export default function ProductListingPage() {
 
       {/* Mobile Navigation Drawer */}
       <div 
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden ${
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden overflow-hidden ${
           isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsMobileMenuOpen(false)}
