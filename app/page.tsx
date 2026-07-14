@@ -1680,7 +1680,11 @@ export default function StorefrontPage() {
           </div>
 
           {/* Right Column - Horizontal Scroll Container */}
-          <div className="w-full lg:flex-1 overflow-x-auto lg:overflow-hidden relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" ref={horizontalWrapperRef}>
+          <div 
+            className="w-full lg:flex-1 overflow-x-auto overflow-y-hidden lg:overflow-hidden relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+            ref={horizontalWrapperRef}
+            style={{ touchAction: "pan-y" }}
+          >
             <div 
               ref={horizontalContainerRef}
               className="flex gap-8 pl-4 pr-16 py-12"
