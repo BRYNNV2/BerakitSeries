@@ -82,183 +82,97 @@ const safeFetch: typeof fetch = async (input, init) => {
 const useLocalJsonDb = process.env.NEXT_PUBLIC_USE_LOCAL_JSON_DB === "true";
 
 const createLocalClient = (): any => {
-  const queryBuilder = (table: string, filters: any = null, order: any = null) => {
+  const queryBuilder = (table: string) => {
+    let selectCols = "*";
+    const queryFilters: any = {};
+    let queryOrder: any = null;
+    let queryLimit: number | null = null;
+    let isSingle = false;
+    let isDelete = false;
+    let insertData: any = null;
+    let updateData: any = null;
+
     const builder: any = {
       select: (columns: string = "*") => {
-        const selectBuilder: any = {
-          eq: (col: string, val: any) => {
-            const nextFilters = { ...filters, [col]: val };
-            const eqBuilder: any = {
-              single: async () => {
-                const res = await fetch("/api/db", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ table, action: "select", filters: nextFilters }),
-                });
-                const { data, error } = await res.json();
-                return { data: data?.[0] || null, error };
-              },
-              then: async (resolve: any) => {
-                const res = await fetch("/api/db", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ table, action: "select", filters: nextFilters }),
-                });
-                resolve(await res.json());
-              }
-            };
-            return eqBuilder;
-          },
-          order: (column: string, { ascending = true } = {}) => {
-            const nextOrder = { column, ascending };
-            const orderBuilder: any = {
-              then: async (resolve: any) => {
-                const res = await fetch("/api/db", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ table, action: "select", order: nextOrder }),
-                });
-                resolve(await res.json());
-              }
-            };
-            return orderBuilder;
-          },
-          then: async (resolve: any) => {
-            const res = await fetch("/api/db", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ table, action: "select", filters }),
-            });
-            resolve(await res.json());
-          }
-        };
-        return selectBuilder;
+        selectCols = columns;
+        return builder;
       },
       insert: (data: any) => {
-        const insertBuilder: any = {
-          select: (cols: string = "*") => {
-            const selectBuilder: any = {
-              single: async () => {
-                const res = await fetch("/api/db", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ table, action: "insert", data }),
-                });
-                const { data: resData, error } = await res.json();
-                return { data: resData?.[0] || null, error };
-              },
-              then: async (resolve: any) => {
-                const res = await fetch("/api/db", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ table, action: "insert", data }),
-                });
-                resolve(await res.json());
-              }
-            };
-            return selectBuilder;
-          },
-          then: async (resolve: any) => {
-            const res = await fetch("/api/db", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ table, action: "insert", data }),
-            });
-            resolve(await res.json());
-          }
-        };
-        return insertBuilder;
+        insertData = data;
+        return builder;
       },
       update: (data: any) => {
-        const updateBuilder: any = {
-          eq: (col: string, val: any) => {
-            const nextFilters = { ...filters, [col]: val };
-            const eqBuilder: any = {
-              select: () => {
-                const selectBuilder: any = {
-                  then: async (resolve: any) => {
-                    const res = await fetch("/api/db", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ table, action: "update", data, filters: nextFilters }),
-                    });
-                    resolve(await res.json());
-                  }
-                };
-                return selectBuilder;
-              },
-              then: async (resolve: any) => {
-                const res = await fetch("/api/db", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ table, action: "update", data, filters: nextFilters }),
-                });
-                resolve(await res.json());
-              }
-            };
-            return eqBuilder;
-          }
-        };
-        return updateBuilder;
+        updateData = data;
+        return builder;
       },
       delete: () => {
-        const deleteBuilder: any = {
-          neq: (col: string, val: any) => {
-            const nextFilters = { ...filters, [col]: val };
-            const neqBuilder: any = {
-              select: () => {
-                const selectBuilder: any = {
-                  then: async (resolve: any) => {
-                    const res = await fetch("/api/db", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ table, action: "delete", filters: nextFilters }),
-                    });
-                    resolve(await res.json());
-                  }
-                };
-                return selectBuilder;
-              },
-              then: async (resolve: any) => {
-                const res = await fetch("/api/db", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ table, action: "delete", filters: nextFilters }),
-                });
-                resolve(await res.json());
-              }
-            };
-            return neqBuilder;
-          },
-          eq: (col: string, val: any) => {
-            const nextFilters = { ...filters, [col]: val };
-            const eqBuilder: any = {
-              select: () => {
-                const selectBuilder: any = {
-                  then: async (resolve: any) => {
-                    const res = await fetch("/api/db", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ table, action: "delete", filters: nextFilters }),
-                    });
-                    resolve(await res.json());
-                  }
-                };
-                return selectBuilder;
-              },
-              then: async (resolve: any) => {
-                const res = await fetch("/api/db", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ table, action: "delete", filters: nextFilters }),
-                });
-                resolve(await res.json());
-              }
-            };
-            return eqBuilder;
+        isDelete = true;
+        return builder;
+      },
+      eq: (col: string, val: any) => {
+        queryFilters[col] = val;
+        return builder;
+      },
+      neq: (col: string, val: any) => {
+        queryFilters[col] = { operator: "neq", value: val };
+        return builder;
+      },
+      order: (column: string, { ascending = true } = {}) => {
+        queryOrder = { column, ascending };
+        return builder;
+      },
+      limit: (val: number) => {
+        queryLimit = val;
+        return builder;
+      },
+      single: () => {
+        isSingle = true;
+        return builder;
+      },
+      then: async (resolve: any, reject: any) => {
+        try {
+          let action = "select";
+          let payload: any = { table };
+
+          if (insertData) {
+            action = "insert";
+            payload.data = insertData;
+          } else if (updateData) {
+            action = "update";
+            payload.data = updateData;
+            payload.filters = queryFilters;
+          } else if (isDelete) {
+            action = "delete";
+            payload.filters = queryFilters;
+          } else {
+            action = "select";
+            payload.filters = queryFilters;
+            if (queryOrder) {
+              payload.order = queryOrder;
+            }
+            if (queryLimit !== null) {
+              payload.limit = queryLimit;
+            }
           }
-        };
-        return deleteBuilder;
+
+          const res = await fetch("/api/db", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...payload, action }),
+          });
+          const result = await res.json();
+          
+          if (isSingle) {
+            resolve({
+              data: result.data && result.data.length > 0 ? result.data[0] : null,
+              error: result.error
+            });
+          } else {
+            resolve(result);
+          }
+        } catch (err: any) {
+          resolve({ data: null, error: { message: err.message } });
+        }
       }
     };
     return builder;
@@ -337,6 +251,24 @@ const createLocalClient = (): any => {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "signIn", email, password }),
+          });
+          const { data, error } = await res.json();
+          if (error) return { data: null, error };
+
+          if (typeof window !== "undefined" && data?.user) {
+            window.localStorage.setItem("berakit_mock_user", JSON.stringify(data.user));
+          }
+          return { data, error: null };
+        } catch (err: any) {
+          return { data: null, error: { message: err.message } };
+        }
+      },
+      signUp: async ({ email, password }: any) => {
+        try {
+          const res = await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "signUp", email, password }),
           });
           const { data, error } = await res.json();
           if (error) return { data: null, error };
@@ -472,15 +404,21 @@ export const handleSupabaseError = (context: string, error: any) => {
     error?.message === "Network unavailable" || 
     error?.error === "network_error" || 
     error?.status === 503 ||
-    (typeof error === "object" && Object.keys(error).length === 0);
+    error?.isTimeout === true ||
+    (error instanceof Error && (
+      error.message.toLowerCase().includes("fetch") || 
+      error.message.toLowerCase().includes("network") || 
+      error.message.toLowerCase().includes("timeout")
+    )) ||
+    (typeof error === "object" && !(error instanceof Error) && Object.keys(error).length === 0);
 
   if (isNetwork) {
-    console.warn(`[Supabase Offline Mode] ${context}: Supabase is unreachable. Falling back to LocalStorage.`);
+    console.warn(`[Supabase Offline Mode] ${context}: Supabase is unreachable. Falling back to LocalStorage. Detail error:`, error);
     if (typeof window !== "undefined" && !window.localStorage.getItem("berakit_force_local_db")) {
       window.localStorage.setItem("berakit_force_local_db", "true");
       console.log("[Supabase Offline Mode] Automatically activated LocalStorage sandbox for this session.");
     }
   } else {
-    console.error(`${context}:`, error);
+    console.error(`[Supabase Error] ${context}:`, error);
   }
 };

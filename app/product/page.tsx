@@ -63,9 +63,18 @@ interface Product {
   image_url: string;
   category: string;
   created_at?: string;
+  has_sizes?: boolean;
+  size_variants?: { size: string; price: number; stock: number }[];
+  has_custom_length?: boolean;
+  price_per_cm?: number;
+  min_length_cm?: number;
+  selectedSize?: string;
+  customLength?: number;
+  is_active?: boolean;
 }
 
 interface CartItem {
+  id?: string;
   product: Product;
   quantity: number;
 }
@@ -105,12 +114,79 @@ export default function ProductListingPage() {
 
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [currentUser, setCurrentUser] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      if (supabase) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            let role = session.user.role;
+            if (!role) {
+              try {
+                const { data: pData } = await supabase
+                  .from("profiles")
+                  .select("role")
+                  .eq("id", session.user.id)
+                  .single();
+                if (pData?.role) role = pData.role;
+              } catch (err) {
+                console.warn("Failed fetching profile role on product mount:", err);
+              }
+            }
+            setCurrentUser({ ...session.user, role: role || "buyer" });
+          }
+        } catch (e) {
+          console.warn("Failed fetching session in product catalog:", e);
+        }
+      }
+    };
+    fetchUser();
+  }, []);
 
   // Quick View dialog state
-  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = React.useState<any | null>(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = React.useState(false);
   const [selectedSize, setSelectedSize] = React.useState("M");
+  const [customLength, setCustomLength] = React.useState<number>(100);
   const [isClosing, setIsClosing] = React.useState(false);
+
+  React.useEffect(() => {
+    if (selectedProduct) {
+      if (selectedProduct.has_sizes && selectedProduct.size_variants && selectedProduct.size_variants.length > 0) {
+        setSelectedSize(selectedProduct.size_variants[0].size);
+      } else {
+        setSelectedSize("M");
+      }
+      if (selectedProduct.has_custom_length) {
+        setCustomLength(selectedProduct.min_length_cm || 100);
+      } else {
+        setCustomLength(100);
+      }
+    }
+  }, [selectedProduct]);
+
+  const activePrice = React.useMemo(() => {
+    if (!selectedProduct) return 0;
+    if (selectedProduct.has_sizes) {
+      const variant = selectedProduct.size_variants?.find((v: any) => v.size === selectedSize);
+      return variant ? variant.price : selectedProduct.price;
+    }
+    if (selectedProduct.has_custom_length) {
+      return (selectedProduct.price_per_cm || 0) * customLength;
+    }
+    return selectedProduct.price;
+  }, [selectedProduct, selectedSize, customLength]);
+
+  const activeStock = React.useMemo(() => {
+    if (!selectedProduct) return 0;
+    if (selectedProduct.has_sizes) {
+      const variant = selectedProduct.size_variants?.find((v: any) => v.size === selectedSize);
+      return variant ? variant.stock : 0;
+    }
+    return selectedProduct.stock;
+  }, [selectedProduct, selectedSize]);
 
   // Checkout states
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
@@ -301,30 +377,60 @@ export default function ProductListingPage() {
   }, [products, searchQuery, selectedCategory, sortBy]);
 
   // Cart operations
-  const addToCart = (product: Product, quantity = 1) => {
-    const existing = cart.find((item) => item.product.id === product.id);
+  const addToCart = (product: any, quantity = 1, size?: string, length?: number) => {
+    let resolvedPrice = product.price;
+    let sizeLabel = size || "Standard";
+    let maxStock = product.stock;
+
+    if (product.has_sizes && size) {
+      const variant = product.size_variants?.find((v: any) => v.size === size);
+      if (variant) {
+        resolvedPrice = variant.price;
+        maxStock = variant.stock;
+      }
+    } else if (product.has_custom_length && length) {
+      resolvedPrice = (product.price_per_cm || 0) * length;
+      sizeLabel = `${length} cm`;
+      maxStock = Math.floor(product.stock / length) || 1;
+    }
+
+    const cartItemId = `${product.id}-${sizeLabel}`;
+    const existing = cart.find((item) => item.id === cartItemId);
+    
+    const cartProduct = {
+      ...product,
+      price: resolvedPrice,
+      selectedSize: sizeLabel,
+      customLength: length,
+      stock: maxStock
+    };
+
     if (existing) {
       const updated = cart.map((item) =>
-        item.product.id === product.id
-          ? { ...item, quantity: Math.min(item.quantity + quantity, product.stock) }
+        item.id === cartItemId
+          ? { ...item, quantity: Math.min(item.quantity + quantity, maxStock) }
           : item
       );
       updateCart(updated);
     } else {
-      updateCart([...cart, { product, quantity: Math.min(quantity, product.stock) }]);
+      updateCart([...cart, { 
+        id: cartItemId, 
+        product: cartProduct, 
+        quantity: Math.min(quantity, maxStock) 
+      }]);
     }
-    toast.success(`${product.name} ditambahkan ke keranjang`);
+    toast.success(`${product.name} (${sizeLabel}) ditambahkan ke keranjang`);
   };
 
-  const removeFromCart = (productId: string) => {
-    const updated = cart.filter((item) => item.product.id !== productId);
+  const removeFromCart = (cartItemId: string) => {
+    const updated = cart.filter((item) => item.id !== cartItemId && item.product.id !== cartItemId);
     updateCart(updated);
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
+  const updateQuantity = (cartItemId: string, delta: number) => {
     const updated = cart
       .map((item) => {
-        if (item.product.id === productId) {
+        if (item.id === cartItemId || item.product.id === cartItemId) {
           const nextQty = item.quantity + delta;
           return { ...item, quantity: Math.min(Math.max(nextQty, 1), item.product.stock) };
         }
@@ -381,8 +487,22 @@ export default function ProductListingPage() {
       }
     }
 
+    // Fetch user if logged in
+    let loggedInUserId = null;
+    if (supabase) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          loggedInUserId = user.id;
+        }
+      } catch (err) {
+        console.warn("Failed fetching user during checkout:", err);
+      }
+    }
+
     // Structure transaction object matching public.orders schema
     const orderData = {
+      user_id: loggedInUserId,
       customer_name: customerName,
       customer_phone: customerPhone,
       address: customerAddress,
@@ -392,6 +512,7 @@ export default function ProductListingPage() {
         name: item.product.name,
         price: item.product.price,
         quantity: item.quantity,
+        selected_size: item.product.selectedSize || null,
       })),
       total_amount: cartSubtotal,
       status: "Pending",
@@ -408,10 +529,38 @@ export default function ProductListingPage() {
           .select();
         if (error) throw error;
 
-        // Deduct stocks in Supabase
+        // Deduct stocks in Supabase depending on product model type
         for (const item of cart) {
-          const newStock = Math.max(0, item.product.stock - item.quantity);
-          await supabase.from("products").update({ stock: newStock }).eq("id", item.product.id);
+          if (item.product.has_sizes) {
+            const { data: prodData } = await supabase.from("products").select("size_variants").eq("id", item.product.id).single();
+            if (prodData) {
+              const currentVariants = prodData.size_variants || [];
+              const updatedVariants = currentVariants.map((v: any) => {
+                if (v.size === item.product.selectedSize) {
+                  return { ...v, stock: Math.max(0, v.stock - item.quantity) };
+                }
+                return v;
+              });
+              const totalStock = updatedVariants.reduce((sum: number, v: any) => sum + (v.stock || 0), 0);
+              await supabase.from("products").update({ 
+                size_variants: updatedVariants,
+                stock: totalStock 
+              }).eq("id", item.product.id);
+            }
+          } else if (item.product.has_custom_length) {
+            const { data: prodData } = await supabase.from("products").select("stock").eq("id", item.product.id).single();
+            if (prodData) {
+              const totalUsedCm = item.quantity * (item.product.customLength || 100);
+              const newStock = Math.max(0, prodData.stock - totalUsedCm);
+              await supabase.from("products").update({ stock: newStock }).eq("id", item.product.id);
+            }
+          } else {
+            const { data: prodData } = await supabase.from("products").select("stock").eq("id", item.product.id).single();
+            if (prodData) {
+              const newStock = Math.max(0, prodData.stock - item.quantity);
+              await supabase.from("products").update({ stock: newStock }).eq("id", item.product.id);
+            }
+          }
         }
 
         const insertedId = data && data[0] ? data[0].id : orderId;
@@ -492,19 +641,35 @@ export default function ProductListingPage() {
             <button className="text-black hover:opacity-80 transition-opacity">
               <Search className="size-[20px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
             </button>
-            <button 
-              className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"
-              style={{
-                fontFamily: "'Inter', system-ui, sans-serif",
-                fontWeight: 700,
-                color: "lab(7.78201 -0.0000149012 0)",
-                fontSize: "12px",
-                lineHeight: "16px"
-              }}
-              onClick={() => router.push("/login")}
-            >
-              Sign In
-            </button>
+            {currentUser ? (
+              <button 
+                className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"
+                style={{
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontWeight: 700,
+                  color: "lab(7.78201 -0.0000149012 0)",
+                  fontSize: "12px",
+                  lineHeight: "16px"
+                }}
+                onClick={() => router.push(currentUser.role === "admin" ? "/admin" : "/dashboard")}
+              >
+                Dashboard
+              </button>
+            ) : (
+              <button 
+                className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"
+                style={{
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontWeight: 700,
+                  color: "lab(7.78201 -0.0000149012 0)",
+                  fontSize: "12px",
+                  lineHeight: "16px"
+                }}
+                onClick={() => router.push("/login")}
+              >
+                Sign In
+              </button>
+            )}
             <button
               className="relative text-black hover:opacity-80 transition-opacity"
               onClick={() => setIsCartOpen(true)}
@@ -584,15 +749,27 @@ export default function ProductListingPage() {
           </div>
           
           <div className="pt-6 border-t border-zinc-100 flex flex-col gap-4">
-            <button 
-              className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                router.push("/login");
-              }}
-            >
-              Sign In
-            </button>
+            {currentUser ? (
+              <button 
+                className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  router.push(currentUser.role === "admin" ? "/admin" : "/dashboard");
+                }}
+              >
+                Dashboard
+              </button>
+            ) : (
+              <button 
+                className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  router.push("/login");
+                }}
+              >
+                Sign In
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -770,11 +947,17 @@ export default function ProductListingPage() {
               >
                 {/* Product Card Image Container */}
                 <div className="relative aspect-[4/5] bg-zinc-100 border border-zinc-200/80 rounded-2xl sm:rounded-[28px] overflow-hidden flex items-center justify-center shadow-xs transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:shadow-lg group-hover:shadow-zinc-200/50 group-hover:border-zinc-300">
-                  {/* Featured Badge */}
+                  {/* Out of Stock or Featured Badge */}
                   <div className="absolute top-2.5 left-2.5 sm:top-5 sm:left-5 z-10">
-                    <Badge className="bg-[#bef264] hover:bg-[#bef264] text-black font-bold uppercase tracking-widest text-[7px] sm:text-[9px] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border-none shadow-none">
-                      FEATURED
-                    </Badge>
+                    {product.is_active === false || product.stock === 0 ? (
+                      <Badge className="bg-rose-500 hover:bg-rose-500 text-white font-extrabold uppercase tracking-widest text-[7px] sm:text-[9px] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border-none shadow-md">
+                        STOK HABIS
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-[#bef264] hover:bg-[#bef264] text-black font-bold uppercase tracking-widest text-[7px] sm:text-[9px] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border-none shadow-none">
+                        FEATURED
+                      </Badge>
+                    )}
                   </div>
                   
                   {/* Main Image */}
@@ -876,7 +1059,13 @@ export default function ProductListingPage() {
                       {selectedProduct.category}
                     </span>
                     <span className="text-[10px] font-mono font-bold text-zinc-400 mr-10">
-                      STOCK: {selectedProduct.stock}
+                      STOCK: {selectedProduct.is_active === false 
+                        ? 0 
+                        : (selectedProduct.has_sizes 
+                          ? activeStock 
+                          : selectedProduct.has_custom_length 
+                            ? `${(selectedProduct.stock / 100).toFixed(1)} m`
+                            : selectedProduct.stock)}
                     </span>
                   </div>
                   
@@ -890,7 +1079,7 @@ export default function ProductListingPage() {
                   
                   {/* Price */}
                   <span className="text-[22px] font-black text-zinc-950 block">
-                    Rp {selectedProduct.price.toLocaleString("id-ID")}
+                    Rp {activePrice.toLocaleString("id-ID")}
                   </span>
 
                   {/* Horizontal Divider (matching final reference image) */}
@@ -902,37 +1091,111 @@ export default function ProductListingPage() {
                   </DialogDescription>
                 </div>
 
-                {/* Size Selector (matching reference image) */}
-                <div>
-                  <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-zinc-900 mb-3">
-                    <span>SELECT SIZE</span>
-                    <span className="underline cursor-pointer text-zinc-400 hover:text-zinc-600 transition-colors">SIZE GUIDE</span>
+                {/* Dynamic Size Selector / CM Length selection */}
+                {selectedProduct.has_sizes && selectedProduct.size_variants && selectedProduct.size_variants.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-zinc-900 mb-3">
+                      <span>PILIH UKURAN</span>
+                      <span className="underline cursor-pointer text-zinc-400 hover:text-zinc-600 transition-colors">PANDUAN UKURAN</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedProduct.size_variants.map((v: any) => (
+                        <div
+                          key={v.size}
+                          onClick={() => {
+                            if (v.stock > 0) setSelectedSize(v.size);
+                          }}
+                          className={`h-11 px-4 rounded-full text-xs font-extrabold transition-all duration-300 border flex items-center justify-center cursor-pointer select-none ${
+                            v.stock === 0
+                              ? "bg-zinc-50 text-zinc-300 border-zinc-100 line-through cursor-not-allowed"
+                              : selectedSize === v.size
+                                ? "bg-[#bef264] text-black border-transparent shadow-md shadow-[#bef264]/40 scale-105"
+                                : "bg-white text-zinc-800 border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50"
+                          }`}
+                        >
+                          {v.size}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    {["XS", "S", "M", "L", "XL"].map((size) => (
-                      <div
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`size-11 rounded-full text-xs font-extrabold transition-all duration-300 border flex items-center justify-center cursor-pointer select-none ${
-                          selectedSize === size
-                            ? "bg-[#bef264] text-black border-transparent shadow-md shadow-[#bef264]/40 scale-105"
-                            : "bg-white text-zinc-800 border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50"
-                        }`}
+                )}
+
+                {/* CM Length selection for fabrics */}
+                {selectedProduct.has_custom_length && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-zinc-900">
+                      <span>PANJANG KAIN (CENTIMETER)</span>
+                      <span className="text-zinc-400 font-mono">Rp {(selectedProduct.price_per_cm || 0).toLocaleString("id-ID")}/cm</span>
+                    </div>
+                    
+                    {/* Centimeter Input Control */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        className="size-10 rounded-full border border-zinc-200 flex items-center justify-center font-bold text-zinc-600 hover:bg-zinc-50 cursor-pointer active:scale-95 transition-all select-none bg-white"
+                        onClick={() => setCustomLength(Math.max((selectedProduct.min_length_cm || 100), customLength - 10))}
                       >
-                        {size}
+                        -10
+                      </button>
+                      <div className="flex-1 relative">
+                        <input
+                          type="number"
+                          min={selectedProduct.min_length_cm || 100}
+                          max={selectedProduct.stock}
+                          value={customLength}
+                          onChange={(e) => {
+                            const val = Math.max((selectedProduct.min_length_cm || 100), Number(e.target.value));
+                            setCustomLength(Math.min(val, selectedProduct.stock));
+                          }}
+                          className="w-full h-11 border border-zinc-200 rounded-full px-5 text-center text-sm font-extrabold text-zinc-900 focus:outline-none focus:border-zinc-400 transition-colors bg-white"
+                        />
+                        <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xs text-zinc-400 font-bold">cm</span>
                       </div>
-                    ))}
+                      <button
+                        type="button"
+                        className="size-10 rounded-full border border-zinc-200 flex items-center justify-center font-bold text-zinc-600 hover:bg-zinc-50 cursor-pointer active:scale-95 transition-all select-none bg-white"
+                        onClick={() => setCustomLength(Math.min(selectedProduct.stock, customLength + 10))}
+                      >
+                        +10
+                      </button>
+                    </div>
+
+                    {/* Quick length presets */}
+                    <div className="flex gap-2">
+                      {[100, 150, 200, 250].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setCustomLength(Math.max((selectedProduct.min_length_cm || 100), Math.min(selectedProduct.stock, preset)))}
+                          className={`flex-1 py-1.5 rounded-lg border text-[10px] font-black transition-all cursor-pointer ${
+                            customLength === preset
+                              ? "bg-zinc-950 text-white border-transparent"
+                              : "bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50"
+                          }`}
+                        >
+                          {preset === 100 ? "1 Meter" : `${(preset / 100).toFixed(1)} Meter`}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-[10px] text-zinc-400 block text-left leading-normal">
+                      * Minimal pembelian: {selectedProduct.min_length_cm || 100} cm ({(selectedProduct.min_length_cm || 100) / 100} meter).
+                    </span>
                   </div>
-                </div>
+                )}
 
                 {/* Bottom Buttons (exactly matching reference image layout) */}
                 <div className="flex gap-3 pt-2">
-                  {selectedProduct.stock > 0 ? (
+                  {(((selectedProduct.has_sizes && activeStock > 0) || (!selectedProduct.has_sizes && selectedProduct.stock > 0)) && selectedProduct.is_active !== false) ? (
                     <>
                       {/* CART Button (Lime green) */}
                       <button
                         onClick={() => {
-                          addToCart(selectedProduct);
+                          addToCart(
+                            selectedProduct, 
+                            1, 
+                            selectedProduct.has_sizes ? selectedSize : undefined,
+                            selectedProduct.has_custom_length ? customLength : undefined
+                          );
                           setIsQuickViewOpen(false);
                           setIsCartOpen(true);
                         }}
@@ -945,7 +1208,12 @@ export default function ProductListingPage() {
                       {/* BUY NOW Button (Black) */}
                       <button
                         onClick={() => {
-                          addToCart(selectedProduct);
+                          addToCart(
+                            selectedProduct, 
+                            1, 
+                            selectedProduct.has_sizes ? selectedSize : undefined,
+                            selectedProduct.has_custom_length ? customLength : undefined
+                          );
                           setIsQuickViewOpen(false);
                           setIsCheckoutOpen(true);
                         }}
@@ -1019,8 +1287,8 @@ export default function ProductListingPage() {
               <div className="p-5 space-y-3">
                 {cart.map((item) => (
                   <div 
-                    key={item.product.id}
-                    className="bg-zinc-50 border border-zinc-100 rounded-2xl p-4 flex gap-4 items-center"
+                    key={item.id || item.product.id}
+                    className="bg-zinc-50 border border-zinc-100 rounded-2xl p-4 flex gap-4 items-center animate-in fade-in duration-200"
                   >
                     <div className="size-16 rounded-xl bg-white border border-zinc-100 p-2 shrink-0 flex items-center justify-center">
                       <img 
@@ -1034,9 +1302,16 @@ export default function ProductListingPage() {
                       <h5 className="font-bold text-sm text-zinc-900 line-clamp-1 uppercase" style={{ fontFamily: "'Inter', sans-serif" }}>
                         {item.product.name}
                       </h5>
-                      <span className="text-[10px] font-extrabold text-[#bef264] uppercase tracking-widest">
-                        {item.product.category}
-                      </span>
+                      <div className="flex flex-wrap gap-1.5 items-center mt-0.5">
+                        <span className="text-[10px] font-extrabold text-[#bef264] uppercase tracking-widest">
+                          {item.product.category}
+                        </span>
+                        {item.product.selectedSize && (
+                          <span className="text-[9px] bg-zinc-200/60 text-zinc-700 px-2 py-0.5 rounded-full font-bold uppercase">
+                            Ukuran: {item.product.selectedSize}
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center justify-between mt-2">
                         <span className="font-bold text-xs text-zinc-700">
                           Rp {item.product.price.toLocaleString("id-ID")}
@@ -1044,15 +1319,15 @@ export default function ProductListingPage() {
                         {/* Quantity Selector */}
                         <div className="flex items-center gap-2 bg-white border border-zinc-200 rounded-full px-2 py-1">
                           <button 
-                            className="text-zinc-400 hover:text-zinc-900 p-0.5 transition-colors"
-                            onClick={() => updateQuantity(item.product.id, -1)}
+                            className="text-zinc-400 hover:text-zinc-900 p-0.5 transition-colors cursor-pointer"
+                            onClick={() => updateQuantity(item.id || item.product.id, -1)}
                           >
                             <Minus className="size-3" />
                           </button>
                           <span className="text-xs font-bold px-1.5 text-zinc-900">{item.quantity}</span>
                           <button 
-                            className="text-zinc-400 hover:text-zinc-900 p-0.5 transition-colors"
-                            onClick={() => updateQuantity(item.product.id, 1)}
+                            className="text-zinc-400 hover:text-zinc-900 p-0.5 transition-colors cursor-pointer"
+                            onClick={() => updateQuantity(item.id || item.product.id, 1)}
                           >
                             <Plus className="size-3" />
                           </button>
@@ -1060,8 +1335,8 @@ export default function ProductListingPage() {
                       </div>
                     </div>
                     <button 
-                      className="text-zinc-300 hover:text-red-500 p-2 shrink-0 transition-colors"
-                      onClick={() => removeFromCart(item.product.id)}
+                      className="text-zinc-300 hover:text-red-500 p-2 shrink-0 transition-colors cursor-pointer"
+                      onClick={() => removeFromCart(item.id || item.product.id)}
                     >
                       <Trash2 className="size-4" />
                     </button>

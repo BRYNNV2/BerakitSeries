@@ -53,6 +53,7 @@ interface Product {
   image_url: string;
   category: string;
   created_at?: string;
+  is_active?: boolean;
 }
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -95,6 +96,13 @@ export function ProductsCrud() {
   const [formCategory, setFormCategory] = React.useState("Batik Tulis");
   const [formImageUrl, setFormImageUrl] = React.useState("");
   const [submitting, setSubmitting] = React.useState(false);
+
+  // Form pricing & variant settings
+  const [formPricingType, setFormPricingType] = React.useState<"standard" | "sizes" | "custom_length">("standard");
+  const [formSizeVariants, setFormSizeVariants] = React.useState<{ size: string; price: number; stock: number }[]>([]);
+  const [formPricePerCm, setFormPricePerCm] = React.useState<string>("");
+  const [formMinLengthCm, setFormMinLengthCm] = React.useState<number>(100);
+  const [formIsActive, setFormIsActive] = React.useState(true);
 
   // File Upload States
   const [uploadFile, setUploadFile] = React.useState<File | null>(null);
@@ -202,11 +210,19 @@ export function ProductsCrud() {
     setUploadFile(null);
     setImagePreview("");
     setShowUrlField(false);
+    setFormIsActive(true);
+
+    // Reset pricing model variables
+    setFormPricingType("standard");
+    setFormSizeVariants([]);
+    setFormPricePerCm("");
+    setFormMinLengthCm(100);
+
     setIsFormOpen(true);
   };
 
   // Open Form for Edit
-  const handleEditClick = (product: Product) => {
+  const handleEditClick = (product: any) => {
     setEditingProduct(product);
     setFormName(product.name);
     setFormDescription(product.description || "");
@@ -217,6 +233,26 @@ export function ProductsCrud() {
     setUploadFile(null);
     setImagePreview(product.image_url || "");
     setShowUrlField(false);
+    setFormIsActive(product.is_active !== false);
+
+    // Populate pricing model variables based on product options
+    if (product.has_sizes) {
+      setFormPricingType("sizes");
+      setFormSizeVariants(product.size_variants || []);
+      setFormPricePerCm("");
+      setFormMinLengthCm(100);
+    } else if (product.has_custom_length) {
+      setFormPricingType("custom_length");
+      setFormSizeVariants([]);
+      setFormPricePerCm(formatRupiah(product.price_per_cm || 0));
+      setFormMinLengthCm(product.min_length_cm || 100);
+    } else {
+      setFormPricingType("standard");
+      setFormSizeVariants([]);
+      setFormPricePerCm("");
+      setFormMinLengthCm(100);
+    }
+
     setIsFormOpen(true);
   };
 
@@ -327,13 +363,47 @@ export function ProductsCrud() {
       }
     }
 
+    // Validate sizes if in sizes mode
+    if (formPricingType === "sizes" && formSizeVariants.length === 0) {
+      toast.error("Harap tambahkan minimal 1 ukuran varian.");
+      setSubmitting(false);
+      return;
+    }
+
+    const pricingTypeData: any = {
+      has_sizes: formPricingType === "sizes",
+      size_variants: formPricingType === "sizes" ? formSizeVariants : [],
+      has_custom_length: formPricingType === "custom_length",
+      price_per_cm: formPricingType === "custom_length" ? Number(String(formPricePerCm).replace(/\D/g, "")) : 0,
+      min_length_cm: formPricingType === "custom_length" ? Number(formMinLengthCm) : 100,
+    };
+
+    // Calculate baseline price and stock for general layout list
+    let finalPrice = Number(String(formPrice).replace(/\D/g, ""));
+    let finalStock = Number(formStock);
+
+    if (formPricingType === "sizes") {
+      if (formSizeVariants.length > 0) {
+        // Baseline price is the lowest variant price
+        finalPrice = Math.min(...formSizeVariants.map(v => v.price));
+        finalStock = formSizeVariants.reduce((sum, item) => sum + item.stock, 0);
+      }
+    } else if (formPricingType === "custom_length") {
+      // price represents price per 100cm (1 meter) as baseline for grid display
+      const perCm = Number(String(formPricePerCm).replace(/\D/g, ""));
+      finalPrice = perCm * 100;
+      finalStock = Number(formStock);
+    }
+
     const newProductData = {
       name: formName,
       description: formDescription,
-      price: Number(String(formPrice).replace(/\D/g, "")),
-      stock: Number(formStock),
+      price: finalPrice,
+      stock: finalStock,
       category: formCategory,
       image_url: finalImageUrl,
+      is_active: formIsActive,
+      ...pricingTypeData
     };
 
     if (isUsingSupabase) {
@@ -601,11 +671,26 @@ export function ProductsCrud() {
                       </TableCell>
                       <TableCell className="font-medium text-sm tabular-nums">
                         Rp {product.price.toLocaleString("id-ID")}
+                        {(product as any).has_sizes && (
+                          <span className="block text-[10px] text-muted-foreground font-normal">
+                            (Mulai dari, {((product as any).size_variants || []).length} ukuran)
+                          </span>
+                        )}
+                        {(product as any).has_custom_length && (
+                          <span className="block text-[10px] text-muted-foreground font-normal">
+                            (Rp {((product as any).price_per_cm || 0).toLocaleString("id-ID")}/cm)
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <span className={`text-sm font-semibold ${product.stock <= 5 ? "text-rose-500" : "text-muted-foreground"}`}>
-                          {product.stock}
+                        <span className={`text-sm font-semibold ${product.stock <= 5 && !(product as any).has_custom_length ? "text-rose-500" : "text-muted-foreground"}`}>
+                          {(product as any).has_custom_length ? `${product.stock} cm` : product.stock}
                         </span>
+                        {(product as any).has_sizes && (
+                          <span className="block text-[10px] text-muted-foreground font-normal">
+                            Total stok
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1.5">
@@ -636,9 +721,8 @@ export function ProductsCrud() {
         </div>
       </div>
 
-      {/* Add/Edit Product Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md md:max-w-lg max-h-[85vh] overflow-y-auto">
           <form onSubmit={handleFormSubmit}>
             <DialogHeader>
               <DialogTitle>{editingProduct ? "Edit Produk" : "Tambah Produk Baru"}</DialogTitle>
@@ -659,50 +743,225 @@ export function ProductsCrud() {
                 />
               </div>
 
-              {/* Category & Stock */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5">
-                  <label className="text-xs font-semibold">Kategori</label>
-                  <Select value={formCategory} onValueChange={setFormCategory}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Kategori" />
+              {/* Category */}
+              <div className="grid gap-1.5">
+                <label className="text-xs font-semibold">Kategori</label>
+                <Select value={formCategory} onValueChange={setFormCategory}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Kategori" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tipe Penjualan / Model Harga */}
+              <div className="grid gap-1.5">
+                <label className="text-xs font-semibold">Tipe Penjualan / Varian</label>
+                <Select 
+                  value={formPricingType} 
+                  onValueChange={(val: any) => {
+                    setFormPricingType(val);
+                    if (val === "sizes" && formSizeVariants.length === 0) {
+                      setFormSizeVariants([
+                        { size: "S", price: 150000, stock: 10 },
+                        { size: "M", price: 150000, stock: 10 },
+                        { size: "L", price: 160000, stock: 10 },
+                        { size: "XL", price: 170000, stock: 10 }
+                      ]);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih Tipe Penjualan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="standard">Standard (Satu Harga & Stok)</SelectItem>
+                    <SelectItem value="sizes">Variasi Ukuran (XS, S, M, L, XL dsb, Harga berbeda)</SelectItem>
+                    <SelectItem value="custom_length">Per Centimeter / CM (Potongan Kain)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Status Ketersediaan / Active Toggle */}
+              <div className="grid gap-1.5 border p-3 rounded-lg bg-[#bef264]/10 dark:bg-[#bef264]/5 border-[#bef264]/20 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="text-left">
+                    <label className="text-xs font-bold uppercase tracking-wider text-foreground block">Status Toko / Stok Ketersediaan</label>
+                    <span className="text-[10px] text-muted-foreground leading-normal block mt-0.5">Aktifkan untuk tersedia (ON). Nonaktifkan jika barang offline habis mendadak (OFF).</span>
+                  </div>
+                  <Select 
+                    value={formIsActive ? "active" : "inactive"} 
+                    onValueChange={(val) => setFormIsActive(val === "active")}
+                  >
+                    <SelectTrigger className="w-[130px] h-8 text-xs font-bold">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((c) => (
-                        <SelectItem key={c} value={c}>
-                          {c}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="active" className="text-xs font-bold text-emerald-600">TERSEDIA (ON)</SelectItem>
+                      <SelectItem value="inactive" className="text-xs font-bold text-rose-600">HABIS (OFF)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid gap-1.5">
-                  <label className="text-xs font-semibold">Stok Produk *</label>
-                  <Input
-                    required
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={formStock}
-                    onChange={(e) => setFormStock(Number(e.target.value))}
-                  />
-                </div>
               </div>
 
-              {/* Price */}
-              <div className="grid gap-1.5">
-                <label className="text-xs font-semibold">Harga Jual (Rupiah) *</label>
-                <Input
-                  required
-                  type="text"
-                  placeholder="Contoh: 12.000"
-                  value={formPrice}
-                  onChange={(e) => {
-                    const formatted = formatRupiah(e.target.value);
-                    setFormPrice(formatted);
-                  }}
-                />
-              </div>
+              {/* TIPE STANDARD: Stock & Price */}
+              {formPricingType === "standard" && (
+                <div className="grid grid-cols-2 gap-3 border p-3 rounded-lg bg-muted/20 animate-in fade-in duration-300">
+                  <div className="grid gap-1.5">
+                    <label className="text-xs font-semibold">Stok Produk *</label>
+                    <Input
+                      required
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={formStock}
+                      onChange={(e) => setFormStock(Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="grid gap-1.5">
+                    <label className="text-xs font-semibold">Harga Jual (Rp) *</label>
+                    <Input
+                      required
+                      type="text"
+                      placeholder="Contoh: 120.000"
+                      value={formPrice}
+                      onChange={(e) => setFormPrice(formatRupiah(e.target.value))}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* TIPE SIZES: Dynamic variant creator */}
+              {formPricingType === "sizes" && (
+                <div className="border p-3.5 rounded-lg bg-muted/20 space-y-3 animate-in fade-in duration-300">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Variasi Ukuran & Harga</label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-[10px] font-bold cursor-pointer"
+                      onClick={() => setFormSizeVariants([...formSizeVariants, { size: "", price: 0, stock: 5 }])}
+                    >
+                      <Plus className="size-3 mr-1" />
+                      Tambah Varian
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                    {formSizeVariants.map((item, idx) => (
+                      <div key={idx} className="flex gap-2 items-center bg-white dark:bg-zinc-950 p-2 rounded-md border shadow-xs">
+                        <div className="w-[80px]">
+                          <Input
+                            placeholder="S/M/L/XL atau 2.5m"
+                            value={item.size}
+                            required
+                            className="h-8 text-xs font-bold uppercase text-center"
+                            onChange={(e) => {
+                              const updated = [...formSizeVariants];
+                              updated[idx].size = e.target.value.toUpperCase();
+                              setFormSizeVariants(updated);
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Input
+                            placeholder="Harga (Rp)"
+                            required
+                            type="text"
+                            className="h-8 text-xs font-mono"
+                            value={formatRupiah(item.price)}
+                            onChange={(e) => {
+                              const val = Number(e.target.value.replace(/\D/g, ""));
+                              const updated = [...formSizeVariants];
+                              updated[idx].price = val;
+                              setFormSizeVariants(updated);
+                            }}
+                          />
+                        </div>
+                        <div className="w-[70px]">
+                          <Input
+                            type="number"
+                            min="0"
+                            required
+                            placeholder="Stok"
+                            className="h-8 text-xs text-center"
+                            value={item.stock}
+                            onChange={(e) => {
+                              const updated = [...formSizeVariants];
+                              updated[idx].stock = Number(e.target.value);
+                              setFormSizeVariants(updated);
+                            }}
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                          onClick={() => {
+                            setFormSizeVariants(formSizeVariants.filter((_, i) => i !== idx));
+                          }}
+                        >
+                          <X className="size-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TIPE CUSTOM LENGTH (CM): Pricing per CM */}
+              {formPricingType === "custom_length" && (
+                <div className="border p-3.5 rounded-lg bg-muted/20 space-y-3 animate-in fade-in duration-300">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Pengaturan Potongan Kain (Per CM)</label>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="grid gap-1.5">
+                      <label className="text-[10px] font-semibold text-muted-foreground">Harga per Centimeter (Rp) *</label>
+                      <Input
+                        required
+                        type="text"
+                        placeholder="Contoh: 500"
+                        value={formPricePerCm}
+                        onChange={(e) => setFormPricePerCm(formatRupiah(e.target.value))}
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <label className="text-[10px] font-semibold text-muted-foreground">Min. Pembelian (CM) *</label>
+                      <Input
+                        required
+                        type="number"
+                        min="1"
+                        placeholder="100"
+                        value={formMinLengthCm}
+                        onChange={(e) => setFormMinLengthCm(Number(e.target.value))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-1.5">
+                    <label className="text-[10px] font-semibold text-muted-foreground">Total Panjang Kain Tersedia (Stok CM) *</label>
+                    <Input
+                      required
+                      type="number"
+                      min="0"
+                      placeholder="Misal: 5000 untuk 50 meter"
+                      value={formStock}
+                      onChange={(e) => setFormStock(Number(e.target.value))}
+                    />
+                    <span className="text-[9px] text-muted-foreground leading-normal">
+                      * 100 cm = 1 meter. Jika Anda memiliki total 50 meter kain, masukkan angka 5000.
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Foto Produk */}
               <div className="grid gap-2">

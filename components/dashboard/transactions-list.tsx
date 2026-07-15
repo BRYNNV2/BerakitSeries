@@ -47,6 +47,7 @@ import {
   MessageSquare,
   Trash2,
   AlertTriangle,
+  Eye,
 } from "lucide-react";
 import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
@@ -63,6 +64,7 @@ interface Transaction {
   payment_method: string;
   receipt_url?: string | null;
   created_at: string;
+  items?: any;
 }
 
 import { useDashboardStore } from "@/store/dashboard-store";
@@ -74,6 +76,10 @@ export function TransactionsList() {
   const searchQuery = useDashboardStore((state) => state.searchQuery);
   const setSearchQuery = useDashboardStore((state) => state.setSearchQuery);
   const [statusFilter, setStatusFilter] = React.useState("all");
+
+  // Details dialog states
+  const [selectedTx, setSelectedTx] = React.useState<Transaction | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = React.useState(false);
 
   // Delete confirmation dialog states
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
@@ -400,6 +406,11 @@ export function TransactionsList() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => { setSelectedTx(tx); setIsDetailsOpen(true); }} className="cursor-pointer">
+                            <Eye className="size-4 mr-2 text-muted-foreground" />
+                            Detail Pesanan
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           {tx.status !== "Selesai" && tx.status !== "Dibatalkan" && (
                             <>
                               <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Diproses")}>
@@ -483,6 +494,104 @@ export function TransactionsList() {
                 <Trash2 className="size-3" />
               )}
               {deleteLoading ? "Menghapus..." : "Hapus Permanen"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Transaction Details Dialog */}
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-md border-border/80">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold flex items-center gap-2">
+              <ClipboardList className="size-4 text-primary" />
+              Detail Rincian Pesanan
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-0.5">
+              ID Transaksi: <span className="font-mono text-foreground font-semibold">{selectedTx?.id}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedTx && (
+            <div className="space-y-4 py-2 text-left">
+              {/* Customer Info Card */}
+              <div className="bg-muted/30 p-3 rounded-lg border text-xs space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Nama Pelanggan:</span>
+                  <span className="font-semibold text-foreground">{selectedTx.customer_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">No. Telepon:</span>
+                  <span className="font-semibold text-foreground">{selectedTx.customer_phone}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Metode Pembayaran:</span>
+                  <span className="font-semibold text-foreground">{selectedTx.payment_method}</span>
+                </div>
+                <div className="flex flex-col pt-1 border-t border-dashed mt-1.5">
+                  <span className="text-muted-foreground mb-0.5">Alamat Pengiriman:</span>
+                  <span className="text-foreground leading-normal font-medium">{selectedTx.address}</span>
+                </div>
+              </div>
+
+              {/* Items List */}
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Produk Yang Dipesan</span>
+                <div className="border rounded-lg overflow-hidden divide-y bg-white dark:bg-zinc-950">
+                  {(() => {
+                    let itemsArray: any[] = [];
+                    if (typeof selectedTx.items === "string") {
+                      try {
+                        itemsArray = JSON.parse(selectedTx.items);
+                      } catch (e) {
+                        itemsArray = [];
+                      }
+                    } else if (Array.isArray(selectedTx.items)) {
+                      itemsArray = selectedTx.items;
+                    }
+
+                    if (itemsArray.length === 0) {
+                      return <div className="p-3 text-xs text-muted-foreground text-center">Rincian produk tidak tersedia.</div>;
+                    }
+
+                    return itemsArray.map((item: any, idx: number) => (
+                      <div key={idx} className="p-3 flex justify-between items-center text-xs">
+                        <div className="space-y-0.5 max-w-[240px]">
+                          <span className="font-semibold text-foreground block leading-tight">{item.name}</span>
+                          {item.selected_size && (
+                            <span className="inline-block bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-[9px] px-1.5 py-0.5 rounded font-extrabold uppercase mt-0.5">
+                              Ukuran/Dimensi: {item.selected_size}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="font-medium text-foreground block">{item.quantity} x Rp {(item.price || 0).toLocaleString("id-ID")}</span>
+                          <span className="font-bold text-primary block">Rp {((item.price || 0) * item.quantity).toLocaleString("id-ID")}</span>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              </div>
+
+              {/* Subtotal & Total */}
+              <div className="pt-3 border-t flex justify-between items-center">
+                <span className="text-xs font-bold text-muted-foreground uppercase">Total Pembayaran</span>
+                <span className="text-base font-black text-foreground tabular-nums">
+                  Rp {selectedTx.total_amount.toLocaleString("id-ID")}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="pt-2 border-t mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDetailsOpen(false)}
+              className="h-8 text-xs font-semibold px-4 cursor-pointer"
+            >
+              Tutup
             </Button>
           </DialogFooter>
         </DialogContent>

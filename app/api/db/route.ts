@@ -145,7 +145,7 @@ function writeDb(data: DbSchema) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { table, action, data, filters, order } = await req.json();
+    const { table, action, data, filters, order, limit } = await req.json();
 
     // IF USING REAL SUPABASE SERVER-SIDE PROXY
     if (!useLocalJsonDb && supabaseServer) {
@@ -158,6 +158,9 @@ export async function POST(req: NextRequest) {
         }
         if (order) {
           query = query.order(order.column, { ascending: order.ascending });
+        }
+        if (limit) {
+          query = query.limit(limit);
         }
         const { data: resData, error } = await query;
         return NextResponse.json({ data: resData, error });
@@ -214,6 +217,9 @@ export async function POST(req: NextRequest) {
           if (a[column] > b[column]) return ascending ? 1 : -1;
           return 0;
         });
+      }
+      if (limit) {
+        result = result.slice(0, limit);
       }
       return NextResponse.json({ data: result, error: null });
     }

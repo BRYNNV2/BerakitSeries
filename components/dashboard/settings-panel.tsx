@@ -70,7 +70,7 @@ const AVATAR_TEMPLATES = [
 ];
 
 export function SettingsPanel() {
-  const [activeSubTab, setActiveSubTab] = React.useState<"admin-profile" | "profile" | "payment" | "shipping" | "database">("admin-profile");
+  const [activeSubTab, setActiveSubTab] = React.useState<"admin-profile" | "profile" | "payment" | "shipping" | "users">("admin-profile");
   const [settings, setSettings] = React.useState<BumdesSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = React.useState(false);
   const [saveSuccess, setSaveSuccess] = React.useState(false);
@@ -91,6 +91,58 @@ export function SettingsPanel() {
   const [dbLoading, setDbLoading] = React.useState(false);
   const [dbMessage, setDbMessage] = React.useState<{ text: string; type: "success" | "error" | "" }>({ text: "", type: "" });
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(!!supabase);
+
+  // User Management states
+  const [profiles, setProfiles] = React.useState<any[]>([]);
+  const [profilesLoading, setProfilesLoading] = React.useState(false);
+
+  const loadProfiles = React.useCallback(async () => {
+    if (!supabase) return;
+    setProfilesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      setProfiles(data || []);
+    } catch (err: any) {
+      console.warn("Failed to load profiles:", err);
+    } finally {
+      setProfilesLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (activeSubTab === "users") {
+      loadProfiles();
+    }
+  }, [activeSubTab, loadProfiles]);
+
+  const handleUpdateRole = async (userId: string, currentRole: string) => {
+    if (!supabase) return;
+    const newRole = currentRole === "admin" ? "buyer" : "admin";
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ role: newRole })
+        .eq("id", userId);
+      
+      if (error) throw error;
+      
+      toast.success(`Berhasil mengubah role pengguna menjadi ${newRole}!`);
+      setProfiles(prev => prev.map(p => p.id === userId ? { ...p, role: newRole } : p));
+      addActivityLog(
+        "Update Role User",
+        `Mengubah hak akses user ID ${userId} menjadi '${newRole}'`,
+        "settings"
+      );
+    } catch (err: any) {
+      console.error("Gagal mengubah role:", err);
+      toast.error(`Gagal mengubah role: ${err.message || err}`);
+    }
+  };
 
   // Sync edit state with store changes
   const [uploading, setUploading] = React.useState(false);
@@ -522,6 +574,18 @@ export function SettingsPanel() {
             <Truck className="size-4" />
             Tarif Ongkos Kirim
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveSubTab("users")}
+            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
+              activeSubTab === "users"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            }`}
+          >
+            <UserCircle className="size-4" />
+            Manajemen User
+          </button>
         </div>
 
         {/* Content Area */}
@@ -809,25 +873,107 @@ export function SettingsPanel() {
               </div>
             )}
 
-            {/* Save Buttons Footer */}
-            <div className="flex items-center gap-3 pt-4 border-t">
-              <Button type="submit" disabled={loading} className="gap-2 h-9 sm:h-10 text-xs sm:text-sm">
-                {loading ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : saveSuccess ? (
-                  <CheckCircle2 className="size-4 text-white" />
-                ) : (
-                  <Save className="size-4" />
-                )}
-                {loading ? "Menyimpan..." : saveSuccess ? "Tersimpan!" : "Simpan Pengaturan"}
-              </Button>
+            {/* SUBTAB 4: User Management (Manajemen User) */}
+            {activeSubTab === "users" && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                <div>
+                  <h3 className="text-base font-semibold">Manajemen Hak Akses Pengguna</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Kelola hak akses pengguna terdaftar di sistem BUMDes Berakit. Anda dapat mengubah pembeli biasa menjadi admin.
+                  </p>
+                </div>
 
-              {saveSuccess && (
-                <span className="text-xs font-semibold text-emerald-500 animate-in fade-in duration-200">
-                  Konfigurasi berhasil disimpan!
-                </span>
-              )}
-            </div>
+                {profilesLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
+                    <Loader2 className="size-8 animate-spin text-primary" />
+                    <span className="text-xs font-semibold">Memuat data pengguna...</span>
+                  </div>
+                ) : profiles.length === 0 ? (
+                  <div className="border border-dashed rounded-xl p-10 text-center text-muted-foreground">
+                    <UserCircle className="size-10 mx-auto text-muted-foreground/30 mb-2" />
+                    <span className="text-xs font-semibold">Tidak ada pengguna kustom terdaftar.</span>
+                  </div>
+                ) : (
+                  <div className="border rounded-xl overflow-hidden bg-white dark:bg-zinc-900 shadow-xs">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b bg-muted/20 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            <th className="p-3.5">Nama & Kontak</th>
+                            <th className="p-3.5">Email</th>
+                            <th className="p-3.5">Role</th>
+                            <th className="p-3.5">Tanggal Daftar</th>
+                            <th className="p-3.5 text-right">Aksi</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {profiles.map((p) => {
+                            const isSelfOrMasterAdmin = p.email === "admin@berakit.desa.id" || p.email === adminEmail;
+                            return (
+                              <tr key={p.id} className="border-b last:border-0 hover:bg-muted/10 text-xs font-medium">
+                                <td className="p-3.5">
+                                  <div className="font-semibold text-foreground">{p.full_name || "Pelanggan Tanpa Nama"}</div>
+                                  <div className="text-[10px] text-muted-foreground">{p.phone || "-"}</div>
+                                </td>
+                                <td className="p-3.5 font-mono text-[11px]">{p.email}</td>
+                                <td className="p-3.5">
+                                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${
+                                    p.role === "admin" 
+                                      ? "bg-rose-50 text-rose-700 border-rose-100" 
+                                      : "bg-zinc-100 text-zinc-650 border-zinc-200"
+                                  }`}>
+                                    {p.role}
+                                  </span>
+                                </td>
+                                <td className="p-3.5 text-muted-foreground text-[10px]">
+                                  {new Date(p.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                                </td>
+                                <td className="p-3.5 text-right">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={p.role === "admin" ? "outline" : "default"}
+                                    disabled={isSelfOrMasterAdmin}
+                                    onClick={() => handleUpdateRole(p.id, p.role)}
+                                    className={`h-7 text-[9px] px-3 font-bold uppercase tracking-wider rounded-md cursor-pointer ${
+                                      p.role === "admin" ? "hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200" : ""
+                                    }`}
+                                  >
+                                    {p.role === "admin" ? "Jadikan Buyer" : "Jadikan Admin"}
+                                  </Button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Save Buttons Footer */}
+            {activeSubTab !== "users" && (
+              <div className="flex items-center gap-3 pt-4 border-t">
+                <Button type="submit" disabled={loading} className="gap-2 h-9 sm:h-10 text-xs sm:text-sm">
+                  {loading ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : saveSuccess ? (
+                    <CheckCircle2 className="size-4 text-white" />
+                  ) : (
+                    <Save className="size-4" />
+                  )}
+                  {loading ? "Menyimpan..." : saveSuccess ? "Tersimpan!" : "Simpan Pengaturan"}
+                </Button>
+
+                {saveSuccess && (
+                  <span className="text-xs font-semibold text-emerald-500 animate-in fade-in duration-200">
+                    Konfigurasi berhasil disimpan!
+                  </span>
+                )}
+              </div>
+            )}
           </form>
         </div>
       </div>

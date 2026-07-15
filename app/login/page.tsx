@@ -47,12 +47,15 @@ export default function LoginPage() {
 
     if (isUsingSupabase) {
       try {
-        const { error: authError } = await withTimeout(
+        const loginRes = await withTimeout(
           supabase.auth.signInWithPassword({
             email,
             password,
           })
         );
+
+        const authError = loginRes?.error;
+        const authData = loginRes?.data;
 
         if (authError) {
           if (email === "admin@berakit.desa.id" && password === "adminberakit") {
@@ -63,7 +66,28 @@ export default function LoginPage() {
           }
         } else {
           localStorage.removeItem("berakit_admin_auth");
-          router.push("/admin");
+          
+          const loggedInUser = authData?.user || authData?.session?.user;
+          let userRole = loggedInUser?.role;
+          
+          if (loggedInUser && !userRole) {
+            try {
+              const { data: pData } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", loggedInUser.id)
+                .single();
+              if (pData?.role) userRole = pData.role;
+            } catch (e) {
+              console.warn("Failed fetching profile role on login:", e);
+            }
+          }
+
+          if (userRole === "admin" || email === "admin@berakit.desa.id") {
+            router.push("/admin");
+          } else {
+            router.push("/dashboard");
+          }
         }
       } catch (err) {
         console.warn("Supabase auth error:", err);
@@ -267,7 +291,7 @@ export default function LoginPage() {
               Continue with Google
             </button>
             <p className="text-[11px] text-zinc-400 text-center font-medium">
-              Don&apos;t have an account? <span className="text-[#bef264] font-bold cursor-pointer hover:underline">Sign up</span>
+              Don&apos;t have an account? <span onClick={() => router.push("/register")} className="text-[#bef264] font-bold cursor-pointer hover:underline">Sign up</span>
             </p>
           </div>
 

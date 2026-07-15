@@ -50,15 +50,55 @@ export default function DashboardPage() {
           const sessionRes = await withTimeout(supabase.auth.getSession(), 2000);
           const session = sessionRes?.data?.session;
           if (session) {
-            setAuthenticated(true);
-            setLoading(false);
-            return;
+            const user = session.user;
+            let userRole = user?.role;
+            if (user && !userRole) {
+              try {
+                const { data: pData } = await supabase
+                  .from("profiles")
+                  .select("role")
+                  .eq("id", user.id)
+                  .single();
+                if (pData?.role) userRole = pData.role;
+              } catch (e) {
+                console.warn("Failed fetching profile role in admin check:", e);
+              }
+            }
+
+            if (userRole === "admin" || user?.email === "admin@berakit.desa.id") {
+              setAuthenticated(true);
+              setLoading(false);
+              return;
+            } else {
+              router.push("/");
+              setLoading(false);
+              return;
+            }
           }
 
           // Listen for auth changes
-          const authChangeRes = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+          const authChangeRes = supabase.auth.onAuthStateChange(async (_event: any, session: any) => {
             if (session) {
-              setAuthenticated(true);
+              const user = session.user;
+              let userRole = user?.role;
+              if (user && !userRole) {
+                try {
+                  const { data: pData } = await supabase
+                    .from("profiles")
+                    .select("role")
+                    .eq("id", user.id)
+                    .single();
+                  if (pData?.role) userRole = pData.role;
+                } catch (e) {
+                  console.warn("Failed fetching profile role on auth change:", e);
+                }
+              }
+
+              if (userRole === "admin" || user?.email === "admin@berakit.desa.id") {
+                setAuthenticated(true);
+              } else {
+                router.push("/");
+              }
             } else {
               // Only redirect if local auth is also missing
               const currentLocalAuth = localStorage.getItem("berakit_admin_auth");

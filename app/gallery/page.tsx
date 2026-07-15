@@ -113,6 +113,36 @@ export default function GalleryPage() {
   const [cartItemCount, setCartItemCount] = React.useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isSortOpen, setIsSortOpen] = React.useState(false);
+  const [currentUser, setCurrentUser] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      if (supabase) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            let role = session.user.role;
+            if (!role) {
+              try {
+                const { data: pData } = await supabase
+                  .from("profiles")
+                  .select("role")
+                  .eq("id", session.user.id)
+                  .single();
+                if (pData?.role) role = pData.role;
+              } catch (err) {
+                console.warn("Failed fetching profile role on gallery mount:", err);
+              }
+            }
+            setCurrentUser({ ...session.user, role: role || "buyer" });
+          }
+        } catch (e) {
+          console.warn("Failed fetching session in gallery:", e);
+        }
+      }
+    };
+    fetchUser();
+  }, []);
   const sortRef = React.useRef<HTMLDivElement>(null);
   const hasAnimated = React.useRef(false);
 
@@ -343,7 +373,11 @@ export default function GalleryPage() {
                 {isSearchOpen ? <X className="size-[18px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} /> : <Search className="size-[18px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />}
               </button>
             </div>
-            <button className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 700, color: "lab(7.78201 -0.0000149012 0)", fontSize: "12px", lineHeight: "16px" }} onClick={() => router.push("/login")}>Sign In</button>
+            {currentUser ? (
+              <button className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 700, color: "lab(7.78201 -0.0000149012 0)", fontSize: "12px", lineHeight: "16px" }} onClick={() => router.push(currentUser.role === "admin" ? "/admin" : "/dashboard")}>Dashboard</button>
+            ) : (
+              <button className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 700, color: "lab(7.78201 -0.0000149012 0)", fontSize: "12px", lineHeight: "16px" }} onClick={() => router.push("/login")}>Sign In</button>
+            )}
             <button className="relative text-black hover:opacity-80 transition-opacity" onClick={() => router.push("/product")}>
               <ShoppingBag className="size-[20px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
               {cartItemCount > 0 && (<span className="absolute -top-1.5 -right-1.5 bg-[#bef264] text-black text-[9px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center animate-pulse">{cartItemCount}</span>)}
@@ -376,7 +410,11 @@ export default function GalleryPage() {
             </nav>
           </div>
           <div className="pt-6 border-t border-zinc-100 flex flex-col gap-4">
-            <button className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors" onClick={() => { setIsMobileMenuOpen(false); router.push("/login"); }}>Sign In</button>
+            {currentUser ? (
+              <button className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors" onClick={() => { setIsMobileMenuOpen(false); router.push(currentUser.role === "admin" ? "/admin" : "/dashboard"); }}>Dashboard</button>
+            ) : (
+              <button className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors" onClick={() => { setIsMobileMenuOpen(false); router.push("/login"); }}>Sign In</button>
+            )}
           </div>
         </div>
       </div>

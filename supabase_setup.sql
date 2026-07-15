@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS public.orders CASCADE;
 DROP TABLE IF EXISTS public.products CASCADE;
 DROP TABLE IF EXISTS public.settings CASCADE;
 DROP TABLE IF EXISTS public.gallery CASCADE;
+DROP TABLE IF EXISTS public.profiles CASCADE;
 
 -- 1. Create PRODUCTS Table
 CREATE TABLE IF NOT EXISTS public.products (
@@ -14,12 +15,19 @@ CREATE TABLE IF NOT EXISTS public.products (
     stock INTEGER NOT NULL DEFAULT 0,
     image_url TEXT,
     category TEXT,
+    has_sizes BOOLEAN DEFAULT false,
+    size_variants JSONB DEFAULT '[]'::jsonb,
+    has_custom_length BOOLEAN DEFAULT false,
+    price_per_cm NUMERIC DEFAULT 0,
+    min_length_cm INTEGER DEFAULT 100,
+    is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- 2. Create ORDERS Table
 CREATE TABLE IF NOT EXISTS public.orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     customer_name TEXT NOT NULL,
     customer_phone TEXT,
     address TEXT,
@@ -111,3 +119,29 @@ ALTER TABLE public.orders DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.settings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gallery DISABLE ROW LEVEL SECURITY;
+
+-- 11. Create PROFILES Table for user/buyer profiles and roles
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email TEXT NOT NULL,
+    full_name TEXT,
+    phone TEXT,
+    address TEXT,
+    role TEXT NOT NULL DEFAULT 'buyer'::text, -- 'admin' or 'buyer'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Disable Row-Level Security on profiles for easy public access
+ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
+
+-- =========================================================================
+-- RUN THIS MIGRATION IF YOUR DATABASE WAS CREATED BEFORE SIZE/LENGTH PRICING
+-- =========================================================================
+-- ALTER TABLE public.products 
+-- ADD COLUMN IF NOT EXISTS has_sizes BOOLEAN DEFAULT false,
+-- ADD COLUMN IF NOT EXISTS size_variants JSONB DEFAULT '[]'::jsonb,
+-- ADD COLUMN IF NOT EXISTS has_custom_length BOOLEAN DEFAULT false,
+-- ADD COLUMN IF NOT EXISTS price_per_cm NUMERIC DEFAULT 0,
+-- ADD COLUMN IF NOT EXISTS min_length_cm INTEGER DEFAULT 100,
+-- ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+
