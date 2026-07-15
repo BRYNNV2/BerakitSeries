@@ -152,6 +152,7 @@ export default function ProductListingPage() {
   const [isQuickViewOpen, setIsQuickViewOpen] = React.useState(false);
   const [selectedSize, setSelectedSize] = React.useState("M");
   const [customLength, setCustomLength] = React.useState<number>(100);
+  const [purchaseQty, setPurchaseQty] = React.useState<number>(1);
   const [isClosing, setIsClosing] = React.useState(false);
 
   React.useEffect(() => {
@@ -166,6 +167,7 @@ export default function ProductListingPage() {
       } else {
         setCustomLength(100);
       }
+      setPurchaseQty(1);
     }
   }, [selectedProduct]);
 
@@ -189,6 +191,20 @@ export default function ProductListingPage() {
     }
     return selectedProduct.stock;
   }, [selectedProduct, selectedSize]);
+
+  const maxQuantityAllowed = React.useMemo(() => {
+    if (!selectedProduct) return 1;
+    if (selectedProduct.has_custom_length) {
+      return Math.floor(selectedProduct.stock / customLength) || 1;
+    }
+    return activeStock;
+  }, [selectedProduct, activeStock, customLength]);
+
+  React.useEffect(() => {
+    if (purchaseQty > maxQuantityAllowed) {
+      setPurchaseQty(maxQuantityAllowed || 1);
+    }
+  }, [maxQuantityAllowed, purchaseQty]);
 
   // Checkout states
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
@@ -1206,6 +1222,48 @@ export default function ProductListingPage() {
                   </div>
                 )}
 
+                {/* Quantity selection */}
+                {(((selectedProduct.has_sizes && activeStock > 0) || (!selectedProduct.has_sizes && selectedProduct.stock > 0)) && selectedProduct.is_active !== false) && (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-zinc-900">
+                      <span>JUMLAH PEMBELIAN</span>
+                      <span className="text-zinc-400 font-mono">Maks: {maxQuantityAllowed}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        className="size-10 rounded-full border border-zinc-200 flex items-center justify-center font-bold text-zinc-600 hover:bg-zinc-50 cursor-pointer active:scale-95 transition-all select-none bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                        onClick={() => setPurchaseQty(Math.max(1, purchaseQty - 1))}
+                        disabled={purchaseQty <= 1}
+                      >
+                        -
+                      </button>
+                      <div className="flex-1 relative">
+                        <input
+                          type="number"
+                          min={1}
+                          max={maxQuantityAllowed}
+                          value={purchaseQty}
+                          onChange={(e) => {
+                            const val = Math.max(1, Number(e.target.value));
+                            setPurchaseQty(Math.min(val, maxQuantityAllowed));
+                          }}
+                          className="w-full h-10 border border-zinc-200 rounded-full px-5 text-center text-sm font-extrabold text-zinc-900 focus:outline-none focus:border-zinc-400 transition-colors bg-white"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="size-10 rounded-full border border-zinc-200 flex items-center justify-center font-bold text-zinc-600 hover:bg-zinc-50 cursor-pointer active:scale-95 transition-all select-none bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+                        onClick={() => setPurchaseQty(Math.min(maxQuantityAllowed, purchaseQty + 1))}
+                        disabled={purchaseQty >= maxQuantityAllowed}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Bottom Buttons (exactly matching reference image layout) */}
                 <div className="flex gap-3 pt-2">
                   {(((selectedProduct.has_sizes && activeStock > 0) || (!selectedProduct.has_sizes && selectedProduct.stock > 0)) && selectedProduct.is_active !== false) ? (
@@ -1215,7 +1273,7 @@ export default function ProductListingPage() {
                         onClick={() => {
                           addToCart(
                             selectedProduct, 
-                            1, 
+                            purchaseQty, 
                             selectedProduct.has_sizes ? selectedSize : undefined,
                             selectedProduct.has_custom_length ? customLength : undefined
                           );
@@ -1266,7 +1324,7 @@ export default function ProductListingPage() {
                           const directItem: CartItem = {
                             id: `${selectedProduct.id}-${sizeLabel}`,
                             product: tempProduct,
-                            quantity: 1
+                            quantity: purchaseQty
                           };
 
                           const codOk = directItem.product.allow_cod !== false;
