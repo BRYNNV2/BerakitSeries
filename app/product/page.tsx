@@ -469,6 +469,7 @@ export default function ProductListingPage() {
 
   const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+  const checkoutSubtotal = checkoutItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
   const isCodAllowed = checkoutItems.length > 0 ? checkoutItems.every(item => item.product.allow_cod !== false) : true;
   const isBankAllowed = checkoutItems.length > 0 ? checkoutItems.every(item => item.product.allow_bank !== false) : true;
@@ -1024,15 +1025,15 @@ export default function ProductListingPage() {
                 </div>
 
                 {/* Info Under Card */}
-                <div className="mt-2.5 sm:mt-4 flex flex-col text-left">
-                  <div className="flex justify-between items-start gap-1 sm:gap-4">
+                <div className="mt-2.5 sm:mt-4 flex flex-col text-left px-1 sm:px-0">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-4">
                     <span 
-                      className="font-bold text-[11px] sm:text-base text-zinc-900 uppercase tracking-tight line-clamp-2 sm:line-clamp-1 group-hover:text-black transition-colors leading-tight"
+                      className="font-bold text-xs sm:text-base text-zinc-900 uppercase tracking-tight line-clamp-2 sm:line-clamp-1 group-hover:text-black transition-colors leading-tight"
                       style={{ fontFamily: "'Inter', sans-serif" }}
                     >
                       {product.name}
                     </span>
-                    <span className="font-bold text-[10px] sm:text-base text-zinc-900 whitespace-nowrap shrink-0">
+                    <span className="font-extrabold sm:font-bold text-xs sm:text-base text-zinc-900 whitespace-nowrap shrink-0 mt-0.5 sm:mt-0">
                       Rp {product.price.toLocaleString("id-ID")}
                     </span>
                   </div>
@@ -1054,7 +1055,7 @@ export default function ProductListingPage() {
         // Prevent immediate close if click outside is triggered while closing
         if (!isClosing) setIsQuickViewOpen(open);
       }}>
-        <DialogContent className="max-w-3xl bg-white border border-white shadow-[0_4px_16px_rgba(0,0,0,0.08),0_16px_40px_rgba(0,0,0,0.12),0_40px_80px_-20px_rgba(0,0,0,0.15)] p-0 overflow-hidden rounded-[40px] [&>button]:hidden duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.9] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.95] data-[state=open]:slide-in-from-left-0 data-[state=open]:slide-in-from-top-0 data-[state=closed]:slide-out-to-left-0 data-[state=closed]:slide-out-to-top-0">
+        <DialogContent className="w-[94vw] md:w-full max-w-3xl bg-white border border-white shadow-[0_4px_16px_rgba(0,0,0,0.08),0_16px_40px_rgba(0,0,0,0.12),0_40px_80px_-20px_rgba(0,0,0,0.15)] p-0 overflow-hidden rounded-[30px] md:rounded-[40px] [&>button]:hidden duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.9] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.95] data-[state=open]:slide-in-from-left-0 data-[state=open]:slide-in-from-top-0 data-[state=closed]:slide-out-to-left-0 data-[state=closed]:slide-out-to-top-0 max-h-[92vh] overflow-y-auto">
           {selectedProduct && (
             <div className="grid grid-cols-1 md:grid-cols-2 relative">
               
@@ -1067,7 +1068,7 @@ export default function ProductListingPage() {
                     setIsClosing(false);
                   }, 800);
                 }}
-                className="absolute right-5 top-5 z-50 size-8 rounded-full bg-transparent flex items-center justify-center text-zinc-600 hover:text-black transition-all hover:scale-110 active:scale-90 group/close cursor-pointer"
+                className="absolute right-4 top-4 md:right-5 md:top-5 z-50 size-8 rounded-full bg-white/90 md:bg-transparent shadow-md md:shadow-none flex items-center justify-center text-zinc-600 hover:text-black transition-all hover:scale-110 active:scale-90 group/close cursor-pointer border border-zinc-200/50 md:border-none"
               >
                 {isClosing ? (
                   <svg className="animate-spin size-4 text-[#bef264]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -1080,17 +1081,17 @@ export default function ProductListingPage() {
               </div>
 
               {/* Left Column: Image with light gray bg */}
-              <div className="bg-[#f0f0f0] p-10 flex items-center justify-center min-h-[340px]">
+              <div className="bg-[#f0f0f0] p-6 md:p-10 flex items-center justify-center min-h-[220px] md:min-h-[340px]">
                 <img
                   src={selectedProduct.image_url}
                   alt={selectedProduct.name}
                   loading="lazy"
-                  className="max-h-[320px] max-w-full object-contain"
+                  className="max-h-[180px] md:max-h-[320px] max-w-full object-contain"
                 />
               </div>
 
               {/* Right Column: Info */}
-              <div className="p-8 flex flex-col justify-center text-left space-y-5 relative">
+              <div className="p-5 md:p-8 flex flex-col justify-center text-left space-y-4 md:space-y-5 relative">
                 <div>
                   <div className="flex items-center justify-between gap-4 mb-1">
                     {/* Category Label (plain bright lime/green text as in reference image) */}
@@ -1110,19 +1111,19 @@ export default function ProductListingPage() {
                   
                   {/* Title (Oswald/Inter bold condensed uppercase) */}
                   <DialogTitle 
-                    className="text-4xl font-black uppercase text-zinc-950 leading-[1.05] tracking-tight mb-1"
+                    className="text-2xl md:text-4xl font-black uppercase text-zinc-950 leading-[1.05] tracking-tight mb-1"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                   >
                     {selectedProduct.name}
                   </DialogTitle>
                   
                   {/* Price */}
-                  <span className="text-[22px] font-black text-zinc-950 block">
+                  <span className="text-lg md:text-[22px] font-black text-zinc-950 block">
                     Rp {activePrice.toLocaleString("id-ID")}
                   </span>
 
                   {/* Horizontal Divider (matching final reference image) */}
-                  <div className="w-full h-px bg-zinc-200/60 my-4" />
+                  <div className="w-full h-px bg-zinc-200/60 my-3 md:my-4" />
                   
                   {/* Description */}
                   <DialogDescription className="text-zinc-500 text-xs leading-relaxed font-medium max-w-xs mt-1">
@@ -1495,18 +1496,18 @@ export default function ProductListingPage() {
 
       {/* 3. CHECKOUT DIALOG / POPUP */}
       <Dialog open={isCheckoutOpen} onOpenChange={handleCheckoutClose}>
-        <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 text-white rounded-3xl p-6 overflow-hidden">
+        <DialogContent className="w-[94vw] md:w-full max-w-md bg-white border border-zinc-200 text-zinc-900 rounded-3xl p-6 max-h-[92vh] overflow-y-auto">
           {checkoutSuccess ? (
             <div className="py-8 text-center space-y-6">
-              <div className="size-16 rounded-full bg-[#bef264]/10 text-[#bef264] flex items-center justify-center border border-[#bef264]/20 mx-auto">
+              <div className="size-16 rounded-full bg-[#bef264]/10 text-zinc-900 flex items-center justify-center border border-[#bef264]/20 mx-auto">
                 <CheckCircle className="size-8" />
               </div>
               <div className="space-y-2">
-                <DialogTitle className="text-2xl font-black uppercase tracking-tight text-white" style={{ fontFamily: "'Oswald', sans-serif" }}>
+                <DialogTitle className="text-2xl font-black uppercase tracking-tight text-zinc-950" style={{ fontFamily: "'Oswald', sans-serif" }}>
                   PESANAN DITERIMA!
                 </DialogTitle>
-                <p className="text-xs text-zinc-400 font-mono">ORDER ID: {lastCreatedOrderId}</p>
-                <DialogDescription className="text-zinc-400 text-sm max-w-xs mx-auto leading-relaxed font-normal">
+                <p className="text-xs text-zinc-500 font-mono">ORDER ID: {lastCreatedOrderId}</p>
+                <DialogDescription className="text-zinc-500 text-sm max-w-xs mx-auto leading-relaxed font-normal">
                   Terima kasih telah memesan di BERAKIT SERIES. Admin kami akan segera menghubungi Anda melalui nomor telepon untuk konfirmasi pengiriman.
                 </DialogDescription>
               </div>
@@ -1520,7 +1521,7 @@ export default function ProductListingPage() {
           ) : (
             <form onSubmit={handleCheckoutSubmit} className="space-y-6 text-left">
               <div>
-                <DialogTitle className="text-2xl font-black uppercase text-white tracking-tight" style={{ fontFamily: "'Oswald', sans-serif" }}>
+                <DialogTitle className="text-2xl font-black uppercase text-zinc-950 tracking-tight" style={{ fontFamily: "'Oswald', sans-serif" }}>
                   FORMULIR CHECKOUT
                 </DialogTitle>
                 <DialogDescription className="text-zinc-500 text-xs mt-1">
@@ -1529,81 +1530,81 @@ export default function ProductListingPage() {
               </div>
 
               {/* Order Summary Summary */}
-              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-4 space-y-2.5">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Ringkasan Pembelian</span>
+              <div className="bg-zinc-50 border border-zinc-200/80 rounded-2xl p-4 space-y-2.5">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Ringkasan Pembelian</span>
                 <div className="max-h-[100px] overflow-y-auto space-y-1.5 pr-2">
-                  {cart.map((item) => (
-                    <div key={item.product.id} className="flex justify-between text-xs text-zinc-300">
+                  {checkoutItems.map((item) => (
+                    <div key={item.id} className="flex justify-between text-xs text-zinc-600">
                       <span className="line-clamp-1">{item.product.name} (x{item.quantity})</span>
-                      <span className="font-mono">Rp {(item.product.price * item.quantity).toLocaleString("id-ID")}</span>
+                      <span className="font-mono text-zinc-900 font-semibold">Rp {(item.product.price * item.quantity).toLocaleString("id-ID")}</span>
                     </div>
                   ))}
                 </div>
-                <div className="h-px bg-zinc-800" />
-                <div className="flex justify-between items-center text-xs font-bold text-white">
+                <div className="h-px bg-zinc-200" />
+                <div className="flex justify-between items-center text-xs font-bold text-zinc-900">
                   <span>TOTAL:</span>
-                  <span className="text-sm text-[#bef264] font-mono">Rp {cartSubtotal.toLocaleString("id-ID")}</span>
+                  <span className="text-sm text-zinc-950 font-black font-mono">Rp {checkoutSubtotal.toLocaleString("id-ID")}</span>
                 </div>
               </div>
 
               {/* Customer Inputs */}
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Nama Lengkap</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Nama Lengkap</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-600" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
                     <Input
                       type="text"
                       placeholder="Masukkan nama Anda"
                       required
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      className="bg-zinc-900 border-zinc-800 text-white rounded-xl pl-10 focus:border-zinc-700 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm h-11"
+                      className="bg-white border-zinc-200 text-zinc-900 rounded-xl pl-10 focus:border-zinc-400 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm h-11"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Nomor WhatsApp / HP</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Nomor WhatsApp / HP</label>
                   <div className="relative">
-                    <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-600" />
+                    <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
                     <Input
                       type="tel"
                       placeholder="Contoh: 08123456789"
                       required
                       value={customerPhone}
                       onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="bg-zinc-900 border-zinc-800 text-white rounded-xl pl-10 focus:border-zinc-700 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm h-11"
+                      className="bg-white border-zinc-200 text-zinc-900 rounded-xl pl-10 focus:border-zinc-400 focus-visible:ring-0 focus-visible:ring-offset-0 text-sm h-11"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Alamat Lengkap Pengiriman</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Alamat Lengkap Pengiriman</label>
                   <textarea
                     placeholder="Masukkan alamat jalan, RT/RW, kelurahan, kecamatan, kabupaten, kode pos"
                     required
                     value={customerAddress}
                     onChange={(e) => setCustomerAddress(e.target.value)}
                     rows={3}
-                    className="w-full bg-zinc-900 border border-zinc-800 text-white rounded-xl p-3 focus:border-zinc-700 focus:outline-none text-sm leading-relaxed"
+                    className="w-full bg-white border border-zinc-200 text-zinc-900 rounded-xl p-3 focus:border-zinc-400 focus:outline-none text-sm leading-relaxed"
                   />
                 </div>
 
                 {/* Payment Option */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Metode Pembayaran</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Metode Pembayaran</label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       disabled={!isCodAllowed}
                       onClick={() => setPaymentMethod("COD")}
-                      className={`py-3 rounded-xl border text-[11px] font-bold uppercase transition-all ${
+                      className={`py-3 rounded-xl border text-[11px] font-extrabold uppercase transition-all ${
                         !isCodAllowed 
-                          ? "bg-zinc-950 border-zinc-900 text-zinc-600 opacity-40 cursor-not-allowed"
+                          ? "bg-zinc-50 border-zinc-100 text-zinc-300 opacity-50 cursor-not-allowed"
                           : paymentMethod === "COD" 
-                            ? "bg-[#bef264] border-[#bef264] text-black" 
-                            : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
+                            ? "bg-zinc-950 border-zinc-950 text-white shadow-md shadow-zinc-950/15" 
+                            : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950"
                       }`}
                     >
                       Bayar di Tempat (COD) {!isCodAllowed && " (Nonaktif)"}
@@ -1612,12 +1613,12 @@ export default function ProductListingPage() {
                       type="button"
                       disabled={!isBankAllowed}
                       onClick={() => setPaymentMethod("Transfer")}
-                      className={`py-3 rounded-xl border text-[11px] font-bold uppercase transition-all ${
+                      className={`py-3 rounded-xl border text-[11px] font-extrabold uppercase transition-all ${
                         !isBankAllowed 
-                          ? "bg-zinc-950 border-zinc-900 text-zinc-600 opacity-40 cursor-not-allowed"
+                          ? "bg-zinc-50 border-zinc-100 text-zinc-300 opacity-50 cursor-not-allowed"
                           : paymentMethod === "Transfer" 
-                            ? "bg-[#bef264] border-[#bef264] text-black" 
-                            : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
+                            ? "bg-zinc-950 border-zinc-950 text-white shadow-md shadow-zinc-950/15" 
+                            : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950"
                       }`}
                     >
                       Transfer Bank {!isBankAllowed && " (Nonaktif)"}
@@ -1627,22 +1628,22 @@ export default function ProductListingPage() {
 
                 {/* Bank Details & Proof of Transfer (If Transfer selected) */}
                 {paymentMethod === "Transfer" && (
-                  <div className="space-y-4 pt-2 border-t border-zinc-800 animate-in fade-in slide-in-from-top-1 duration-200">
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
-                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Rekening Tujuan Transfer</span>
+                  <div className="space-y-4 pt-2 border-t border-zinc-200 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-4 space-y-3">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Rekening Tujuan Transfer</span>
                       
                       {/* Bank 1 */}
-                      <div className="flex items-center justify-between text-xs py-1 border-b border-zinc-800/50">
-                        <div>
-                          <div className="font-extrabold text-zinc-300">BANK BRI</div>
-                          <div className="text-[10px] text-zinc-500 font-mono mt-0.5">0033-01-001234-56-7</div>
-                          <div className="text-[10px] text-zinc-400">a.n BUMDes Berakit Maju</div>
+                      <div className="flex flex-row items-center justify-between gap-2 py-2 border-b border-zinc-200">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-extrabold text-zinc-900 text-xs">BANK BRI</div>
+                          <div className="text-[10px] text-zinc-600 font-mono mt-0.5 font-semibold">0033-01-001234-56-7</div>
+                          <div className="text-[10px] text-zinc-500">a.n BUMDes Berakit Maju</div>
                         </div>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-7 text-[10px] text-[#bef264] hover:text-[#bef264] hover:bg-[#bef264]/10 rounded-lg px-2 border-none"
+                          className="h-7 text-[10px] font-bold text-zinc-800 hover:text-zinc-950 hover:bg-zinc-200/50 rounded-lg px-3 border border-zinc-200 shrink-0"
                           onClick={() => {
                             navigator.clipboard.writeText("003301001234567");
                             toast.success("Nomor rekening BRI disalin!");
@@ -1653,17 +1654,17 @@ export default function ProductListingPage() {
                       </div>
 
                       {/* Bank 2 */}
-                      <div className="flex items-center justify-between text-xs py-1">
-                        <div>
-                          <div className="font-extrabold text-zinc-300">BANK RIAU KEPRI SYARIAH</div>
-                          <div className="text-[10px] text-zinc-500 font-mono mt-0.5">109-20-12345</div>
-                          <div className="text-[10px] text-zinc-400">a.n BUMDes Berakit Maju</div>
+                      <div className="flex flex-row items-center justify-between gap-2 py-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-extrabold text-zinc-900 text-xs">BANK RIAU KEPRI SYARIAH</div>
+                          <div className="text-[10px] text-zinc-600 font-mono mt-0.5 font-semibold">109-20-12345</div>
+                          <div className="text-[10px] text-zinc-500">a.n BUMDes Berakit Maju</div>
                         </div>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-7 text-[10px] text-[#bef264] hover:text-[#bef264] hover:bg-[#bef264]/10 rounded-lg px-2 border-none"
+                          className="h-7 text-[10px] font-bold text-zinc-800 hover:text-zinc-950 hover:bg-zinc-200/50 rounded-lg px-3 border border-zinc-200 shrink-0"
                           onClick={() => {
                             navigator.clipboard.writeText("1092012345");
                             toast.success("Nomor rekening Riau Kepri disalin!");
@@ -1676,7 +1677,7 @@ export default function ProductListingPage() {
 
                     {/* Bukti Transfer Upload */}
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Unggah Bukti Transfer (Wajib)</label>
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">Unggah Bukti Transfer (Wajib)</label>
                       <div className="relative">
                         <input
                           type="file"
@@ -1698,23 +1699,23 @@ export default function ProductListingPage() {
                         />
                         <label
                           htmlFor="receipt-upload"
-                          className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-800 hover:border-zinc-700 bg-zinc-900/50 rounded-2xl p-4 cursor-pointer hover:bg-zinc-900 transition-all text-center gap-1.5"
+                          className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-200 hover:border-zinc-300 bg-zinc-50 rounded-2xl p-4 cursor-pointer hover:bg-zinc-100/50 transition-all text-center gap-1.5"
                         >
                           {receiptPreview ? (
                             <div className="space-y-2">
                               <img src={receiptPreview} className="max-h-24 object-contain rounded-lg mx-auto" alt="Preview" />
-                              <span className="text-[10px] text-zinc-400 font-mono block truncate max-w-[200px]">
+                              <span className="text-[10px] text-zinc-500 font-mono block truncate max-w-[200px]">
                                 {receiptFile?.name}
                               </span>
-                              <span className="text-[10px] text-[#bef264] font-extrabold uppercase tracking-wider block">Ganti Bukti</span>
+                              <span className="text-[10px] text-zinc-950 font-extrabold uppercase tracking-wider block">Ganti Bukti</span>
                             </div>
                           ) : (
                             <>
-                              <div className="size-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 mx-auto">
+                              <div className="size-8 rounded-full bg-zinc-200 flex items-center justify-center text-zinc-600 mx-auto">
                                 <Plus className="size-4" />
                               </div>
-                              <span className="text-xs text-zinc-300 font-bold">Pilih Gambar Bukti Transfer</span>
-                              <span className="text-[10px] text-zinc-500">Maks. 5MB (Format: JPG, PNG, WEBP)</span>
+                              <span className="text-xs text-zinc-700 font-bold">Pilih Gambar Bukti Transfer</span>
+                              <span className="text-[10px] text-zinc-400">Maks. 5MB (Format: JPG, PNG, WEBP)</span>
                             </>
                           )}
                         </label>
@@ -1729,14 +1730,14 @@ export default function ProductListingPage() {
                 <Button
                   type="button"
                   onClick={() => setIsCheckoutOpen(false)}
-                  className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold uppercase text-xs tracking-wider py-5 rounded-full"
+                  className="flex-1 bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 font-bold uppercase text-xs tracking-wider py-5 rounded-full border border-zinc-200"
                 >
                   Batal
                 </Button>
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 bg-[#bef264] hover:bg-[#bef264]/90 text-black font-bold uppercase text-xs tracking-wider py-5 rounded-full"
+                  className="flex-1 bg-[#bef264] hover:bg-[#bef264]/90 text-black font-bold uppercase text-xs tracking-wider py-5 rounded-full shadow-md shadow-zinc-200/50"
                 >
                   {isSubmitting ? <Loader2 className="size-4 animate-spin mx-auto" /> : "Buat Pesanan"}
                 </Button>
