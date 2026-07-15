@@ -190,6 +190,8 @@ export default function ProductListingPage() {
 
   // Checkout states
   const [isCheckoutOpen, setIsCheckoutOpen] = React.useState(false);
+  const [checkoutItems, setCheckoutItems] = React.useState<CartItem[]>([]);
+  const [isDirectCheckout, setIsDirectCheckout] = React.useState(false);
   const [customerName, setCustomerName] = React.useState("");
   const [customerPhone, setCustomerPhone] = React.useState("");
   const [customerAddress, setCustomerAddress] = React.useState("");
@@ -507,6 +509,8 @@ export default function ProductListingPage() {
       }
     }
 
+    const checkoutSubtotal = checkoutItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+
     // Structure transaction object matching public.orders schema
     const orderData = {
       user_id: loggedInUserId,
@@ -514,14 +518,14 @@ export default function ProductListingPage() {
       customer_phone: customerPhone,
       address: customerAddress,
       payment_method: paymentMethod === "Transfer" ? "Transfer Bank" : "COD",
-      items: cart.map((item) => ({
+      items: checkoutItems.map((item) => ({
         product_id: item.product.id,
         name: item.product.name,
         price: item.product.price,
         quantity: item.quantity,
         selected_size: item.product.selectedSize || null,
       })),
-      total_amount: cartSubtotal,
+      total_amount: checkoutSubtotal,
       status: "Pending",
       receipt_url: finalReceiptUrl,
       created_at: new Date().toISOString(),
@@ -537,7 +541,7 @@ export default function ProductListingPage() {
         if (error) throw error;
 
         // Deduct stocks in Supabase depending on product model type
-        for (const item of cart) {
+        for (const item of checkoutItems) {
           if (item.product.has_sizes) {
             const { data: prodData } = await supabase.from("products").select("size_variants").eq("id", item.product.id).single();
             if (prodData) {
@@ -573,7 +577,13 @@ export default function ProductListingPage() {
         const insertedId = data && data[0] ? data[0].id : orderId;
         setLastCreatedOrderId(insertedId);
         setCheckoutSuccess(true);
-        updateCart([]); // Clear cart
+        
+        if (isDirectCheckout) {
+          setCheckoutItems([]);
+        } else {
+          updateCart([]); // Clear cart if checked out via Cart
+          setCheckoutItems([]);
+        }
       } catch (err: any) {
         console.error("Supabase checkout failed:", err);
         toast.error(`Gagal membuat pesanan: ${err.message || err}`);
@@ -589,6 +599,7 @@ export default function ProductListingPage() {
   const handleCheckoutClose = () => {
     setIsCheckoutOpen(false);
     setCheckoutSuccess(false);
+    setCheckoutItems([]);
     setCustomerName("");
     setCustomerPhone("");
     setCustomerAddress("");
@@ -1222,12 +1233,39 @@ export default function ProductListingPage() {
                             }, 1500);
                             return;
                           }
-                          addToCart(
-                            selectedProduct, 
-                            1, 
-                            selectedProduct.has_sizes ? selectedSize : undefined,
-                            selectedProduct.has_custom_length ? customLength : undefined
-                          );
+                          
+                          let resolvedPrice = selectedProduct.price;
+                          let sizeLabel = selectedProduct.has_sizes ? selectedSize : "Standard";
+                          let maxStock = selectedProduct.stock;
+
+                          if (selectedProduct.has_sizes && selectedSize) {
+                            const variant = selectedProduct.size_variants?.find((v: any) => v.size === selectedSize);
+                            if (variant) {
+                              resolvedPrice = variant.price;
+                              maxStock = variant.stock;
+                            }
+                          } else if (selectedProduct.has_custom_length && customLength) {
+                            resolvedPrice = (selectedProduct.price_per_cm || 0) * customLength;
+                            sizeLabel = `${customLength} cm`;
+                            maxStock = Math.floor(selectedProduct.stock / customLength) || 1;
+                          }
+
+                          const tempProduct = {
+                            ...selectedProduct,
+                            price: resolvedPrice,
+                            selectedSize: sizeLabel,
+                            customLength: selectedProduct.has_custom_length ? customLength : undefined,
+                            stock: maxStock
+                          };
+
+                          const directItem: CartItem = {
+                            id: `${selectedProduct.id}-${sizeLabel}`,
+                            product: tempProduct,
+                            quantity: 1
+                          };
+
+                          setCheckoutItems([directItem]);
+                          setIsDirectCheckout(true);
                           setIsQuickViewOpen(false);
                           setIsCheckoutOpen(true);
                         }}
@@ -1374,6 +1412,8 @@ export default function ProductListingPage() {
                 <Button 
                   className="flex-1 h-12 bg-[#bef264] hover:bg-[#b2e658] text-black font-extrabold uppercase text-xs tracking-widest rounded-full flex items-center justify-center gap-2 shadow-md shadow-[#bef264]/10 hover:shadow-[#bef264]/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-none"
                   onClick={() => {
+                    setCheckoutItems(cart);
+                    setIsDirectCheckout(false);
                     setIsCartOpen(false);
                     setIsCheckoutOpen(true);
                   }}
