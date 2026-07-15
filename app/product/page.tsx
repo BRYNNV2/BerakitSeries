@@ -71,6 +71,8 @@ interface Product {
   selectedSize?: string;
   customLength?: number;
   is_active?: boolean;
+  allow_cod?: boolean;
+  allow_bank?: boolean;
 }
 
 interface CartItem {
@@ -451,6 +453,9 @@ export default function ProductListingPage() {
 
   const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+
+  const isCodAllowed = checkoutItems.length > 0 ? checkoutItems.every(item => item.product.allow_cod !== false) : true;
+  const isBankAllowed = checkoutItems.length > 0 ? checkoutItems.every(item => item.product.allow_bank !== false) : true;
 
   // Checkout submit
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
@@ -1264,6 +1269,8 @@ export default function ProductListingPage() {
                             quantity: 1
                           };
 
+                          const codOk = directItem.product.allow_cod !== false;
+                          setPaymentMethod(codOk ? "COD" : "Transfer");
                           setCheckoutItems([directItem]);
                           setIsDirectCheckout(true);
                           setIsQuickViewOpen(false);
@@ -1412,6 +1419,8 @@ export default function ProductListingPage() {
                 <Button 
                   className="flex-1 h-12 bg-[#bef264] hover:bg-[#b2e658] text-black font-extrabold uppercase text-xs tracking-widest rounded-full flex items-center justify-center gap-2 shadow-md shadow-[#bef264]/10 hover:shadow-[#bef264]/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-none"
                   onClick={() => {
+                    const codOk = cart.every(item => item.product.allow_cod !== false);
+                    setPaymentMethod(codOk ? "COD" : "Transfer");
                     setCheckoutItems(cart);
                     setIsDirectCheckout(false);
                     setIsCartOpen(false);
@@ -1529,25 +1538,31 @@ export default function ProductListingPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
+                      disabled={!isCodAllowed}
                       onClick={() => setPaymentMethod("COD")}
-                      className={`py-3 rounded-xl border text-xs font-bold uppercase transition-all ${
-                        paymentMethod === "COD" 
-                          ? "bg-[#bef264] border-[#bef264] text-black" 
-                          : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
+                      className={`py-3 rounded-xl border text-[11px] font-bold uppercase transition-all ${
+                        !isCodAllowed 
+                          ? "bg-zinc-950 border-zinc-900 text-zinc-600 opacity-40 cursor-not-allowed"
+                          : paymentMethod === "COD" 
+                            ? "bg-[#bef264] border-[#bef264] text-black" 
+                            : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
                       }`}
                     >
-                      Bayar di Tempat (COD)
+                      Bayar di Tempat (COD) {!isCodAllowed && " (Nonaktif)"}
                     </button>
                     <button
                       type="button"
+                      disabled={!isBankAllowed}
                       onClick={() => setPaymentMethod("Transfer")}
-                      className={`py-3 rounded-xl border text-xs font-bold uppercase transition-all ${
-                        paymentMethod === "Transfer" 
-                          ? "bg-[#bef264] border-[#bef264] text-black" 
-                          : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
+                      className={`py-3 rounded-xl border text-[11px] font-bold uppercase transition-all ${
+                        !isBankAllowed 
+                          ? "bg-zinc-950 border-zinc-900 text-zinc-600 opacity-40 cursor-not-allowed"
+                          : paymentMethod === "Transfer" 
+                            ? "bg-[#bef264] border-[#bef264] text-black" 
+                            : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
                       }`}
                     >
-                      Transfer Bank
+                      Transfer Bank {!isBankAllowed && " (Nonaktif)"}
                     </button>
                   </div>
                 </div>

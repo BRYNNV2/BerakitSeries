@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS public.products (
     price_per_cm NUMERIC DEFAULT 0,
     min_length_cm INTEGER DEFAULT 100,
     is_active BOOLEAN DEFAULT true,
+    allow_cod BOOLEAN DEFAULT true,
+    allow_bank BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -143,5 +145,7 @@ ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 -- ADD COLUMN IF NOT EXISTS has_custom_length BOOLEAN DEFAULT false,
 -- ADD COLUMN IF NOT EXISTS price_per_cm NUMERIC DEFAULT 0,
 -- ADD COLUMN IF NOT EXISTS min_length_cm INTEGER DEFAULT 100,
--- ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+-- ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true,
+-- ADD COLUMN IF NOT EXISTS allow_cod BOOLEAN DEFAULT true,
+-- ADD COLUMN IF NOT EXISTS allow_bank BOOLEAN DEFAULT true;
 

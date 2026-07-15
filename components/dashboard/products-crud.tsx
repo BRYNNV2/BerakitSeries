@@ -54,6 +54,8 @@ interface Product {
   category: string;
   created_at?: string;
   is_active?: boolean;
+  allow_cod?: boolean;
+  allow_bank?: boolean;
 }
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -103,6 +105,8 @@ export function ProductsCrud() {
   const [formPricePerCm, setFormPricePerCm] = React.useState<string>("");
   const [formMinLengthCm, setFormMinLengthCm] = React.useState<number>(100);
   const [formIsActive, setFormIsActive] = React.useState(true);
+  const [formAllowCod, setFormAllowCod] = React.useState(true);
+  const [formAllowBank, setFormAllowBank] = React.useState(true);
 
   // File Upload States
   const [uploadFile, setUploadFile] = React.useState<File | null>(null);
@@ -211,6 +215,8 @@ export function ProductsCrud() {
     setImagePreview("");
     setShowUrlField(false);
     setFormIsActive(true);
+    setFormAllowCod(true);
+    setFormAllowBank(true);
 
     // Reset pricing model variables
     setFormPricingType("standard");
@@ -234,6 +240,8 @@ export function ProductsCrud() {
     setImagePreview(product.image_url || "");
     setShowUrlField(false);
     setFormIsActive(product.is_active !== false);
+    setFormAllowCod(product.allow_cod !== false);
+    setFormAllowBank(product.allow_bank !== false);
 
     // Populate pricing model variables based on product options
     if (product.has_sizes) {
@@ -403,6 +411,8 @@ export function ProductsCrud() {
       category: formCategory,
       image_url: finalImageUrl,
       is_active: formIsActive,
+      allow_cod: formAllowCod,
+      allow_bank: formAllowBank,
       ...pricingTypeData
     };
 
@@ -807,6 +817,60 @@ export function ProductsCrud() {
                       <SelectItem value="inactive" className="text-xs font-bold text-rose-600">HABIS (OFF)</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              {/* Metode Pembayaran / Payment Methods Configuration */}
+              <div className="grid gap-1.5 border p-3 rounded-lg bg-muted/30 border-muted/50 animate-in fade-in duration-300">
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground block text-left">Metode Pembayaran yang Didukung</label>
+                <div className="grid grid-cols-2 gap-3 mt-1">
+                  {/* COD Toggle */}
+                  <div className="flex items-center justify-between border p-2 rounded bg-background">
+                    <span className="text-[11px] font-bold">COD (Bayar di Tempat)</span>
+                    <Select 
+                      value={formAllowCod ? "active" : "inactive"} 
+                      onValueChange={(val) => {
+                        const isCod = val === "active";
+                        if (!isCod && !formAllowBank) {
+                          toast.error("Harap aktifkan minimal satu metode pembayaran!");
+                          return;
+                        }
+                        setFormAllowCod(isCod);
+                      }}
+                    >
+                      <SelectTrigger className="w-[85px] h-7 text-[10px] font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active" className="text-[10px] font-bold text-emerald-600">ON</SelectItem>
+                        <SelectItem value="inactive" className="text-[10px] font-bold text-rose-600">OFF</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Transfer Bank Toggle */}
+                  <div className="flex items-center justify-between border p-2 rounded bg-background">
+                    <span className="text-[11px] font-bold">Transfer Bank</span>
+                    <Select 
+                      value={formAllowBank ? "active" : "inactive"} 
+                      onValueChange={(val) => {
+                        const isBank = val === "active";
+                        if (!isBank && !formAllowCod) {
+                          toast.error("Harap aktifkan minimal satu metode pembayaran!");
+                          return;
+                        }
+                        setFormAllowBank(isBank);
+                      }}
+                    >
+                      <SelectTrigger className="w-[85px] h-7 text-[10px] font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active" className="text-[10px] font-bold text-emerald-600">ON</SelectItem>
+                        <SelectItem value="inactive" className="text-[10px] font-bold text-rose-600">OFF</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
 
