@@ -732,7 +732,7 @@ export function ProductsCrud() {
       </div>
 
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-md md:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-md md:max-w-3xl max-h-[90vh] overflow-y-auto">
           <form onSubmit={handleFormSubmit}>
             <DialogHeader>
               <DialogTitle>{editingProduct ? "Edit Produk" : "Tambah Produk Baru"}</DialogTitle>
@@ -741,408 +741,414 @@ export function ProductsCrud() {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid gap-4 py-4">
-              {/* Name */}
-              <div className="grid gap-1.5">
-                <label className="text-xs font-semibold">Nama Produk *</label>
-                <Input
-                  required
-                  placeholder="Misal: Madu Hutan Asli"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 items-start">
+              {/* Left Column: Basic Info, Category, Description & Image */}
+              <div className="space-y-4">
+                {/* Name */}
+                <div className="grid gap-1.5">
+                  <label className="text-xs font-semibold text-left">Nama Produk *</label>
+                  <Input
+                    required
+                    placeholder="Misal: Madu Hutan Asli"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                  />
+                </div>
 
-              {/* Category */}
-              <div className="grid gap-1.5">
-                <label className="text-xs font-semibold">Kategori</label>
-                <Select value={formCategory} onValueChange={setFormCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Kategori" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Tipe Penjualan / Model Harga */}
-              <div className="grid gap-1.5">
-                <label className="text-xs font-semibold">Tipe Penjualan / Varian</label>
-                <Select 
-                  value={formPricingType} 
-                  onValueChange={(val: any) => {
-                    setFormPricingType(val);
-                    if (val === "sizes" && formSizeVariants.length === 0) {
-                      setFormSizeVariants([
-                        { size: "S", price: 150000, stock: 10 },
-                        { size: "M", price: 150000, stock: 10 },
-                        { size: "L", price: 160000, stock: 10 },
-                        { size: "XL", price: 170000, stock: 10 }
-                      ]);
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih Tipe Penjualan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="standard">Standard (Satu Harga & Stok)</SelectItem>
-                    <SelectItem value="sizes">Variasi Ukuran (XS, S, M, L, XL dsb, Harga berbeda)</SelectItem>
-                    <SelectItem value="custom_length">Per Centimeter / CM (Potongan Kain)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Status Ketersediaan / Active Toggle */}
-              <div className="grid gap-1.5 border p-3 rounded-lg bg-[#bef264]/10 dark:bg-[#bef264]/5 border-[#bef264]/20 animate-in fade-in duration-300">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="text-left">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground block">Status Toko / Stok Ketersediaan</label>
-                    <span className="text-[10px] text-muted-foreground leading-normal block mt-0.5">Aktifkan untuk tersedia (ON). Nonaktifkan jika barang offline habis mendadak (OFF).</span>
-                  </div>
-                  <Select 
-                    value={formIsActive ? "active" : "inactive"} 
-                    onValueChange={(val) => setFormIsActive(val === "active")}
-                  >
-                    <SelectTrigger className="w-[130px] h-8 text-xs font-bold">
-                      <SelectValue />
+                {/* Category */}
+                <div className="grid gap-1.5">
+                  <label className="text-xs font-semibold text-left">Kategori</label>
+                  <Select value={formCategory} onValueChange={setFormCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Kategori" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active" className="text-xs font-bold text-emerald-600">TERSEDIA (ON)</SelectItem>
-                      <SelectItem value="inactive" className="text-xs font-bold text-rose-600">HABIS (OFF)</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              {/* Metode Pembayaran / Payment Methods Configuration */}
-              <div className="grid gap-1.5 border p-3 rounded-lg bg-muted/30 border-muted/50 animate-in fade-in duration-300">
-                <label className="text-xs font-bold uppercase tracking-wider text-foreground block text-left">Metode Pembayaran yang Didukung</label>
-                <div className="grid grid-cols-2 gap-3 mt-1">
-                  {/* COD Toggle */}
-                  <div className="flex items-center justify-between border p-2 rounded bg-background">
-                    <span className="text-[11px] font-bold">COD (Bayar di Tempat)</span>
-                    <Select 
-                      value={formAllowCod ? "active" : "inactive"} 
-                      onValueChange={(val) => {
-                        const isCod = val === "active";
-                        if (!isCod && !formAllowBank) {
-                          toast.error("Harap aktifkan minimal satu metode pembayaran!");
-                          return;
-                        }
-                        setFormAllowCod(isCod);
-                      }}
-                    >
-                      <SelectTrigger className="w-[85px] h-7 text-[10px] font-bold">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active" className="text-[10px] font-bold text-emerald-600">ON</SelectItem>
-                        <SelectItem value="inactive" className="text-[10px] font-bold text-rose-600">OFF</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Transfer Bank Toggle */}
-                  <div className="flex items-center justify-between border p-2 rounded bg-background">
-                    <span className="text-[11px] font-bold">Transfer Bank</span>
-                    <Select 
-                      value={formAllowBank ? "active" : "inactive"} 
-                      onValueChange={(val) => {
-                        const isBank = val === "active";
-                        if (!isBank && !formAllowCod) {
-                          toast.error("Harap aktifkan minimal satu metode pembayaran!");
-                          return;
-                        }
-                        setFormAllowBank(isBank);
-                      }}
-                    >
-                      <SelectTrigger className="w-[85px] h-7 text-[10px] font-bold">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active" className="text-[10px] font-bold text-emerald-600">ON</SelectItem>
-                        <SelectItem value="inactive" className="text-[10px] font-bold text-rose-600">OFF</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Description */}
+                <div className="grid gap-1.5">
+                  <label className="text-xs font-semibold text-left">Deskripsi Produk</label>
+                  <textarea
+                    className="flex min-h-[90px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Keterangan singkat produk..."
+                    value={formDescription}
+                    onChange={(e) => setFormDescription(e.target.value)}
+                  />
                 </div>
-              </div>
 
-              {/* TIPE STANDARD: Stock & Price */}
-              {formPricingType === "standard" && (
-                <div className="grid grid-cols-2 gap-3 border p-3 rounded-lg bg-muted/20 animate-in fade-in duration-300">
-                  <div className="grid gap-1.5">
-                    <label className="text-xs font-semibold">Stok Produk *</label>
-                    <Input
-                      required
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={formStock}
-                      onChange={(e) => setFormStock(Number(e.target.value))}
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <label className="text-xs font-semibold">Harga Jual (Rp) *</label>
-                    <Input
-                      required
-                      type="text"
-                      placeholder="Contoh: 120.000"
-                      value={formPrice}
-                      onChange={(e) => setFormPrice(formatRupiah(e.target.value))}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* TIPE SIZES: Dynamic variant creator */}
-              {formPricingType === "sizes" && (
-                <div className="border p-3.5 rounded-lg bg-muted/20 space-y-3 animate-in fade-in duration-300">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Variasi Ukuran & Harga</label>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-[10px] font-bold cursor-pointer"
-                      onClick={() => setFormSizeVariants([...formSizeVariants, { size: "", price: 0, stock: 5 }])}
-                    >
-                      <Plus className="size-3 mr-1" />
-                      Tambah Varian
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                    {formSizeVariants.map((item, idx) => (
-                      <div key={idx} className="flex gap-2 items-center bg-white dark:bg-zinc-950 p-2 rounded-md border shadow-xs">
-                        <div className="w-[80px]">
-                          <Input
-                            placeholder="S/M/L/XL atau 2.5m"
-                            value={item.size}
-                            required
-                            className="h-8 text-xs font-bold uppercase text-center"
-                            onChange={(e) => {
-                              const updated = [...formSizeVariants];
-                              updated[idx].size = e.target.value.toUpperCase();
-                              setFormSizeVariants(updated);
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <Input
-                            placeholder="Harga (Rp)"
-                            required
-                            type="text"
-                            className="h-8 text-xs font-mono"
-                            value={formatRupiah(item.price)}
-                            onChange={(e) => {
-                              const val = Number(e.target.value.replace(/\D/g, ""));
-                              const updated = [...formSizeVariants];
-                              updated[idx].price = val;
-                              setFormSizeVariants(updated);
-                            }}
-                          />
-                        </div>
-                        <div className="w-[70px]">
-                          <Input
-                            type="number"
-                            min="0"
-                            required
-                            placeholder="Stok"
-                            className="h-8 text-xs text-center"
-                            value={item.stock}
-                            onChange={(e) => {
-                              const updated = [...formSizeVariants];
-                              updated[idx].stock = Number(e.target.value);
-                              setFormSizeVariants(updated);
-                            }}
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
-                          onClick={() => {
-                            setFormSizeVariants(formSizeVariants.filter((_, i) => i !== idx));
-                          }}
-                        >
-                          <X className="size-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TIPE CUSTOM LENGTH (CM): Pricing per CM */}
-              {formPricingType === "custom_length" && (
-                <div className="border p-3.5 rounded-lg bg-muted/20 space-y-3 animate-in fade-in duration-300">
-                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Pengaturan Potongan Kain (Per CM)</label>
+                {/* Foto Produk */}
+                <div className="grid gap-2">
+                  <label className="text-xs font-semibold text-left">Foto Produk</label>
                   
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="grid gap-1.5">
-                      <label className="text-[10px] font-semibold text-muted-foreground">Harga per Centimeter (Rp) *</label>
-                      <Input
-                        required
-                        type="text"
-                        placeholder="Contoh: 500"
-                        value={formPricePerCm}
-                        onChange={(e) => setFormPricePerCm(formatRupiah(e.target.value))}
+                  {imagePreview ? (
+                    <div 
+                      className="relative group rounded-lg overflow-hidden border bg-muted aspect-video flex items-center justify-center"
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
                       />
+                      {isDragging ? (
+                        <div className="absolute inset-0 bg-primary/25 backdrop-blur-xs flex items-center justify-center border-2 border-dashed border-primary">
+                          <span className="text-xs font-bold text-white bg-primary px-2.5 py-1 rounded-md shadow-lg animate-bounce">
+                            Lepaskan Foto Baru
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => document.getElementById("file-upload")?.click()}
+                          >
+                            Ganti Foto
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={handleRemoveImage}
+                          >
+                            Hapus
+                          </Button>
+                        </div>
+                      )}
                     </div>
+                  ) : (
+                    <div
+                      onClick={() => document.getElementById("file-upload")?.click()}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={handleDrop}
+                      className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${
+                        isDragging 
+                          ? "border-primary bg-primary/5" 
+                          : "border-muted-foreground/20 hover:border-primary/50 hover:bg-muted/30"
+                      }`}
+                    >
+                      <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center animate-pulse">
+                        <UploadCloud className="size-5" />
+                      </div>
+                      <div className="text-center">
+                        <span className="text-xs font-medium text-primary hover:underline">
+                          {isDragging ? "Lepaskan untuk mengunggah" : "Klik atau seret file ke sini"}
+                        </span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">PNG, JPG, JPEG (Maks. 2MB)</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
+
+                  {/* Optional URL Toggle */}
+                  <div className="flex items-center justify-between mt-1">
+                    <button
+                      type="button"
+                      className="text-[10px] font-medium text-muted-foreground hover:text-primary transition-colors"
+                      onClick={() => setShowUrlField(!showUrlField)}
+                    >
+                      {showUrlField ? "Sembunyikan Input URL" : "Atau masukkan URL gambar secara manual"}
+                    </button>
+                  </div>
+
+                  {showUrlField && (
+                    <div className="grid gap-1.5 mt-2 transition-all">
+                      <Input
+                        placeholder="https://example.com/gambar.jpg"
+                        value={formImageUrl}
+                        onChange={(e) => {
+                          setFormImageUrl(e.target.value);
+                          setImagePreview(e.target.value);
+                          setUploadFile(null); // Clear file upload if URL is edited
+                        }}
+                      />
+                      <span className="text-[10px] text-muted-foreground">
+                        Tempel URL gambar langsung (Unsplash, Imgur, dll.)
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Settings & Pricing Model */}
+              <div className="space-y-4">
+                {/* Status Ketersediaan / Active Toggle */}
+                <div className="grid gap-1.5 border p-3 rounded-lg bg-[#bef264]/10 dark:bg-[#bef264]/5 border-[#bef264]/20 animate-in fade-in duration-300">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="text-left">
+                      <label className="text-xs font-bold uppercase tracking-wider text-foreground block">Status Toko / Stok Ketersediaan</label>
+                      <span className="text-[10px] text-muted-foreground leading-normal block mt-0.5">Aktifkan untuk tersedia (ON). Nonaktifkan jika barang offline habis (OFF).</span>
+                    </div>
+                    <Select 
+                      value={formIsActive ? "active" : "inactive"} 
+                      onValueChange={(val) => setFormIsActive(val === "active")}
+                    >
+                      <SelectTrigger className="w-[130px] h-8 text-xs font-bold">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active" className="text-xs font-bold text-emerald-600">TERSEDIA (ON)</SelectItem>
+                        <SelectItem value="inactive" className="text-xs font-bold text-rose-600">HABIS (OFF)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Metode Pembayaran / Payment Methods Configuration */}
+                <div className="grid gap-1.5 border p-3 rounded-lg bg-muted/30 border-muted/50 animate-in fade-in duration-300">
+                  <label className="text-xs font-bold uppercase tracking-wider text-foreground block text-left">Metode Pembayaran yang Didukung</label>
+                  <div className="grid grid-cols-2 gap-3 mt-1">
+                    {/* COD Toggle */}
+                    <div className="flex items-center justify-between border p-2 rounded bg-background">
+                      <span className="text-[11px] font-bold">COD (Bayar di Tempat)</span>
+                      <Select 
+                        value={formAllowCod ? "active" : "inactive"} 
+                        onValueChange={(val) => {
+                          const isCod = val === "active";
+                          if (!isCod && !formAllowBank) {
+                            toast.error("Harap aktifkan minimal satu metode pembayaran!");
+                            return;
+                          }
+                          setFormAllowCod(isCod);
+                        }}
+                      >
+                        <SelectTrigger className="w-[85px] h-7 text-[10px] font-bold">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active" className="text-[10px] font-bold text-emerald-600">ON</SelectItem>
+                          <SelectItem value="inactive" className="text-[10px] font-bold text-rose-600">OFF</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Transfer Bank Toggle */}
+                    <div className="flex items-center justify-between border p-2 rounded bg-background">
+                      <span className="text-[11px] font-bold">Transfer Bank</span>
+                      <Select 
+                        value={formAllowBank ? "active" : "inactive"} 
+                        onValueChange={(val) => {
+                          const isBank = val === "active";
+                          if (!isBank && !formAllowCod) {
+                            toast.error("Harap aktifkan minimal satu metode pembayaran!");
+                            return;
+                          }
+                          setFormAllowBank(isBank);
+                        }}
+                      >
+                        <SelectTrigger className="w-[85px] h-7 text-[10px] font-bold">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active" className="text-[10px] font-bold text-emerald-600">ON</SelectItem>
+                          <SelectItem value="inactive" className="text-[10px] font-bold text-rose-600">OFF</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tipe Penjualan / Model Harga */}
+                <div className="grid gap-1.5">
+                  <label className="text-xs font-semibold text-left">Tipe Penjualan / Varian</label>
+                  <Select 
+                    value={formPricingType} 
+                    onValueChange={(val: any) => {
+                      setFormPricingType(val);
+                      if (val === "sizes" && formSizeVariants.length === 0) {
+                        setFormSizeVariants([
+                          { size: "S", price: 150000, stock: 10 },
+                          { size: "M", price: 150000, stock: 10 },
+                          { size: "L", price: 160000, stock: 10 },
+                          { size: "XL", price: 170000, stock: 10 }
+                        ]);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih Tipe Penjualan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">Standard (Satu Harga & Stok)</SelectItem>
+                      <SelectItem value="sizes">Variasi Ukuran (XS, S, M, L, XL dsb, Harga berbeda)</SelectItem>
+                      <SelectItem value="custom_length">Per Centimeter / CM (Potongan Kain)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* TIPE STANDARD: Stock & Price */}
+                {formPricingType === "standard" && (
+                  <div className="grid grid-cols-2 gap-3 border p-3 rounded-lg bg-muted/20 animate-in fade-in duration-300">
                     <div className="grid gap-1.5">
-                      <label className="text-[10px] font-semibold text-muted-foreground">Min. Pembelian (CM) *</label>
+                      <label className="text-xs font-semibold text-left">Stok Produk *</label>
                       <Input
                         required
                         type="number"
-                        min="1"
-                        placeholder="100"
-                        value={formMinLengthCm}
-                        onChange={(e) => setFormMinLengthCm(Number(e.target.value))}
+                        min="0"
+                        placeholder="0"
+                        value={formStock}
+                        onChange={(e) => setFormStock(Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <label className="text-xs font-semibold text-left">Harga Jual (Rp) *</label>
+                      <Input
+                        required
+                        type="text"
+                        placeholder="Contoh: 120.000"
+                        value={formPrice}
+                        onChange={(e) => setFormPrice(formatRupiah(e.target.value))}
                       />
                     </div>
                   </div>
+                )}
 
-                  <div className="grid gap-1.5">
-                    <label className="text-[10px] font-semibold text-muted-foreground">Total Panjang Kain Tersedia (Stok CM) *</label>
-                    <Input
-                      required
-                      type="number"
-                      min="0"
-                      placeholder="Misal: 5000 untuk 50 meter"
-                      value={formStock}
-                      onChange={(e) => setFormStock(Number(e.target.value))}
-                    />
-                    <span className="text-[9px] text-muted-foreground leading-normal">
-                      * 100 cm = 1 meter. Jika Anda memiliki total 50 meter kain, masukkan angka 5000.
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* Foto Produk */}
-              <div className="grid gap-2">
-                <label className="text-xs font-semibold">Foto Produk</label>
-                
-                {imagePreview ? (
-                  <div 
-                    className="relative group rounded-lg overflow-hidden border bg-muted aspect-video flex items-center justify-center"
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                    {isDragging ? (
-                      <div className="absolute inset-0 bg-primary/25 backdrop-blur-xs flex items-center justify-center border-2 border-dashed border-primary">
-                        <span className="text-xs font-bold text-white bg-primary px-2.5 py-1 rounded-md shadow-lg animate-bounce">
-                          Lepaskan Foto Baru
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="h-8 text-xs"
-                          onClick={() => document.getElementById("file-upload")?.click()}
-                        >
-                          Ganti Foto
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          className="h-8 text-xs"
-                          onClick={handleRemoveImage}
-                        >
-                          Hapus
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => document.getElementById("file-upload")?.click()}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${
-                      isDragging 
-                        ? "border-primary bg-primary/5" 
-                        : "border-muted-foreground/20 hover:border-primary/50 hover:bg-muted/30"
-                    }`}
-                  >
-                    <div className="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center animate-pulse">
-                      <UploadCloud className="size-5" />
+                {/* TIPE SIZES: Dynamic variant creator */}
+                {formPricingType === "sizes" && (
+                  <div className="border p-3 rounded-lg bg-muted/20 space-y-3 animate-in fade-in duration-300">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Variasi Ukuran & Harga</label>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[10px] font-bold cursor-pointer"
+                        onClick={() => setFormSizeVariants([...formSizeVariants, { size: "", price: 0, stock: 5 }])}
+                      >
+                        <Plus className="size-3 mr-1" />
+                        Tambah Varian
+                      </Button>
                     </div>
-                    <div className="text-center">
-                      <span className="text-xs font-medium text-primary hover:underline">
-                        {isDragging ? "Lepaskan untuk mengunggah" : "Klik atau seret file ke sini"}
+
+                    <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                      {formSizeVariants.map((item, idx) => (
+                        <div key={idx} className="flex gap-2 items-center bg-white dark:bg-zinc-950 p-2 rounded-md border shadow-xs">
+                          <div className="w-[80px]">
+                            <Input
+                              placeholder="S/M/L/XL atau 2.5m"
+                              value={item.size}
+                              required
+                              className="h-8 text-xs font-bold uppercase text-center"
+                              onChange={(e) => {
+                                const updated = [...formSizeVariants];
+                                updated[idx].size = e.target.value.toUpperCase();
+                                setFormSizeVariants(updated);
+                              }}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <Input
+                              placeholder="Harga (Rp)"
+                              required
+                              type="text"
+                              className="h-8 text-xs font-mono"
+                              value={formatRupiah(item.price)}
+                              onChange={(e) => {
+                                const val = Number(e.target.value.replace(/\D/g, ""));
+                                const updated = [...formSizeVariants];
+                                updated[idx].price = val;
+                                setFormSizeVariants(updated);
+                              }}
+                            />
+                          </div>
+                          <div className="w-[70px]">
+                            <Input
+                              type="number"
+                              min="0"
+                              required
+                              placeholder="Stok"
+                              className="h-8 text-xs text-center"
+                              value={item.stock}
+                              onChange={(e) => {
+                                const updated = [...formSizeVariants];
+                                updated[idx].stock = Number(e.target.value);
+                                setFormSizeVariants(updated);
+                              }}
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-rose-500 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                            onClick={() => {
+                              setFormSizeVariants(formSizeVariants.filter((_, i) => i !== idx));
+                            }}
+                          >
+                            <X className="size-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* TIPE CUSTOM LENGTH (CM): Pricing per CM */}
+                {formPricingType === "custom_length" && (
+                  <div className="border p-3 rounded-lg bg-muted/20 space-y-3 animate-in fade-in duration-300">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block text-left">Pengaturan Potongan Kain (Per CM)</label>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="grid gap-1.5">
+                        <label className="text-[10px] font-semibold text-muted-foreground text-left">Harga per CM (Rp) *</label>
+                        <Input
+                          required
+                          type="text"
+                          placeholder="Contoh: 500"
+                          value={formPricePerCm}
+                          onChange={(e) => setFormPricePerCm(formatRupiah(e.target.value))}
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <label className="text-[10px] font-semibold text-muted-foreground text-left">Min. Beli (CM) *</label>
+                        <Input
+                          required
+                          type="number"
+                          min="1"
+                          placeholder="100"
+                          value={formMinLengthCm}
+                          onChange={(e) => setFormMinLengthCm(Number(e.target.value))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-1.5">
+                      <label className="text-[10px] font-semibold text-muted-foreground text-left">Total Panjang Kain (Stok CM) *</label>
+                      <Input
+                        required
+                        type="number"
+                        min="0"
+                        placeholder="Misal: 5000 untuk 50 meter"
+                        value={formStock}
+                        onChange={(e) => setFormStock(Number(e.target.value))}
+                      />
+                      <span className="text-[9px] text-muted-foreground leading-normal text-left">
+                        * 100 cm = 1 meter. Jika Anda memiliki total 50 meter kain, masukkan angka 5000.
                       </span>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">PNG, JPG, JPEG (Maks. 2MB)</p>
                     </div>
                   </div>
                 )}
-                
-                <input
-                  id="file-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-
-                {/* Optional URL Toggle */}
-                <div className="flex items-center justify-between mt-1">
-                  <button
-                    type="button"
-                    className="text-[10px] font-medium text-muted-foreground hover:text-primary transition-colors"
-                    onClick={() => setShowUrlField(!showUrlField)}
-                  >
-                    {showUrlField ? "Sembunyikan Input URL" : "Atau masukkan URL gambar secara manual"}
-                  </button>
-                </div>
-
-                {showUrlField && (
-                  <div className="grid gap-1.5 mt-2 transition-all">
-                    <Input
-                      placeholder="https://example.com/gambar.jpg"
-                      value={formImageUrl}
-                      onChange={(e) => {
-                        setFormImageUrl(e.target.value);
-                        setImagePreview(e.target.value);
-                        setUploadFile(null); // Clear file upload if URL is edited
-                      }}
-                    />
-                    <span className="text-[10px] text-muted-foreground">
-                      Tempel URL gambar langsung (Unsplash, Imgur, dll.)
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Description */}
-              <div className="grid gap-1.5">
-                <label className="text-xs font-semibold">Deskripsi Produk</label>
-                <textarea
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="Keterangan singkat produk..."
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                />
               </div>
             </div>
 
