@@ -378,6 +378,13 @@ export default function ProductListingPage() {
 
   // Cart operations
   const addToCart = (product: any, quantity = 1, size?: string, length?: number) => {
+    if (!currentUser) {
+      toast.error("Harap login terlebih dahulu untuk memasukkan produk ke keranjang!");
+      setTimeout(() => {
+        router.push("/login?redirect=/product");
+      }, 1500);
+      return;
+    }
     let resolvedPrice = product.price;
     let sizeLabel = size || "Standard";
     let maxStock = product.stock;
@@ -1208,6 +1215,13 @@ export default function ProductListingPage() {
                       {/* BUY NOW Button (Black) */}
                       <button
                         onClick={() => {
+                          if (!currentUser) {
+                            toast.error("Harap login terlebih dahulu untuk melakukan pembelian!");
+                            setTimeout(() => {
+                              router.push("/login?redirect=/product");
+                            }, 1500);
+                            return;
+                          }
                           addToCart(
                             selectedProduct, 
                             1, 
