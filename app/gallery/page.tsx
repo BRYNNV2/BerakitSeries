@@ -544,39 +544,39 @@ export default function GalleryPage() {
 
       {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-5xl bg-zinc-950/98 border-zinc-900 text-white rounded-[32px] p-0 overflow-hidden shadow-2xl">
+        <DialogContent className="max-w-5xl bg-white border-zinc-200 text-zinc-900 rounded-[32px] p-0 overflow-hidden shadow-2xl">
           {filteredGallery[activePhotoIdx] && (
             <div className="grid grid-cols-1 lg:grid-cols-12 relative h-full min-h-[500px]">
-              <button onClick={() => setLightboxOpen(false)} className="absolute right-5 top-5 z-50 size-10 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"><X className="size-5" /></button>
-              <div className="lg:col-span-8 bg-zinc-900/40 relative flex items-center justify-center min-h-[350px] lg:h-[600px] p-6">
+              <button onClick={() => setLightboxOpen(false)} className="absolute right-5 top-5 z-50 size-10 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center hover:bg-zinc-200 transition-colors shadow-xs"><X className="size-5" /></button>
+              <div className="lg:col-span-8 bg-zinc-50 relative flex items-center justify-center min-h-[350px] lg:h-[600px] p-6">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={filteredGallery[activePhotoIdx].image_url} alt={filteredGallery[activePhotoIdx].title} className="max-h-full max-w-full object-contain rounded-xl shadow-2xl" />
+                <img src={filteredGallery[activePhotoIdx].image_url} alt={filteredGallery[activePhotoIdx].title} className="max-h-full max-w-full object-contain rounded-xl shadow-lg border border-zinc-200/50" />
                 {filteredGallery.length > 1 && (
                   <>
-                    <button onClick={handlePrevPhoto} className="absolute left-4 top-1/2 -translate-y-1/2 size-12 rounded-full bg-black/30 border border-white/10 hover:bg-black/60 text-white flex items-center justify-center transition-colors cursor-pointer"><ArrowLeft className="size-5" /></button>
-                    <button onClick={handleNextPhoto} className="absolute right-4 top-1/2 -translate-y-1/2 size-12 rounded-full bg-black/30 border border-white/10 hover:bg-black/60 text-white flex items-center justify-center transition-colors cursor-pointer"><ArrowRight className="size-5" /></button>
+                    <button onClick={handlePrevPhoto} className="absolute left-4 top-1/2 -translate-y-1/2 size-12 rounded-full bg-white/90 border border-zinc-200 hover:bg-zinc-50 text-zinc-800 flex items-center justify-center transition-colors cursor-pointer shadow-sm"><ArrowLeft className="size-5" /></button>
+                    <button onClick={handleNextPhoto} className="absolute right-4 top-1/2 -translate-y-1/2 size-12 rounded-full bg-white/90 border border-zinc-200 hover:bg-zinc-50 text-zinc-800 flex items-center justify-center transition-colors cursor-pointer shadow-sm"><ArrowRight className="size-5" /></button>
                   </>
                 )}
               </div>
-              <div className="lg:col-span-4 p-8 flex flex-col justify-between text-left border-t lg:border-t-0 lg:border-l border-zinc-900 bg-zinc-950">
+              <div className="lg:col-span-4 p-8 flex flex-col justify-between text-left border-t lg:border-t-0 lg:border-l border-zinc-100 bg-white">
                 <div className="space-y-6">
                   <Badge className="bg-[#bef264] text-black text-[10px] font-black uppercase tracking-widest hover:bg-[#bef264] border-none">{filteredGallery[activePhotoIdx].category}</Badge>
                   <div className="space-y-3">
-                    <DialogTitle className="text-3xl font-black uppercase tracking-tight text-white leading-tight" style={{ fontFamily: "'Inter', sans-serif" }}>{filteredGallery[activePhotoIdx].title}</DialogTitle>
-                    <div className="flex items-center gap-2 text-zinc-500 text-xs font-mono">
+                    <DialogTitle className="text-3xl font-black uppercase tracking-tight text-zinc-900 leading-tight" style={{ fontFamily: "'Inter', sans-serif" }}>{filteredGallery[activePhotoIdx].title}</DialogTitle>
+                    <div className="flex items-center gap-2 text-zinc-400 text-xs font-mono">
                       <Calendar className="size-3.5" />
                       <span>{filteredGallery[activePhotoIdx].created_at ? new Date(filteredGallery[activePhotoIdx].created_at!).toLocaleDateString("id-ID", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "DOKUMENTASI DESA"}</span>
                     </div>
                   </div>
-                  <div className="h-px bg-zinc-900" />
+                  <div className="h-px bg-zinc-100" />
                   <div className="space-y-2">
-                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block font-mono">KETERANGAN</span>
-                    <DialogDescription className="text-zinc-400 text-sm leading-relaxed font-normal">{filteredGallery[activePhotoIdx].description}</DialogDescription>
+                    <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block font-mono">KETERANGAN</span>
+                    <DialogDescription className="text-zinc-600 text-sm leading-relaxed font-normal">{filteredGallery[activePhotoIdx].description}</DialogDescription>
                   </div>
                 </div>
-                <div className="pt-6 border-t border-zinc-900 flex justify-between items-center text-xs font-mono text-zinc-500">
+                <div className="pt-6 border-t border-zinc-100 flex justify-between items-center text-xs font-mono text-zinc-400">
                   <span>BERAKIT SERIES ARCHIVE</span>
-                  <span className="text-white font-bold">{activePhotoIdx + 1} / {filteredGallery.length}</span>
+                  <span className="text-zinc-900 font-bold">{activePhotoIdx + 1} / {filteredGallery.length}</span>
                 </div>
               </div>
             </div>
