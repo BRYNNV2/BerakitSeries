@@ -544,19 +544,7 @@ export function SettingsPanel() {
             }`}
           >
             <UserCircle className="size-4" />
-            Profil Admin
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveSubTab("profile")}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap transition-all ${
-              activeSubTab === "profile"
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-            }`}
-          >
-            <Building2 className="size-4" />
-            Profil BUMDes
+            Profil & BUMDes
           </button>
           <button
             type="button"
@@ -600,17 +588,22 @@ export function SettingsPanel() {
         <div className="flex-1 rounded-xl border bg-card p-4 sm:p-6 shadow-xs min-w-0">
           <form onSubmit={handleSave} className="space-y-6">
             
-            {/* SUBTAB 0: Admin Profile (NEW) */}
+            {/* SUBTAB 0: Admin Profile & BUMDes Profile */}
             {activeSubTab === "admin-profile" && (
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-base font-semibold">Pengaturan Akun Pengguna</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Kelola foto profil, nama pengguna, dan informasi detail akun login Anda.
+                
+                {/* Section 1: Admin Personal Account */}
+                <div className="border-b pb-4">
+                  <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                    <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">1</span>
+                    Profil Pengguna (Akun Admin)
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 ml-8">
+                    Mengatur data personal Anda sebagai pengelola sistem (nama lengkap & foto profil). Data ini bersifat internal untuk akun login Anda.
                   </p>
                 </div>
 
-                <div className="space-y-6 pt-2">
+                <div className="space-y-6 pt-2 pl-8">
                   {/* Photo Profile Uploader */}
                   <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-xl border bg-muted/10">
                     <div className="relative group shrink-0">
@@ -634,7 +627,7 @@ export function SettingsPanel() {
                     <div className="space-y-3 flex-1 text-center sm:text-left min-w-0">
                       <span className="text-sm font-semibold block">Foto Profil Admin</span>
                       <span className="text-xs text-muted-foreground block leading-normal">
-                        Unggah foto kustom Anda (Maksimal 1MB) atau pilih dari template unik bertema Kepulauan Riau di bawah.
+                        Unggah foto kustom Anda (Maksimal 1MB) atau pilih dari template avatar di bawah.
                       </span>
                       <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
                         <Button
@@ -693,7 +686,7 @@ export function SettingsPanel() {
                   {/* Profile inputs */}
                   <div className="grid gap-4">
                     <div className="grid gap-1.5">
-                      <label className="text-xs font-semibold">Nama Lengkap *</label>
+                      <label className="text-xs font-semibold">Nama Lengkap Admin *</label>
                       <Input
                         required
                         value={profileName}
@@ -703,7 +696,7 @@ export function SettingsPanel() {
                     </div>
                     <div className="grid gap-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-semibold">Email Pengguna</label>
+                        <label className="text-xs font-semibold">Email Pengguna (Untuk Login)</label>
                         <Badge variant="outline" className="text-[10px] text-muted-foreground border-muted px-1.5 py-0">
                           Deteksi Otomatis Akun
                         </Badge>
@@ -717,51 +710,58 @@ export function SettingsPanel() {
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* SUBTAB 1: BUMDes Profile */}
-            {activeSubTab === "profile" && (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-base font-semibold">Profil Pengelola BUMDes</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Informasi identitas koperasi desa yang akan tampil di halaman checkout pembeli.
+                {/* Separator / Divider */}
+                <div className="border-t my-8 pt-8"></div>
+
+                {/* Section 2: BUMDes Store Identity */}
+                <div className="border-b pb-4">
+                  <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+                    <span className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">2</span>
+                    Identitas Toko & Kantor BUMDes
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5 ml-8">
+                    Mengatur data resmi toko/koperasi desa BUMDes Berakit. Informasi ini **akan ditampilkan kepada pembeli** pada halaman checkout, detail produk, serta nota/invoice pembelian.
                   </p>
                 </div>
-                <div className="grid gap-4 pt-2">
+
+                <div className="grid gap-4 pt-2 pl-8">
                   <div className="grid gap-1.5">
-                    <label className="text-xs font-semibold">Nama Instansi / BUMDes *</label>
+                    <label className="text-xs font-semibold">Nama Instansi / Toko BUMDes *</label>
                     <Input
                       required
                       value={settings.name}
                       onChange={(e) => setSettings({ ...settings, name: e.target.value })}
+                      placeholder="Nama Instansi/Toko BUMDes"
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="grid gap-1.5">
-                      <label className="text-xs font-semibold">Email Kontak</label>
+                      <label className="text-xs font-semibold">Email Kontak Toko (Ditampilkan ke Pembeli)</label>
                       <Input
                         type="email"
                         value={settings.email}
                         onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                        placeholder="email@berakit.desa.id"
                       />
                     </div>
                     <div className="grid gap-1.5">
-                      <label className="text-xs font-semibold">No. Telepon / WhatsApp *</label>
+                      <label className="text-xs font-semibold">No. Telepon / WhatsApp Toko *</label>
                       <Input
                         required
                         value={settings.phone}
                         onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                        placeholder="Contoh: 0812345678"
                       />
                     </div>
                   </div>
                   <div className="grid gap-1.5">
-                    <label className="text-xs font-semibold">Alamat Kantor Pusat BUMDes</label>
+                    <label className="text-xs font-semibold">Alamat Kantor Pusat BUMDes (Asal Pengiriman Nota)</label>
                     <textarea
                       className="flex min-h-[90px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       value={settings.address}
                       onChange={(e) => setSettings({ ...settings, address: e.target.value })}
+                      placeholder="Alamat kantor atau lokasi koperasi pengirim..."
                     />
                   </div>
                 </div>
