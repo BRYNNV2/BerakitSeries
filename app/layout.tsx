@@ -34,6 +34,25 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                if (typeof window !== 'undefined' && typeof Node !== 'undefined') {
+                  var originalRemoveChild = Node.prototype.removeChild;
+                  Node.prototype.removeChild = function(child) {
+                    if (child && child.parentNode !== this) {
+                      return child;
+                    }
+                    return originalRemoveChild.call(this, child);
+                  };
+                }
+              })();
+            `
+          }}
+        />
+      </head>
       <body
         className={`${inter.variable} ${geistMono.variable} ${oswald.variable} antialiased`}
         suppressHydrationWarning
