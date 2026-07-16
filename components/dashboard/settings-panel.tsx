@@ -191,9 +191,9 @@ export function SettingsPanel() {
         localStorage.setItem("berakit_settings", JSON.stringify(loadedSettings));
 
         const loadedProfile = {
-          name: data.admin_name || adminName,
+          name: userData?.user?.user_metadata?.full_name || data.admin_name || adminName,
           email: currentLoggedInEmail,
-          avatar: data.admin_avatar || adminAvatar,
+          avatar: userData?.user?.user_metadata?.avatar_url || data.admin_avatar || adminAvatar,
         };
         setAdminProfile(loadedProfile);
         localStorage.setItem("berakit_admin_profile", JSON.stringify(loadedProfile));
@@ -288,14 +288,7 @@ export function SettingsPanel() {
           updated_at: new Date().toISOString(),
         };
 
-        const isLocalDb = process.env.NEXT_PUBLIC_USE_LOCAL_JSON_DB === "true" || 
-                          (typeof window !== "undefined" && window.localStorage.getItem("berakit_force_local_db") === "true");
 
-        if (isLocalDb) {
-          upsertPayload.admin_name = profileName;
-          upsertPayload.admin_email = profileEmail;
-          upsertPayload.admin_avatar = profileAvatar;
-        }
 
         const { error } = await supabase
           .from("settings")
