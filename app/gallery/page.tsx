@@ -23,6 +23,7 @@ import { supabase, withTimeout } from "@/lib/supabase";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { OccludedWrapper } from "@/components/ui/occluded-wrapper";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -285,11 +286,45 @@ export default function GalleryPage() {
           return a.title.localeCompare(b.title);
         case "za":
           return b.title.localeCompare(a.title);
-        default:
-          return 0;
       }
     });
   }, [gallery, selectedCategory, searchQuery, sortBy]);
+
+  // Infinite Scroll Pagination
+  const PAGE_SIZE = 8;
+  const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
+
+  // Reset pagination when filter or search changes
+  React.useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [searchQuery, selectedCategory, sortBy]);
+
+  const slicedGallery = React.useMemo(() => {
+    return filteredGallery.slice(0, visibleCount);
+  }, [filteredGallery, visibleCount]);
+
+  const loadMoreRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredGallery.length));
+        }
+      },
+      {
+        rootMargin: "300px", // Trigger loading more 300px before reaching the bottom
+      }
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.unobserve(el);
+    };
+  }, [filteredGallery.length, visibleCount]);
 
   // GSAP Entrance reveal animations — runs only once on initial data load
   React.useEffect(() => {
@@ -505,47 +540,59 @@ export default function GalleryPage() {
           <Button onClick={() => { setSelectedCategory("Semua"); setSearchQuery(""); }} className="bg-black hover:bg-zinc-800 text-white rounded-full px-6 py-2 text-xs font-bold uppercase tracking-wider mt-2 border-none">Reset Filter</Button>
         </div>
       ) : (
-        <section className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 pb-20">
-          {/* Masonry Pinterest-style: 2 cols mobile, 3 cols tablet, 4 cols desktop */}
-          <div className="columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 sm:gap-5 space-y-3 sm:space-y-5">
-            {filteredGallery.map((item, idx) => {
-              // Vary heights for masonry effect
-              const heights = ["aspect-[3/4]", "aspect-[4/5]", "aspect-square", "aspect-[3/4]", "aspect-[5/6]", "aspect-[4/3]", "aspect-[3/4]"];
-              const h = heights[idx % heights.length];
+        <>
+          <section className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 pb-10">
+            {/* Masonry Pinterest-style: 2 cols mobile, 3 cols tablet, 4 cols desktop */}
+            <div className="columns-2 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 sm:gap-5 space-y-3 sm:space-y-5">
+              {slicedGallery.map((item, idx) => {
+                // Vary heights for masonry effect
+                const heights = ["aspect-[3/4]", "aspect-[4/5]", "aspect-square", "aspect-[3/4]", "aspect-[5/6]", "aspect-[4/3]", "aspect-[3/4]"];
+                const h = heights[idx % heights.length];
 
-              return (
-                <div
-                  key={item.id}
-                  className={`gallery-card break-inside-avoid relative ${h} rounded-xl sm:rounded-[20px] overflow-hidden cursor-pointer group bg-zinc-100 border border-zinc-200/50 shadow-sm sm:shadow-md hover:shadow-2xl hover:shadow-zinc-400/30 transition-all duration-500`}
-                  style={{ transformStyle: "preserve-3d" }}
-                  onClick={() => { setActivePhotoIdx(idx); setLightboxOpen(true); }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={item.image_url} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
+                return (
+                  <div
+                    key={item.id}
+                    className={`gallery-card break-inside-avoid relative ${h} rounded-xl sm:rounded-[20px] overflow-hidden cursor-pointer group bg-zinc-100 border border-zinc-200/50 shadow-sm sm:shadow-md hover:shadow-2xl hover:shadow-zinc-400/30 transition-all duration-500`}
+                    style={{ transformStyle: "preserve-3d" }}
+                    onClick={() => { setActivePhotoIdx(idx); setLightboxOpen(true); }}
+                  >
+                    <OccludedWrapper heightClass="w-full h-full">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.image_url} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
 
-                  {/* Gradient overlay on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex flex-col justify-end p-2.5 sm:p-5 text-white">
-                    <Badge className="bg-[#bef264] text-black text-[8px] sm:text-[9px] font-extrabold tracking-widest uppercase hover:bg-[#bef264] w-fit mb-1 sm:mb-2 border-none">{item.category}</Badge>
-                    <h3 className="font-bold text-[10px] sm:text-base lg:text-lg uppercase leading-tight tracking-tight mb-0.5 sm:mb-1">{item.title}</h3>
-                    <p className="hidden sm:block text-zinc-300 text-xs line-clamp-2 leading-relaxed mb-3">{item.description}</p>
-                    <div className="hidden sm:flex items-center justify-between pt-2 border-t border-white/10 text-[9px] font-mono tracking-widest text-zinc-400">
-                      <span>{item.created_at ? new Date(item.created_at).toLocaleDateString("id-ID") : "DOKUMENTASI"}</span>
-                      <span className="flex items-center gap-1 text-[#bef264]">VIEW <Maximize2 className="size-3" /></span>
-                    </div>
-                    <div className="flex sm:hidden justify-end mt-0.5">
-                      <span className="flex items-center gap-0.5 text-[#bef264] text-[8px] font-bold">VIEW <Maximize2 className="size-2.5" /></span>
-                    </div>
+                      {/* Gradient overlay on hover */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-400 flex flex-col justify-end p-2.5 sm:p-5 text-white">
+                        <Badge className="bg-[#bef264] text-black text-[8px] sm:text-[9px] font-extrabold tracking-widest uppercase hover:bg-[#bef264] w-fit mb-1 sm:mb-2 border-none">{item.category}</Badge>
+                        <h3 className="font-bold text-[10px] sm:text-base lg:text-lg uppercase leading-tight tracking-tight mb-0.5 sm:mb-1">{item.title}</h3>
+                        <p className="hidden sm:block text-zinc-300 text-xs line-clamp-2 leading-relaxed mb-3">{item.description}</p>
+                        <div className="hidden sm:flex items-center justify-between pt-2 border-t border-white/10 text-[9px] font-mono tracking-widest text-zinc-400">
+                          <span>{item.created_at ? new Date(item.created_at).toLocaleDateString("id-ID") : "DOKUMENTASI"}</span>
+                          <span className="flex items-center gap-1 text-[#bef264]">VIEW <Maximize2 className="size-3" /></span>
+                        </div>
+                        <div className="flex sm:hidden justify-end mt-0.5">
+                          <span className="flex items-center gap-0.5 text-[#bef264] text-[8px] font-bold">VIEW <Maximize2 className="size-2.5" /></span>
+                        </div>
+                      </div>
+
+                      {/* Subtle always-visible bottom label */}
+                      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2 sm:p-4 group-hover:opacity-0 transition-opacity duration-300">
+                        <p className="text-white text-[9px] sm:text-xs font-bold uppercase tracking-wide truncate">{item.title}</p>
+                      </div>
+                    </OccludedWrapper>
                   </div>
+                );
+              })}
+            </div>
+          </section>
 
-                  {/* Subtle always-visible bottom label */}
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-2 sm:p-4 group-hover:opacity-0 transition-opacity duration-300">
-                    <p className="text-white text-[9px] sm:text-xs font-bold uppercase tracking-wide truncate">{item.title}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
+          {/* Sentinel for Infinite Scroll */}
+          {visibleCount < filteredGallery.length && (
+            <div ref={loadMoreRef} className="w-full py-16 flex flex-col items-center justify-center gap-2">
+              <Loader2 className="size-6 animate-spin text-zinc-400" />
+              <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">Memuat Lebih Banyak...</span>
+            </div>
+          )}
+        </>
       )}
 
       {/* Lightbox */}

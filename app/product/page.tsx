@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase, withTimeout } from "@/lib/supabase";
+import { OccludedWrapper } from "@/components/ui/occluded-wrapper";
 import { gsap } from "gsap";
 
 interface Product {
@@ -395,6 +396,42 @@ export default function ProductListingPage() {
 
     return result;
   }, [products, searchQuery, selectedCategory, sortBy]);
+
+  // Infinite Scroll Pagination
+  const PAGE_SIZE = 8;
+  const [visibleCount, setVisibleCount] = React.useState(PAGE_SIZE);
+
+  // Reset pagination when filter or search changes
+  React.useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [searchQuery, selectedCategory, sortBy]);
+
+  const slicedProducts = React.useMemo(() => {
+    return filteredProducts.slice(0, visibleCount);
+  }, [filteredProducts, visibleCount]);
+
+  const loadMoreRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredProducts.length));
+        }
+      },
+      {
+        rootMargin: "300px", // Trigger loading more 300px before reaching the bottom
+      }
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.unobserve(el);
+    };
+  }, [filteredProducts.length, visibleCount]);
 
   // Cart operations
   const addToCart = (product: any, quantity = 1, size?: string, length?: number) => {
@@ -975,75 +1012,87 @@ export default function ProductListingPage() {
             </Button>
           </div>
         ) : (
-          <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6 sm:gap-x-6 sm:gap-y-10">
-            {filteredProducts.map((product) => (
-              <div 
-                key={product.id} 
-                className="product-card-animate group flex flex-col cursor-pointer"
-                onClick={() => {
-                  setSelectedProduct(product);
-                  setIsQuickViewOpen(true);
-                }}
-              >
-                {/* Product Card Image Container */}
-                <div className="relative aspect-[4/5] bg-zinc-100 border border-zinc-200/80 rounded-2xl sm:rounded-[28px] overflow-hidden flex items-center justify-center shadow-xs transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:shadow-lg group-hover:shadow-zinc-200/50 group-hover:border-zinc-300">
-                  {/* Out of Stock or Featured Badge */}
-                  <div className="absolute top-2.5 left-2.5 sm:top-5 sm:left-5 z-10">
-                    {product.is_active === false || product.stock === 0 ? (
-                      <Badge className="bg-rose-500 hover:bg-rose-500 text-white font-extrabold uppercase tracking-widest text-[7px] sm:text-[9px] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border-none shadow-md">
-                        STOK HABIS
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-[#bef264] hover:bg-[#bef264] text-black font-bold uppercase tracking-widest text-[7px] sm:text-[9px] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border-none shadow-none">
-                        FEATURED
-                      </Badge>
-                    )}
+          <>
+            <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6 sm:gap-x-6 sm:gap-y-10">
+              {slicedProducts.map((product) => (
+                <div 
+                  key={product.id} 
+                  className="product-card-animate group flex flex-col cursor-pointer"
+                  onClick={() => {
+                    setSelectedProduct(product);
+                    setIsQuickViewOpen(true);
+                  }}
+                >
+                  {/* Product Card Image Container */}
+                  <div className="relative aspect-[4/5] bg-zinc-100 border border-zinc-200/80 rounded-2xl sm:rounded-[28px] overflow-hidden flex items-center justify-center shadow-xs transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:shadow-lg group-hover:shadow-zinc-200/50 group-hover:border-zinc-300">
+                    <OccludedWrapper heightClass="w-full h-full">
+                      {/* Out of Stock or Featured Badge */}
+                      <div className="absolute top-2.5 left-2.5 sm:top-5 sm:left-5 z-10">
+                        {product.is_active === false || product.stock === 0 ? (
+                          <Badge className="bg-rose-500 hover:bg-rose-500 text-white font-extrabold uppercase tracking-widest text-[7px] sm:text-[9px] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border-none shadow-md">
+                            STOK HABIS
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-[#bef264] hover:bg-[#bef264] text-black font-bold uppercase tracking-widest text-[7px] sm:text-[9px] px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border-none shadow-none">
+                            FEATURED
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Main Image */}
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                      />
+                      
+                      {/* Quick View button — hidden on mobile tap-first UX, shown on hover desktop */}
+                      <div className="absolute inset-0 bg-black/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] hidden sm:flex items-end justify-center pb-6">
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProduct(product);
+                            setIsQuickViewOpen(true);
+                          }}
+                          className="bg-white text-zinc-900 border border-zinc-200/80 hover:border-zinc-300 hover:bg-zinc-50 transition-all duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] shadow-md shadow-zinc-200/80 hover:shadow-lg rounded-full px-6 h-11 flex items-center justify-center gap-2 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto"
+                        >
+                          <Eye className="size-4 text-zinc-500 stroke-[2.5]" />
+                          <span className="text-[10px] font-extrabold uppercase tracking-widest leading-none">QUICK VIEW</span>
+                        </div>
+                      </div>
+                    </OccludedWrapper>
                   </div>
-                  
-                  {/* Main Image */}
-                  <img
-                    src={product.image_url}
-                    alt={product.name}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
-                  />
-                  
-                  {/* Quick View button — hidden on mobile tap-first UX, shown on hover desktop */}
-                  <div className="absolute inset-0 bg-black/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] hidden sm:flex items-end justify-center pb-6">
-                    <div 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedProduct(product);
-                        setIsQuickViewOpen(true);
-                      }}
-                      className="bg-white text-zinc-900 border border-zinc-200/80 hover:border-zinc-300 hover:bg-zinc-50 transition-all duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] shadow-md shadow-zinc-200/80 hover:shadow-lg rounded-full px-6 h-11 flex items-center justify-center gap-2 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 pointer-events-auto"
-                    >
-                      <Eye className="size-4 text-zinc-500 stroke-[2.5]" />
-                      <span className="text-[10px] font-extrabold uppercase tracking-widest leading-none">QUICK VIEW</span>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Info Under Card */}
-                <div className="mt-2.5 sm:mt-4 flex flex-col text-left px-1 sm:px-0">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-4">
-                    <span 
-                      className="font-bold text-xs sm:text-base text-zinc-900 uppercase tracking-tight line-clamp-2 sm:line-clamp-1 group-hover:text-black transition-colors leading-tight"
-                      style={{ fontFamily: "'Inter', sans-serif" }}
-                    >
-                      {product.name}
-                    </span>
-                    <span className="font-extrabold sm:font-bold text-xs sm:text-base text-zinc-900 whitespace-nowrap shrink-0 mt-0.5 sm:mt-0">
-                      Rp {product.price.toLocaleString("id-ID")}
+                  {/* Info Under Card */}
+                  <div className="mt-2.5 sm:mt-4 flex flex-col text-left px-1 sm:px-0">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-4">
+                      <span 
+                        className="font-bold text-xs sm:text-base text-zinc-900 uppercase tracking-tight line-clamp-2 sm:line-clamp-1 group-hover:text-black transition-colors leading-tight"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        {product.name}
+                      </span>
+                      <span className="font-extrabold sm:font-bold text-xs sm:text-base text-zinc-900 whitespace-nowrap shrink-0 mt-0.5 sm:mt-0">
+                        Rp {product.price.toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                    <span className="text-[9px] sm:text-[11px] font-bold text-zinc-400 uppercase tracking-wider mt-1 font-mono">
+                      {product.category}
                     </span>
                   </div>
-                  <span className="text-[9px] sm:text-[11px] font-bold text-zinc-400 uppercase tracking-wider mt-1 font-mono">
-                    {product.category}
-                  </span>
                 </div>
+              ))}
+            </div>
+
+            {/* Sentinel for Infinite Scroll */}
+            {visibleCount < filteredProducts.length && (
+              <div ref={loadMoreRef} className="w-full py-16 flex flex-col items-center justify-center gap-2">
+                <Loader2 className="size-6 animate-spin text-[#bef264]" />
+                <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-400">Loading more collections...</span>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
 
       </main>
