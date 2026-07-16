@@ -241,10 +241,16 @@ export default function GalleryPage() {
 
     initLenis();
 
+    let lastWidth = window.innerWidth;
+
     // Re-evaluate on resize to handle F12 mobile layout toggle without manual page refreshes
     const handleResize = () => {
-      initLenis();
-      ScrollTrigger.refresh();
+      const currentWidth = window.innerWidth;
+      if (currentWidth !== lastWidth) {
+        lastWidth = currentWidth;
+        initLenis();
+        ScrollTrigger.refresh();
+      }
     };
 
     window.addEventListener("resize", handleResize);
