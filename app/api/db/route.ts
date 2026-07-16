@@ -171,6 +171,11 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ data: resData, error });
       }
 
+      if (action === "upsert") {
+        const { data: resData, error } = await supabaseServer.from(table).upsert(data).select();
+        return NextResponse.json({ data: resData, error });
+      }
+
       if (action === "update") {
         let query = supabaseServer.from(table).update(data);
         if (filters) {
@@ -238,6 +243,30 @@ export async function POST(req: NextRequest) {
       }
       writeDb(db);
       return NextResponse.json({ data: inserted, error: null });
+    }
+
+    if (action === "upsert") {
+      const itemsToUpsert = Array.isArray(data) ? data : [data];
+      const upserted: any[] = [];
+      for (const item of itemsToUpsert) {
+        const id = item.id || `id-${Math.random().toString(36).substring(2, 11)}`;
+        const existingIdx = db[tbl].findIndex((x: any) => String(x.id) === String(id));
+        const newItem = {
+          id,
+          created_at: item.created_at || new Date().toISOString(),
+          ...item,
+          updated_at: new Date().toISOString()
+        };
+        if (existingIdx >= 0) {
+          db[tbl][existingIdx] = { ...db[tbl][existingIdx], ...newItem };
+          upserted.push(db[tbl][existingIdx]);
+        } else {
+          db[tbl].push(newItem);
+          upserted.push(newItem);
+        }
+      }
+      writeDb(db);
+      return NextResponse.json({ data: upserted, error: null });
     }
 
     if (action === "update") {

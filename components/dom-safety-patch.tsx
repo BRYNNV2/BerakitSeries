@@ -6,7 +6,12 @@ if (typeof window !== "undefined" && typeof Node !== "undefined") {
     if (child && child.parentNode !== this) {
       return child;
     }
-    return originalRemoveChild.call(this, child) as T;
+    try {
+      return originalRemoveChild.call(this, child) as T;
+    } catch (err) {
+      console.warn("Node.removeChild error ignored:", err);
+      return child;
+    }
   };
 }
 

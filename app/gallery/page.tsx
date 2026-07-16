@@ -550,11 +550,16 @@ export default function GalleryPage() {
 
       {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-5xl bg-white border-zinc-200 text-zinc-900 rounded-[32px] p-0 overflow-hidden shadow-2xl">
+        <DialogContent className="w-[94vw] lg:w-full max-w-5xl bg-white border-zinc-200 text-zinc-900 rounded-[24px] lg:rounded-[32px] p-0 max-h-[90vh] lg:max-h-none overflow-y-auto lg:overflow-hidden shadow-2xl">
           {filteredGallery[activePhotoIdx] && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 relative h-full min-h-[500px]">
-              <button onClick={() => setLightboxOpen(false)} className="absolute right-5 top-5 z-50 size-10 rounded-full bg-zinc-100 text-zinc-700 flex items-center justify-center hover:bg-zinc-200 transition-colors shadow-xs"><X className="size-5" /></button>
-              <div className="lg:col-span-8 bg-zinc-50 relative flex items-center justify-center min-h-[350px] lg:h-[600px] p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 relative h-full min-h-[400px] lg:min-h-[500px]">
+              <button 
+                onClick={() => setLightboxOpen(false)} 
+                className="absolute right-4 top-4 z-50 size-9 rounded-full bg-white/90 text-zinc-700 flex items-center justify-center hover:bg-zinc-200 transition-colors shadow-md border border-zinc-200/50"
+              >
+                <X className="size-4.5" />
+              </button>
+              <div className="lg:col-span-8 bg-zinc-50 relative flex items-center justify-center h-[280px] sm:h-[360px] lg:h-[600px] p-4 sm:p-6">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={filteredGallery[activePhotoIdx].image_url} alt={filteredGallery[activePhotoIdx].title} className="max-h-full max-w-full object-contain rounded-xl shadow-lg border border-zinc-200/50" />
                 {filteredGallery.length > 1 && (

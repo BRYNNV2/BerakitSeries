@@ -341,8 +341,9 @@ export default function UserDashboard() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg cursor-pointer hover:bg-accent transition-colors">
-                <Avatar className="size-7 sm:size-8">
-                  <AvatarFallback className="text-xs bg-zinc-900 text-white font-mono">{userInitials}</AvatarFallback>
+                <Avatar className="size-7 sm:size-8 notranslate" translate="no">
+                  <AvatarImage src={user?.user_metadata?.avatar_url} />
+                  <AvatarFallback className="text-xs bg-zinc-900 text-white font-mono"><span>{userInitials}</span></AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-xs sm:text-sm truncate">{displayName}</p>

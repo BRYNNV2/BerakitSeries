@@ -82,85 +82,93 @@ const safeFetch: typeof fetch = async (input, init) => {
 const useLocalJsonDb = process.env.NEXT_PUBLIC_USE_LOCAL_JSON_DB === "true";
 
 const createLocalClient = (): any => {
-  const queryBuilder = (table: string) => {
-    let selectCols = "*";
-    const queryFilters: any = {};
-    let queryOrder: any = null;
-    let queryLimit: number | null = null;
-    let isSingle = false;
-    let isDelete = false;
-    let insertData: any = null;
-    let updateData: any = null;
-
-    const builder: any = {
-      select: (columns: string = "*") => {
-        selectCols = columns;
-        return builder;
-      },
-      insert: (data: any) => {
-        insertData = data;
-        return builder;
-      },
-      update: (data: any) => {
-        updateData = data;
-        return builder;
-      },
-      delete: () => {
-        isDelete = true;
-        return builder;
-      },
-      eq: (col: string, val: any) => {
-        queryFilters[col] = val;
-        return builder;
-      },
-      neq: (col: string, val: any) => {
-        queryFilters[col] = { operator: "neq", value: val };
-        return builder;
-      },
-      order: (column: string, { ascending = true } = {}) => {
-        queryOrder = { column, ascending };
-        return builder;
-      },
-      limit: (val: number) => {
-        queryLimit = val;
-        return builder;
-      },
-      single: () => {
-        isSingle = true;
-        return builder;
-      },
-      then: async (resolve: any, reject: any) => {
-        try {
-          let action = "select";
-          let payload: any = { table };
-
-          if (insertData) {
-            action = "insert";
-            payload.data = insertData;
-          } else if (updateData) {
-            action = "update";
-            payload.data = updateData;
-            payload.filters = queryFilters;
-          } else if (isDelete) {
-            action = "delete";
-            payload.filters = queryFilters;
-          } else {
-            action = "select";
-            payload.filters = queryFilters;
-            if (queryOrder) {
-              payload.order = queryOrder;
+    const queryBuilder = (table: string) => {
+      let selectCols = "*";
+      const queryFilters: any = {};
+      let queryOrder: any = null;
+      let queryLimit: number | null = null;
+      let isSingle = false;
+      let isDelete = false;
+      let insertData: any = null;
+      let updateData: any = null;
+      let upsertData: any = null;
+  
+      const builder: any = {
+        select: (columns: string = "*") => {
+          selectCols = columns;
+          return builder;
+        },
+        insert: (data: any) => {
+          insertData = data;
+          return builder;
+        },
+        update: (data: any) => {
+          updateData = data;
+          return builder;
+        },
+        upsert: (data: any) => {
+          upsertData = data;
+          return builder;
+        },
+        delete: () => {
+          isDelete = true;
+          return builder;
+        },
+        eq: (col: string, val: any) => {
+          queryFilters[col] = val;
+          return builder;
+        },
+        neq: (col: string, val: any) => {
+          queryFilters[col] = { operator: "neq", value: val };
+          return builder;
+        },
+        order: (column: string, { ascending = true } = {}) => {
+          queryOrder = { column, ascending };
+          return builder;
+        },
+        limit: (val: number) => {
+          queryLimit = val;
+          return builder;
+        },
+        single: () => {
+          isSingle = true;
+          return builder;
+        },
+        then: async (resolve: any, reject: any) => {
+          try {
+            let action = "select";
+            let payload: any = { table };
+  
+            if (insertData) {
+              action = "insert";
+              payload.data = insertData;
+            } else if (upsertData) {
+              action = "upsert";
+              payload.data = upsertData;
+            } else if (updateData) {
+              action = "update";
+              payload.data = updateData;
+              payload.filters = queryFilters;
+            } else if (isDelete) {
+              action = "delete";
+              payload.filters = queryFilters;
+            } else {
+              action = "select";
+              payload.filters = queryFilters;
+              if (queryOrder) {
+                payload.order = queryOrder;
+              }
+              if (queryLimit !== null) {
+                payload.limit = queryLimit;
+              }
             }
-            if (queryLimit !== null) {
-              payload.limit = queryLimit;
-            }
-          }
-
-          const res = await fetch("/api/db", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...payload, action }),
-          });
-          const result = await res.json();
+  
+            const res = await fetch("/api/db", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...payload, action }),
+            });
+            const result = await res.json();
           
           if (isSingle) {
             resolve({

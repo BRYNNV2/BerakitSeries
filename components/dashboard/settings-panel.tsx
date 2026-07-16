@@ -272,26 +272,34 @@ export function SettingsPanel() {
           }
         });
 
+        const upsertPayload: any = {
+          id: "bumdes_config",
+          name: settings.name,
+          email: settings.email,
+          phone: settings.phone,
+          address: settings.address,
+          enable_cod: settings.enableCod,
+          enable_bank_transfer: settings.enableBankTransfer,
+          bank_name: settings.bankName,
+          account_number: settings.accountNumber,
+          account_holder: settings.accountHolder,
+          flat_shipping_rate: settings.flatShippingRate,
+          min_free_shipping: settings.minFreeShipping,
+          updated_at: new Date().toISOString(),
+        };
+
+        const isLocalDb = process.env.NEXT_PUBLIC_USE_LOCAL_JSON_DB === "true" || 
+                          (typeof window !== "undefined" && window.localStorage.getItem("berakit_force_local_db") === "true");
+
+        if (isLocalDb) {
+          upsertPayload.admin_name = profileName;
+          upsertPayload.admin_email = profileEmail;
+          upsertPayload.admin_avatar = profileAvatar;
+        }
+
         const { error } = await supabase
           .from("settings")
-          .upsert({
-            id: "bumdes_config",
-            name: settings.name,
-            email: settings.email,
-            phone: settings.phone,
-            address: settings.address,
-            enable_cod: settings.enableCod,
-            enable_bank_transfer: settings.enableBankTransfer,
-            bank_name: settings.bankName,
-            account_number: settings.accountNumber,
-            account_holder: settings.accountHolder,
-            flat_shipping_rate: settings.flatShippingRate,
-            min_free_shipping: settings.minFreeShipping,
-            admin_name: profileName,
-            admin_email: profileEmail,
-            admin_avatar: profileAvatar,
-            updated_at: new Date().toISOString(),
-          });
+          .upsert(upsertPayload);
 
         if (error) {
           console.warn("Failed to persist settings in Supabase:", error.message);
@@ -606,10 +614,10 @@ export function SettingsPanel() {
                   {/* Photo Profile Uploader */}
                   <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-xl border bg-muted/10">
                     <div className="relative group shrink-0">
-                      <Avatar className="size-20 sm:size-24 border-2 border-primary/20 shadow-md">
+                      <Avatar className="size-20 sm:size-24 border-2 border-primary/20 shadow-md notranslate" translate="no">
                         <AvatarImage src={profileAvatar} />
                         <AvatarFallback className="text-xl font-bold">
-                          {profileName.slice(0, 2).toUpperCase() || "AD"}
+                          <span>{profileName.slice(0, 2).toUpperCase() || "AD"}</span>
                         </AvatarFallback>
                       </Avatar>
                       <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
@@ -673,9 +681,9 @@ export function SettingsPanel() {
                             profileAvatar === tmpl ? "border-[#6e3ff3] shadow-md shadow-[#6e3ff3]/10" : "border-transparent"
                           }`}
                         >
-                          <Avatar className="size-11 sm:size-12">
+                          <Avatar className="size-11 sm:size-12 notranslate" translate="no">
                             <AvatarImage src={tmpl} />
-                            <AvatarFallback>T{idx}</AvatarFallback>
+                            <AvatarFallback><span>T{idx}</span></AvatarFallback>
                           </Avatar>
                         </button>
                       ))}

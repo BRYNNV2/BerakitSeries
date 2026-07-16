@@ -184,9 +184,9 @@ export function DashboardSidebar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg cursor-pointer hover:bg-accent transition-colors">
-              <Avatar className="size-7 sm:size-8">
+              <Avatar className="size-7 sm:size-8 notranslate" translate="no">
                 <AvatarImage src={adminAvatar} />
-                <AvatarFallback className="text-xs">{adminName.slice(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="text-xs"><span>{adminName.slice(0, 2).toUpperCase()}</span></AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-xs sm:text-sm truncate">{adminName}</p>
