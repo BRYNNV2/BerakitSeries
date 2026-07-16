@@ -4,6 +4,7 @@ import "./globals.css";
 import "lenis/dist/lenis.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
+import DomSafetyPatch from "@/components/dom-safety-patch";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -34,25 +35,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                if (typeof window !== 'undefined' && typeof Node !== 'undefined') {
-                  var originalRemoveChild = Node.prototype.removeChild;
-                  Node.prototype.removeChild = function(child) {
-                    if (child && child.parentNode !== this) {
-                      return child;
-                    }
-                    return originalRemoveChild.call(this, child);
-                  };
-                }
-              })();
-            `
-          }}
-        />
-      </head>
       <body
         className={`${inter.variable} ${geistMono.variable} ${oswald.variable} antialiased`}
         suppressHydrationWarning
@@ -63,6 +45,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <DomSafetyPatch />
           {children}
           <Toaster position="top-center" richColors />
         </ThemeProvider>
