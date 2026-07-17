@@ -48,6 +48,7 @@ import {
   Trash2,
   AlertTriangle,
   Eye,
+  Truck,
 } from "lucide-react";
 import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
@@ -60,7 +61,7 @@ interface Transaction {
   customer_phone: string;
   address: string;
   total_amount: number;
-  status: "Pending" | "Diproses" | "Selesai" | "Dibatalkan";
+  status: string;
   payment_method: string;
   receipt_url?: string | null;
   created_at: string;
@@ -85,6 +86,13 @@ export function TransactionsList() {
   const [isDeleteOpen, setIsDeleteOpen] = React.useState(false);
   const [deletingTx, setDeletingTx] = React.useState<Transaction | null>(null);
   const [deleteLoading, setDeleteLoading] = React.useState(false);
+
+  // Shipping / Resi input dialog states
+  const [isShipDialogOpen, setIsShipDialogOpen] = React.useState(false);
+  const [shippingTx, setShippingTx] = React.useState<Transaction | null>(null);
+  const [courierName, setCourierName] = React.useState("J&T");
+  const [trackingNumber, setTrackingNumber] = React.useState("");
+  const [shipLoading, setShipLoading] = React.useState(false);
 
   // Check Supabase credentials & load data
   const loadData = React.useCallback(async () => {
@@ -149,6 +157,52 @@ export function TransactionsList() {
     } else {
       toast.error("Supabase tidak tersambung. Aksi dibatalkan.");
     }
+  };
+
+  const handleShipClick = (tx: Transaction) => {
+    setShippingTx(tx);
+    setCourierName("J&T");
+    setTrackingNumber("");
+    setIsShipDialogOpen(true);
+  };
+
+  const handleConfirmShip = async () => {
+    if (!shippingTx) return;
+    if (!trackingNumber.trim()) {
+      toast.error("Nomor resi wajib diisi.");
+      return;
+    }
+
+    setShipLoading(true);
+    const newStatus = `Dikirim: ${courierName} | ${trackingNumber.trim()}`;
+
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .update({ status: newStatus })
+          .eq("id", shippingTx.id)
+          .select();
+
+        if (error) throw error;
+
+        addActivityLog(
+          "Kirim Pesanan",
+          `Menandai pesanan #${shippingTx.id} dikirim via ${courierName} dengan resi ${trackingNumber}`,
+          "transaction"
+        );
+        toast.success(`Pesanan #${shippingTx.id} berhasil ditandai dikirim.`);
+        setIsShipDialogOpen(false);
+        setShippingTx(null);
+        await loadData();
+      } catch (err: any) {
+        console.error("Gagal update status pengiriman:", err);
+        toast.error("Gagal memperbarui status pengiriman: " + (err.message || err));
+      }
+    } else {
+      toast.error("Supabase tidak terhubung.");
+    }
+    setShipLoading(false);
   };
 
   const handleWhatsAppContact = (order: Transaction) => {
@@ -221,7 +275,9 @@ export function TransactionsList() {
       const matchesSearch =
         t.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.payment_method.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "all" || t.status === statusFilter;
+      const matchesStatus = 
+        statusFilter === "all" || 
+        (statusFilter === "Dikirim" ? (t.status || "").startsWith("Dikirim") : t.status === statusFilter);
       return matchesSearch && matchesStatus;
     });
   }, [transactions, searchQuery, statusFilter]);
@@ -233,7 +289,15 @@ export function TransactionsList() {
       .reduce((sum, t) => sum + t.total_amount, 0);
   }, [transactions]);
 
-  const getStatusBadge = (status: Transaction["status"]) => {
+  const getStatusBadge = (status: string) => {
+    if (status && status.startsWith("Dikirim")) {
+      return (
+        <Badge className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-450 hover:bg-indigo-500/20 gap-1 border-indigo-500/20 font-medium">
+          <Truck className="size-3" />
+          Dikirim
+        </Badge>
+      );
+    }
     switch (status) {
       case "Selesai":
         return (
@@ -257,10 +321,18 @@ export function TransactionsList() {
           </Badge>
         );
       case "Dibatalkan":
+      case "Batal":
         return (
           <Badge className="bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 gap-1 border-rose-500/20 font-medium">
             <Ban className="size-3" />
             Batal
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-zinc-500/10 text-zinc-550 hover:bg-zinc-500/20 gap-1 border-zinc-500/20 font-medium">
+            <Clock className="size-3" />
+            {status}
           </Badge>
         );
     }
@@ -337,6 +409,7 @@ export function TransactionsList() {
                 <SelectItem value="all">Semua Status</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
                 <SelectItem value="Diproses">Diproses</SelectItem>
+                <SelectItem value="Dikirim">Dikirim</SelectItem>
                 <SelectItem value="Selesai">Selesai</SelectItem>
                 <SelectItem value="Dibatalkan">Dibatalkan</SelectItem>
               </SelectContent>
@@ -411,15 +484,23 @@ export function TransactionsList() {
                             Detail Pesanan
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          {tx.status !== "Selesai" && tx.status !== "Dibatalkan" && (
+                          {tx.status !== "Selesai" && !tx.status.startsWith("Dibatalkan") && tx.status !== "Dibatalkan" && (
                             <>
-                              <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Diproses")}>
-                                <TrendingUp className="size-4 mr-2 text-blue-500" />
-                                Tandai Diproses
-                              </DropdownMenuItem>
+                              {!tx.status.startsWith("Dikirim") && tx.status !== "Diproses" && (
+                                <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Diproses")}>
+                                  <TrendingUp className="size-4 mr-2 text-blue-500" />
+                                  Tandai Diproses
+                                </DropdownMenuItem>
+                              )}
+                              {!tx.status.startsWith("Dikirim") && (
+                                <DropdownMenuItem onClick={() => handleShipClick(tx)}>
+                                  <Truck className="size-4 mr-2 text-indigo-500" />
+                                  Tandai Dikirim (Resi)
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Selesai")}>
-                                <CheckCircle2 className="size-4 mr-2 text-emerald-500" />
-                                Tandai Selesai
+                                  <CheckCircle2 className="size-4 mr-2 text-emerald-500" />
+                                  Tandai Selesai / Diterima
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleUpdateStatus(tx.id, "Dibatalkan")}>
                                 <Ban className="size-4 mr-2 text-rose-500" />
@@ -528,6 +609,20 @@ export function TransactionsList() {
                   <span className="text-muted-foreground">Metode Pembayaran:</span>
                   <span className="font-semibold text-foreground">{selectedTx.payment_method}</span>
                 </div>
+                {selectedTx.status && selectedTx.status.startsWith("Dikirim") && (
+                  (() => {
+                    const parts = selectedTx.status.split(":");
+                    const trackingParts = parts[1]?.split("|") || [];
+                    const courier = trackingParts[0]?.trim() || "";
+                    const resi = trackingParts[1]?.trim() || "";
+                    return (
+                      <div className="flex justify-between border-t border-dashed pt-1.5 mt-1.5 text-indigo-600 dark:text-indigo-400 font-bold">
+                        <span>Kurir & No. Resi:</span>
+                        <span>{courier} ({resi})</span>
+                      </div>
+                    );
+                  })()
+                )}
                 <div className="flex flex-col pt-1 border-t border-dashed mt-1.5">
                   <span className="text-muted-foreground mb-0.5">Alamat Pengiriman:</span>
                   <span className="text-foreground leading-normal font-medium">{selectedTx.address}</span>
@@ -592,6 +687,74 @@ export function TransactionsList() {
               className="h-8 text-xs font-semibold px-4 cursor-pointer"
             >
               Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Shipping / Resi Input Dialog */}
+      <Dialog open={isShipDialogOpen} onOpenChange={setIsShipDialogOpen}>
+        <DialogContent className="max-w-[400px] border-border/80">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold flex items-center gap-2">
+              <Truck className="size-4 text-indigo-500" />
+              Kirim Pesanan & Input Resi
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1.5">
+              Masukkan kurir dan nomor resi pengiriman untuk pembeli <strong className="text-foreground">{shippingTx?.customer_name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-3 text-left">
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Pilih Kurir</label>
+              <Select value={courierName} onValueChange={setCourierName}>
+                <SelectTrigger className="h-9 w-full text-xs">
+                  <SelectValue placeholder="Pilih Kurir" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="J&T Express">J&T Express</SelectItem>
+                  <SelectItem value="JNE">JNE</SelectItem>
+                  <SelectItem value="SiCepat">SiCepat</SelectItem>
+                  <SelectItem value="POS Indonesia">POS Indonesia</SelectItem>
+                  <SelectItem value="Kurir Lokal BUMDes">Kurir Lokal BUMDes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Nomor Resi / Bukti Kirim</label>
+              <Input
+                placeholder="Contoh: JT1093847291 atau Resi-01"
+                value={trackingNumber}
+                onChange={(e) => setTrackingNumber(e.target.value)}
+                className="h-9 text-xs"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-row justify-end gap-2.5 pt-4 border-t mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={shipLoading}
+              onClick={() => setIsShipDialogOpen(false)}
+              className="h-8 text-xs font-semibold px-3 py-1 cursor-pointer"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              disabled={shipLoading || !trackingNumber.trim()}
+              onClick={handleConfirmShip}
+              className="h-8 text-xs font-semibold px-3.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 cursor-pointer"
+            >
+              {shipLoading ? (
+                <Loader2 className="size-3 animate-spin" />
+              ) : (
+                <Truck className="size-3" />
+              )}
+              {shipLoading ? "Memproses..." : "Konfirmasi Kirim"}
             </Button>
           </DialogFooter>
         </DialogContent>

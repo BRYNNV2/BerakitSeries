@@ -32,6 +32,7 @@ import {
   Store,
   History,
   Image as ImageIcon,
+  MessageSquare,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/dashboard-store";
 import { useRouter } from "next/navigation";
@@ -57,6 +58,11 @@ const menuItems = [
     title: "Transaksi",
     icon: CreditCard,
     tab: "transactions" as const,
+  },
+  {
+    title: "Pengaduan",
+    icon: MessageSquare,
+    tab: "complaints" as const,
   },
   {
     title: "Riwayat Aktivitas",

@@ -53,23 +53,37 @@ export async function POST(req: NextRequest) {
 
     // MODE 2: SUPABASE PROXY - Upload to Supabase Storage Server-Side
     if (supabaseServer) {
-      const { data, error } = await supabaseServer.storage
-        .from(bucket)
-        .upload(filePath, buffer, {
-          contentType: file.type,
-          upsert: true
-        });
+      try {
+        const { data, error } = await supabaseServer.storage
+          .from(bucket)
+          .upload(filePath, buffer, {
+            contentType: file.type,
+            upsert: true
+          });
 
-      if (error) {
-        console.error("Supabase Storage Proxy Upload Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        if (!error && data) {
+          const { data: urlData } = supabaseServer.storage.from(bucket).getPublicUrl(filePath);
+          return NextResponse.json({ data: { path: data.path, publicUrl: urlData.publicUrl }, error: null });
+        }
+
+        console.warn(`Supabase Storage upload failed (${error?.message || "unknown error"}). Falling back to local upload...`);
+      } catch (err: any) {
+        console.warn(`Supabase Storage upload threw exception (${err.message}). Falling back to local upload...`);
       }
-
-      const { data: urlData } = supabaseServer.storage.from(bucket).getPublicUrl(filePath);
-      return NextResponse.json({ data: { path: data.path, publicUrl: urlData.publicUrl }, error: null });
     }
 
-    return NextResponse.json({ error: "Storage configuration mismatch" }, { status: 500 });
+    // FALLBACK MODE: Save file to public/uploads/
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    
+    const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+    const fullPath = path.join(uploadDir, fileName);
+    fs.writeFileSync(fullPath, buffer);
+    
+    const publicUrl = `/uploads/${fileName}`;
+    return NextResponse.json({ data: { path: filePath, publicUrl }, error: null });
   } catch (err: any) {
     console.error("Storage upload proxy error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });

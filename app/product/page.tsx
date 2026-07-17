@@ -221,6 +221,80 @@ export default function ProductListingPage() {
   const [checkoutSuccess, setCheckoutSuccess] = React.useState(false);
   const [lastCreatedOrderId, setLastCreatedOrderId] = React.useState("");
 
+  // Address Book state for checkout
+  const [addressBook, setAddressBook] = React.useState<any[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = React.useState<string>("custom");
+
+  // Autofill checkout form from user profile & load address book when checkout modal opens
+  React.useEffect(() => {
+    const loadProfileAndAddresses = async () => {
+      if (isCheckoutOpen && currentUser) {
+        // 1. Fetch main profile
+        if (supabase) {
+          try {
+            const { data: pData } = await supabase
+              .from("profiles")
+              .select("full_name, phone, address")
+              .eq("id", currentUser.id)
+              .single();
+            if (pData) {
+              if (pData.full_name) setCustomerName(pData.full_name);
+              if (pData.phone) setCustomerPhone(pData.phone);
+              if (pData.address) setCustomerAddress(pData.address);
+            }
+          } catch (err) {
+            console.warn("Failed fetching profile for checkout autofill:", err);
+          }
+        }
+        
+        // 2. Fetch address book (Supabase + localStorage merge)
+        try {
+          let list: any[] = [];
+          if (supabase) {
+            const { data: addrData } = await supabase
+              .from("addresses")
+              .select("*")
+              .eq("user_id", currentUser.id)
+              .order("is_primary", { ascending: false });
+            if (addrData) list = addrData;
+          }
+          
+          const localAddrsStr = localStorage.getItem(`berakit_addresses_${currentUser.id}`);
+          if (localAddrsStr) {
+            const localAddrs = JSON.parse(localAddrsStr);
+            localAddrs.forEach((la: any) => {
+              if (!list.some(a => a.id === la.id)) {
+                list.push(la);
+              }
+            });
+          }
+          
+          list.sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0));
+          setAddressBook(list);
+          
+          // Select primary address automatically if it exists
+          const primary = list.find(a => a.is_primary);
+          if (primary) {
+            setSelectedAddressId(primary.id);
+            setCustomerName(primary.recipient_name);
+            setCustomerPhone(primary.recipient_phone);
+            setCustomerAddress(primary.address_line);
+          } else if (list.length > 0) {
+            setSelectedAddressId(list[0].id);
+            setCustomerName(list[0].recipient_name);
+            setCustomerPhone(list[0].recipient_phone);
+            setCustomerAddress(list[0].address_line);
+          } else {
+            setSelectedAddressId("custom");
+          }
+        } catch (err) {
+          console.warn("Failed loading address book for checkout:", err);
+        }
+      }
+    };
+    loadProfileAndAddresses();
+  }, [isCheckoutOpen, currentUser]);
+
   // Refs for entrance animations
   const headerRef = React.useRef<HTMLElement>(null);
   const titleSectionRef = React.useRef<HTMLDivElement>(null);
@@ -316,6 +390,10 @@ export default function ProductListingPage() {
       const catParam = params.get("category");
       if (catParam) {
         setSelectedCategory(catParam);
+      }
+      const openCartParam = params.get("openCart");
+      if (openCartParam === "true") {
+        setIsCartOpen(true);
       }
     }
     // Load cart from localStorage
@@ -583,6 +661,7 @@ export default function ProductListingPage() {
         price: item.product.price,
         quantity: item.quantity,
         selected_size: item.product.selectedSize || null,
+        image_url: item.product.image_url || null,
       })),
       total_amount: checkoutSubtotal,
       status: "Pending",
@@ -638,7 +717,12 @@ export default function ProductListingPage() {
         setCheckoutSuccess(true);
         
         if (isDirectCheckout) {
+          // Remove the purchased items from the cart if they exist in the cart
+          const checkoutItemIds = checkoutItems.map(item => item.id);
+          const newCart = cart.filter(item => !checkoutItemIds.includes(item.id));
+          updateCart(newCart);
           setCheckoutItems([]);
+          setIsDirectCheckout(false);
         } else {
           updateCart([]); // Clear cart if checked out via Cart
           setCheckoutItems([]);
@@ -659,6 +743,7 @@ export default function ProductListingPage() {
     setIsCheckoutOpen(false);
     setCheckoutSuccess(false);
     setCheckoutItems([]);
+    setIsDirectCheckout(false);
     setCustomerName("");
     setCustomerPhone("");
     setCustomerAddress("");
@@ -1598,6 +1683,39 @@ export default function ProductListingPage() {
 
               {/* Customer Inputs */}
               <div className="space-y-4">
+                {currentUser && addressBook.length > 0 && (
+                  <div className="space-y-1.5 bg-zinc-50 border border-zinc-200 rounded-2xl p-3.5 text-left">
+                    <label className="text-[9px] font-black text-zinc-500 uppercase tracking-wider block">Gunakan Alamat Tersimpan</label>
+                    <select
+                      value={selectedAddressId}
+                      onChange={(e) => {
+                        const addrId = e.target.value;
+                        setSelectedAddressId(addrId);
+                        if (addrId === "custom") {
+                          setCustomerName("");
+                          setCustomerPhone("");
+                          setCustomerAddress("");
+                        } else {
+                          const selected = addressBook.find(a => a.id === addrId);
+                          if (selected) {
+                            setCustomerName(selected.recipient_name);
+                            setCustomerPhone(selected.recipient_phone);
+                            setCustomerAddress(selected.address_line);
+                          }
+                        }
+                      }}
+                      className="w-full bg-white border border-zinc-200 text-zinc-900 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-zinc-400 font-semibold"
+                    >
+                      {addressBook.map((addr) => (
+                        <option key={addr.id} value={addr.id}>
+                          {addr.label} {addr.is_primary ? "(Alamat Utama)" : ""} - {addr.recipient_name}
+                        </option>
+                      ))}
+                      <option value="custom">-- Gunakan Alamat Lain / Kustom --</option>
+                    </select>
+                  </div>
+                )}
+
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Nama Lengkap</label>
                   <div className="relative">

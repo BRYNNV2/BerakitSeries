@@ -255,6 +255,29 @@ export default function StorefrontPage() {
     fetchUser();
   }, []);
 
+  // Autofill checkout form from user profile when checkout modal opens
+  React.useEffect(() => {
+    const loadProfileForAutofill = async () => {
+      if (isCheckoutOpen && supabase && currentUser) {
+        try {
+          const { data: pData } = await supabase
+            .from("profiles")
+            .select("full_name, phone, address")
+            .eq("id", currentUser.id)
+            .single();
+          if (pData) {
+            if (pData.full_name) setCustomerName(pData.full_name);
+            if (pData.phone) setCustomerPhone(pData.phone);
+            if (pData.address) setCustomerAddress(pData.address);
+          }
+        } catch (err) {
+          console.warn("Failed fetching profile for checkout autofill:", err);
+        }
+      }
+    };
+    loadProfileForAutofill();
+  }, [isCheckoutOpen, currentUser]);
+
   // BUMDes config (loaded from settings / fallbacks)
   const [bumdesInfo, setBumdesInfo] = React.useState({
     name: "BERAKIT SERIES",
@@ -797,6 +820,14 @@ export default function StorefrontPage() {
       total_amount: finalAmount,
       status: "Pending",
       payment_method: paymentMethod,
+      items: cart.map((item) => ({
+        product_id: item.product.id,
+        name: item.product.name,
+        price: item.product.price,
+        quantity: item.quantity,
+        selected_size: null,
+        image_url: item.product.image_url || null,
+      })),
     };
 
     let orderId = "tx-" + Math.random().toString(36).substr(2, 9);

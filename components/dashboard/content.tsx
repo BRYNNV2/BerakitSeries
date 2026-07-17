@@ -12,6 +12,7 @@ import { GalleryCrud } from "./gallery-crud";
 import { TransactionsList } from "./transactions-list";
 import { SettingsPanel } from "./settings-panel";
 import { ActivityLogs } from "./activity-logs";
+import { ComplaintsList } from "./complaints-list";
 
 export function DashboardContent() {
   const activeTab = useDashboardStore((state) => state.activeTab);
@@ -47,6 +48,10 @@ export function DashboardContent() {
       
       <div key="transactions-tab" className={activeTab === "transactions" ? "" : "hidden"}>
         <TransactionsList />
+      </div>
+
+      <div key="complaints-tab" className={activeTab === "complaints" ? "" : "hidden"}>
+        <ComplaintsList />
       </div>
 
       <div key="logs-tab" className={activeTab === "logs" ? "" : "hidden"}>
