@@ -29,16 +29,13 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const [rememberMe, setRememberMe] = React.useState(false);
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(false);
-  const [processedImageSrc, setProcessedImageSrc] = React.useState("/batik-center.png");
-  const [imageReady, setImageReady] = React.useState(false);
+
 
   React.useEffect(() => {
     setIsUsingSupabase(!!supabase);
   }, []);
 
-  React.useEffect(() => {
-    setImageReady(true);
-  }, []);
+
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,16 +119,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Model Photo overlay */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <img
-            src={processedImageSrc}
-            alt="Model Fashion"
-            className={`h-[58%] w-auto object-contain transform translate-y-4 drop-shadow-[0_35px_35px_rgba(0,0,0,0.6)] transition-opacity duration-700 ease-out ${
-              imageReady ? "opacity-100" : "opacity-0"
-            }`}
-          />
-        </div>
+
 
         {/* Small header/logo at top of left side */}
         <div className="relative z-10">
