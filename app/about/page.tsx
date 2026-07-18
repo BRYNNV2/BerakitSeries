@@ -12,10 +12,44 @@ import {
   Leaf,
   ArrowUpRight,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { gsap } from "gsap";
+
+interface AboutSlide {
+  id: string;
+  title: string;
+  caption: string;
+  image_url: string;
+  order_index?: number;
+}
+
+const DEFAULT_SLIDES: AboutSlide[] = [
+  {
+    id: "slide-1",
+    title: "CRAFTED BY NATURE",
+    caption: "Bringing the timeless coastal heritage of Berakit Village to the forefront of contemporary digital lifestyle.",
+    image_url: "https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=1600&auto=format&fit=crop&q=80",
+    order_index: 1,
+  },
+  {
+    id: "slide-2",
+    title: "TRADITIONAL CANTING ART",
+    caption: "Meticulously hand-drawn with hot wax by local women artisans, preserving centuries-old wisdom.",
+    image_url: "https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?w=1600&auto=format&fit=crop&q=80",
+    order_index: 2,
+  },
+  {
+    id: "slide-3",
+    title: "COMMUNITY EMPOWERMENT",
+    caption: "Supporting local cooperatives and establishing sustainable creative careers on the shores of Bintan.",
+    image_url: "https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?w=1600&auto=format&fit=crop&q=80",
+    order_index: 3,
+  }
+];
 
 export default function AboutPage() {
   const router = useRouter();
@@ -23,6 +57,50 @@ export default function AboutPage() {
   const [cartItemCount, setCartItemCount] = React.useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
+  const [slides, setSlides] = React.useState<AboutSlide[]>([]);
+  const [currentSlideIdx, setCurrentSlideIdx] = React.useState(0);
+
+  // Fetch banner slides
+  React.useEffect(() => {
+    const fetchSlides = async () => {
+      // Load fallback first
+      const cached = localStorage.getItem("berakit_about_slides_cache");
+      let localSlides = DEFAULT_SLIDES;
+      if (cached) {
+        try {
+          localSlides = JSON.parse(cached);
+        } catch (e) {
+          console.error("Failed to parse cached slides:", e);
+        }
+      }
+      setSlides(localSlides);
+
+      if (supabase) {
+        try {
+          const { data, error } = await supabase
+            .from("about_slides")
+            .select("*")
+            .order("order_index", { ascending: true });
+          if (!error && data && data.length > 0) {
+            setSlides(data);
+            localStorage.setItem("berakit_about_slides_cache", JSON.stringify(data));
+          }
+        } catch (err) {
+          console.warn("Failed fetching slides from Supabase:", err);
+        }
+      }
+    };
+    fetchSlides();
+  }, []);
+
+  // Slide autoplay interval
+  React.useEffect(() => {
+    if (slides.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlideIdx((prev) => (prev + 1) % slides.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
 
   // Fetch session user
   React.useEffect(() => {
@@ -271,21 +349,78 @@ export default function AboutPage() {
             </h1>
           </div>
 
-          {/* Banner Image */}
-          <div className="w-full h-[40vh] sm:h-[50vh] lg:h-[60vh] rounded-[24px] sm:rounded-[32px] overflow-hidden relative shadow-lg mb-16 border border-zinc-200/40">
-            <img
-              src="https://images.unsplash.com/photo-1597484211616-396f17ed3998?w=1600&auto=format&fit=crop&q=80"
-              alt="Batik Artistry"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-8 sm:p-12">
-              <div className="text-left text-white max-w-xl">
-                <span className="text-xs font-bold uppercase tracking-widest text-[#bef264] block mb-2 font-mono">ESTABLISHED 2026</span>
-                <p className="text-base sm:text-lg font-bold leading-relaxed uppercase tracking-tight" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
-                  Bringing the timeless coastal heritage of Berakit Village to the forefront of contemporary digital lifestyle.
-                </p>
+          {/* Banner Image Slideshow */}
+          <div className="w-full h-[45vh] sm:h-[55vh] lg:h-[65vh] rounded-[24px] sm:rounded-[32px] overflow-hidden relative shadow-lg mb-16 border border-zinc-200/40 group bg-zinc-900">
+            {slides.map((slide, idx) => {
+              const isActive = idx === currentSlideIdx;
+              return (
+                <div
+                  key={slide.id || idx}
+                  className={`absolute inset-0 transition-all duration-1000 ease-out transform ${
+                    isActive ? "opacity-100 scale-100 z-10" : "opacity-0 scale-95 pointer-events-none z-0"
+                  }`}
+                >
+                  <img
+                    src={slide.image_url}
+                    alt={slide.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent flex items-end p-8 sm:p-12">
+                    <div className={`text-left text-white max-w-xl transition-all duration-700 delay-200 transform ${isActive ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
+                      <span className="text-xs font-bold uppercase tracking-widest text-[#bef264] block mb-2 font-mono">ESTABLISHED 2026</span>
+                      <p className="text-2xl sm:text-4xl font-extrabold leading-tight uppercase tracking-tight" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                        {slide.title}
+                      </p>
+                      <p className="text-xs sm:text-sm text-zinc-300 font-medium mt-2 leading-relaxed">
+                        {slide.caption}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Nav Arrows */}
+            {slides.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentSlideIdx((prev) => (prev - 1 + slides.length) % slides.length);
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-20 size-10 rounded-full bg-black/40 hover:bg-[#bef264] hover:text-black text-white flex items-center justify-center backdrop-blur-xs transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentSlideIdx((prev) => (prev + 1) % slides.length);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-20 size-10 rounded-full bg-black/40 hover:bg-[#bef264] hover:text-black text-white flex items-center justify-center backdrop-blur-xs transition-all duration-300 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                >
+                  <ChevronRight className="size-5" />
+                </button>
+              </>
+            )}
+
+            {/* Dots */}
+            {slides.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setCurrentSlideIdx(idx)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      idx === currentSlideIdx ? "w-6 bg-[#bef264]" : "w-1.5 bg-white/50 hover:bg-white"
+                    }`}
+                  />
+                ))}
               </div>
-            </div>
+            )}
           </div>
         </section>
 

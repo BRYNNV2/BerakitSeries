@@ -9,6 +9,7 @@ import { DealsTable } from "./deals-table";
 import { RecentSales } from "./recent-sales";
 import { ProductsCrud } from "./products-crud";
 import { GalleryCrud } from "./gallery-crud";
+import { AboutSlidesCrud } from "./about-slides-crud";
 import { TransactionsList } from "./transactions-list";
 import { SettingsPanel } from "./settings-panel";
 import { ActivityLogs } from "./activity-logs";
@@ -44,6 +45,10 @@ export function DashboardContent() {
 
       <div key="gallery-tab" className={activeTab === "gallery" ? "" : "hidden"}>
         <GalleryCrud />
+      </div>
+
+      <div key="about-slides-tab" className={activeTab === "about-slides" ? "" : "hidden"}>
+        <AboutSlidesCrud />
       </div>
       
       <div key="transactions-tab" className={activeTab === "transactions" ? "" : "hidden"}>

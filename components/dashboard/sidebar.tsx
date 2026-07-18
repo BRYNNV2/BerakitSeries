@@ -33,6 +33,7 @@ import {
   History,
   Image as ImageIcon,
   MessageSquare,
+  Sliders,
 } from "lucide-react";
 import { useDashboardStore } from "@/store/dashboard-store";
 import { useRouter } from "next/navigation";
@@ -53,6 +54,11 @@ const menuItems = [
     title: "Galeri Desa",
     icon: ImageIcon,
     tab: "gallery" as const,
+  },
+  {
+    title: "Slide About Us",
+    icon: Sliders,
+    tab: "about-slides" as const,
   },
   {
     title: "Transaksi",

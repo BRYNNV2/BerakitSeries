@@ -149,3 +149,19 @@ ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 -- ADD COLUMN IF NOT EXISTS allow_cod BOOLEAN DEFAULT true,
 -- ADD COLUMN IF NOT EXISTS allow_bank BOOLEAN DEFAULT true;
 
+
+-- =========================================================================
+-- ABOUT SLIDES TABLE
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS public.about_slides (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    caption TEXT,
+    image_url TEXT,
+    order_index INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Disable Row-Level Security on about_slides for easy public access
+ALTER TABLE public.about_slides DISABLE ROW LEVEL SECURITY;
+
