@@ -391,6 +391,10 @@ export default function ProductListingPage() {
       if (catParam) {
         setSelectedCategory(catParam);
       }
+      const sortParam = params.get("sort");
+      if (sortParam) {
+        setSortBy(sortParam);
+      }
       const openCartParam = params.get("openCart");
       if (openCartParam === "true") {
         setIsCartOpen(true);

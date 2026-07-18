@@ -967,10 +967,10 @@ export default function StorefrontPage() {
           <nav className="hidden md:flex items-center gap-8">
             {[
               { label: "Collections", href: "/product" },
-              { label: "New Arrivals", href: "/product" },
+              { label: "New Arrivals", href: "/product?sort=newest" },
               { label: "Gallery", href: "/gallery" },
+              { label: "About Us", href: "/about" },
               { label: "Why Us", href: "#profil" },
-              { label: "News Letter", href: "#hubungi-kami" },
             ].map((link, idx) => (
               <a
                 key={idx}
@@ -1080,10 +1080,10 @@ export default function StorefrontPage() {
             <nav className="flex flex-col gap-6">
               {[
                 { label: "Collections", href: "/product" },
-                { label: "New Arrivals", href: "/product" },
+                { label: "New Arrivals", href: "/product?sort=newest" },
                 { label: "Gallery", href: "/gallery" },
+                { label: "About Us", href: "/about" },
                 { label: "Why Us", href: "#profil" },
-                { label: "News Letter", href: "#hubungi-kami" },
               ].map((link, idx) => (
                 <a
                   key={idx}
@@ -2448,14 +2448,13 @@ export default function StorefrontPage() {
               </div>
             </div>
 
-            {/* Column 2: SHOP */}
             <div className="space-y-4">
               <h5 className="text-xs font-bold text-zinc-300 uppercase tracking-widest" style={{ fontFamily: "Consolas, monospace" }}>
                 SHOP
               </h5>
               <ul className="space-y-2 text-sm text-zinc-500 font-medium">
-                <li><a href="/product" className="hover:text-[#bef264] transition-colors">New Arrivals</a></li>
-                <li><a href="/product" className="hover:text-[#bef264] transition-colors">Best Sellers</a></li>
+                <li><a href="/product?sort=newest" className="hover:text-[#bef264] transition-colors">New Arrivals</a></li>
+                <li><a href="/product?sort=price-high" className="hover:text-[#bef264] transition-colors">Best Sellers</a></li>
                 <li><a href="/product?category=Batik%20Tulis" className="hover:text-[#bef264] transition-colors">Batik Tulis</a></li>
                 <li><a href="/product?category=Batik%20Cap" className="hover:text-[#bef264] transition-colors">Batik Cap</a></li>
                 <li><a href="/product?category=Batik%20Kombinasi" className="hover:text-[#bef264] transition-colors">Batik Kombinasi</a></li>
@@ -2463,16 +2462,15 @@ export default function StorefrontPage() {
               </ul>
             </div>
 
-            {/* Column 3: COMPANY */}
             <div className="space-y-4">
               <h5 className="text-xs font-bold text-zinc-300 uppercase tracking-widest" style={{ fontFamily: "Consolas, monospace" }}>
                 COMPANY
               </h5>
               <ul className="space-y-2 text-sm text-zinc-500 font-medium">
-                <li><a href="#difference-section" className="hover:text-[#bef264] transition-colors">About Us</a></li>
-                <li><a href="#difference-section" className="hover:text-[#bef264] transition-colors">Careers</a></li>
-                <li><a href="#difference-section" className="hover:text-[#bef264] transition-colors">Press</a></li>
-                <li><a href="#difference-section" className="hover:text-[#bef264] transition-colors">Sustainability</a></li>
+                <li><a href="/about" className="hover:text-[#bef264] transition-colors">About Us</a></li>
+                <li><a href="/about" className="hover:text-[#bef264] transition-colors">Careers</a></li>
+                <li><a href="/about" className="hover:text-[#bef264] transition-colors">Press</a></li>
+                <li><a href="/about" className="hover:text-[#bef264] transition-colors">Sustainability</a></li>
               </ul>
             </div>
 
