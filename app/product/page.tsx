@@ -966,14 +966,14 @@ export default function ProductListingPage() {
               <SelectTrigger className="w-full md:w-auto h-12 px-6 rounded-full border-zinc-200 bg-white text-xs font-bold uppercase tracking-wider text-zinc-700 hover:bg-zinc-50 transition-colors focus:ring-0 focus:ring-offset-0">
                 <SelectValue placeholder="ALL CATEGORIES" />
               </SelectTrigger>
-              <SelectContent className="bg-white border-zinc-200 rounded-xl">
-                <SelectItem value="all" className="text-xs font-bold uppercase py-2 focus:bg-zinc-50">ALL CATEGORIES</SelectItem>
-                <SelectItem value="Batik Mangrove" className="text-xs font-bold uppercase py-2 focus:bg-zinc-50">BATIK MANGROVE</SelectItem>
-                <SelectItem value="Batik Cap" className="text-xs font-bold uppercase py-2 focus:bg-zinc-50">BATIK CAP</SelectItem>
-                <SelectItem value="Batik Eco Print" className="text-xs font-bold uppercase py-2 focus:bg-zinc-50">BATIK ECO PRINT</SelectItem>
-                <SelectItem value="Batik Tulis" className="text-xs font-bold uppercase py-2 focus:bg-zinc-50">BATIK TULIS</SelectItem>
-                <SelectItem value="Batik Kombinasi" className="text-xs font-bold uppercase py-2 focus:bg-zinc-50">BATIK KOMBINASI</SelectItem>
-                <SelectItem value="Aksesoris" className="text-xs font-bold uppercase py-2 focus:bg-zinc-50">AKSESORIS</SelectItem>
+              <SelectContent className="bg-white text-zinc-900 border-zinc-200 rounded-xl">
+                <SelectItem value="all" className="text-xs font-bold uppercase py-2 text-zinc-800 focus:bg-zinc-100 focus:text-zinc-950">ALL CATEGORIES</SelectItem>
+                <SelectItem value="Batik Mangrove" className="text-xs font-bold uppercase py-2 text-zinc-800 focus:bg-zinc-100 focus:text-zinc-950">BATIK MANGROVE</SelectItem>
+                <SelectItem value="Batik Cap" className="text-xs font-bold uppercase py-2 text-zinc-800 focus:bg-zinc-100 focus:text-zinc-950">BATIK CAP</SelectItem>
+                <SelectItem value="Batik Eco Print" className="text-xs font-bold uppercase py-2 text-zinc-800 focus:bg-zinc-100 focus:text-zinc-950">BATIK ECO PRINT</SelectItem>
+                <SelectItem value="Batik Tulis" className="text-xs font-bold uppercase py-2 text-zinc-800 focus:bg-zinc-100 focus:text-zinc-950">BATIK TULIS</SelectItem>
+                <SelectItem value="Batik Kombinasi" className="text-xs font-bold uppercase py-2 text-zinc-800 focus:bg-zinc-100 focus:text-zinc-950">BATIK KOMBINASI</SelectItem>
+                <SelectItem value="Aksesoris" className="text-xs font-bold uppercase py-2 text-zinc-800 focus:bg-zinc-100 focus:text-zinc-950">AKSESORIS</SelectItem>
               </SelectContent>
             </Select>
           </div>
