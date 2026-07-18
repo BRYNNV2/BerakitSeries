@@ -20,6 +20,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase, withTimeout } from "@/lib/supabase";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
@@ -376,17 +382,136 @@ export default function GalleryPage() {
             BERAKIT SERIES.
           </span>
           <nav className="hidden md:flex items-center gap-8">
-            {[
-              { label: "Collections", href: "/product" },
-              { label: "New Arrivals", href: "/product" },
-              { label: "Gallery", href: "/gallery" },
-              { label: "Why Us", href: "/#profil" },
-              { label: "News Letter", href: "/#hubungi-kami" },
-            ].map((link, idx) => (
-              <a key={idx} href={link.href} className={`relative transition-all duration-300 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#bef264] after:transition-all after:duration-300 after:ease-out ${link.href === "/gallery" ? "opacity-100 after:w-full" : "opacity-60 hover:opacity-100"}`} style={{ fontFamily: "'Inter', system-ui, sans-serif", fontWeight: link.href === "/gallery" ? 900 : 700, fontSize: "14px", lineHeight: "20px", color: "lab(2.75381 0 0)" }}>
-                {link.label}
-              </a>
-            ))}
+            <a
+              href="/"
+              className="relative transition-all duration-300 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#bef264] after:transition-all after:duration-300 after:ease-out opacity-60 hover:opacity-100"
+              style={{
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontWeight: 700,
+                fontSize: "14px",
+                lineHeight: "20px",
+                color: "lab(2.75381 0 0)",
+              }}
+            >
+              Home
+            </a>
+            <a
+              href="/product"
+              className="relative transition-all duration-300 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#bef264] after:transition-all after:duration-300 after:ease-out opacity-60 hover:opacity-100"
+              style={{
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontWeight: 700,
+                fontSize: "14px",
+                lineHeight: "20px",
+                color: "lab(2.75381 0 0)",
+              }}
+            >
+              Collections
+            </a>
+            <a
+              href="/gallery"
+              className="relative transition-all duration-300 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-[#bef264] after:transition-all after:duration-300 after:ease-out opacity-100"
+              style={{
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontWeight: 700,
+                fontSize: "14px",
+                lineHeight: "20px",
+                color: "lab(2.75381 0 0)",
+              }}
+            >
+              Gallery
+            </a>
+
+            {/* Dropdown Menu for Company */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 relative opacity-60 hover:opacity-100 transition-all duration-300 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#bef264] outline-none cursor-pointer" style={{
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontWeight: 700,
+                fontSize: "14px",
+                lineHeight: "20px",
+                color: "lab(2.75381 0 0)",
+              }}>
+                Company <ChevronDown className="size-3.5 opacity-60" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
+                <DropdownMenuItem 
+                  onClick={() => router.push("/about")}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
+                >
+                  About Us
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => router.push("/careers")}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
+                >
+                  Careers
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  disabled
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
+                >
+                  <span>Press</span>
+                  <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  disabled
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
+                >
+                  <span>Sustainability</span>
+                  <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Dropdown Menu for Support */}
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 relative opacity-60 hover:opacity-100 transition-all duration-300 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#bef264] outline-none cursor-pointer" style={{
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontWeight: 700,
+                fontSize: "14px",
+                lineHeight: "20px",
+                color: "lab(2.75381 0 0)",
+              }}>
+                Support <ChevronDown className="size-3.5 opacity-60" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
+                <DropdownMenuItem 
+                  disabled
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
+                >
+                  <span>Contact Us</span>
+                  <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  disabled
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
+                >
+                  <span>FAQs</span>
+                  <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  disabled
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
+                >
+                  <span>Shipping</span>
+                  <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  disabled
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
+                >
+                  <span>Returns</span>
+                  <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  disabled
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
+                >
+                  <span>Size Guide</span>
+                  <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
           <div className="flex items-center gap-4 sm:gap-6">
             {/* Expandable Search */}
@@ -438,16 +563,120 @@ export default function GalleryPage() {
               <span className="uppercase tracking-normal font-black text-xl" style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}>BERAKIT SERIES.</span>
               <button className="text-black hover:opacity-80 transition-opacity" onClick={() => setIsMobileMenuOpen(false)}><X className="size-6" strokeWidth={2.5} style={{ color: "lab(2.75381 0 0)" }} /></button>
             </div>
-            <nav className="flex flex-col gap-6">
-              {[
-                { label: "Collections", href: "/product" },
-                { label: "New Arrivals", href: "/product" },
-                { label: "Gallery", href: "/gallery" },
-                { label: "Why Us", href: "/#profil" },
-                { label: "News Letter", href: "/#hubungi-kami" },
-              ].map((link, idx) => (
-                <a key={idx} href={link.href} className="text-lg font-bold transition-colors hover:text-black py-2 border-b border-zinc-100" style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }} onClick={() => setIsMobileMenuOpen(false)}>{link.label}</a>
-              ))}
+            <nav className="flex flex-col gap-4">
+              <a
+                href="/"
+                className="text-lg font-bold transition-colors hover:text-black py-2 border-b border-zinc-100"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Home
+              </a>
+              <a
+                href="/product"
+                className="text-lg font-bold transition-colors hover:text-black py-2 border-b border-zinc-100"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Collections
+              </a>
+              <a
+                href="/gallery"
+                className="text-lg font-bold transition-colors hover:text-black py-2 border-b border-zinc-100"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Gallery
+              </a>
+
+              {/* Company Accordion / Nested Items */}
+              <div className="py-2 border-b border-zinc-100 flex flex-col gap-2">
+                <span 
+                  className="text-lg font-bold"
+                  style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
+                >
+                  Company
+                </span>
+                <div className="pl-4 flex flex-col gap-2 border-l border-zinc-200">
+                  <a
+                    href="/about"
+                    className="text-sm font-bold text-zinc-955 py-1 hover:text-[#bef264] transition-colors"
+                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    About Us
+                  </a>
+                  <a
+                    href="/careers"
+                    className="text-sm font-bold text-zinc-500 py-1 hover:text-[#bef264] transition-colors"
+                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Careers
+                  </a>
+                  <div
+                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
+                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                  >
+                    <span>Press</span>
+                    <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
+                  </div>
+                  <div
+                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
+                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                  >
+                    <span>Sustainability</span>
+                    <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Support Accordion / Nested Items */}
+              <div className="py-2 border-b border-zinc-100 flex flex-col gap-2">
+                <span 
+                  className="text-lg font-bold"
+                  style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
+                >
+                  Support
+                </span>
+                <div className="pl-4 flex flex-col gap-2 border-l border-zinc-200">
+                  <div
+                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
+                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                  >
+                    <span>Contact Us</span>
+                    <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
+                  </div>
+                  <div
+                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
+                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                  >
+                    <span>FAQs</span>
+                    <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
+                  </div>
+                  <div
+                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
+                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                  >
+                    <span>Shipping</span>
+                    <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
+                  </div>
+                  <div
+                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
+                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                  >
+                    <span>Returns</span>
+                    <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
+                  </div>
+                  <div
+                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
+                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                  >
+                    <span>Size Guide</span>
+                    <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
+                  </div>
+                </div>
+              </div>
             </nav>
           </div>
           <div className="pt-6 border-t border-zinc-100 flex flex-col gap-4">
