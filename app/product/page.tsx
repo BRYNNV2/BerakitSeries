@@ -1400,7 +1400,10 @@ export default function ProductListingPage() {
         // Prevent immediate close if click outside is triggered while closing
         if (!isClosing) setIsQuickViewOpen(open);
       }}>
-        <DialogContent className="w-[94vw] md:w-full max-w-3xl bg-white border border-white shadow-[0_4px_16px_rgba(0,0,0,0.08),0_16px_40px_rgba(0,0,0,0.12),0_40px_80px_-20px_rgba(0,0,0,0.15)] p-0 overflow-hidden rounded-[30px] md:rounded-[40px] [&>button]:hidden duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.9] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.95] data-[state=open]:slide-in-from-left-0 data-[state=open]:slide-in-from-top-0 data-[state=closed]:slide-out-to-left-0 data-[state=closed]:slide-out-to-top-0 max-h-[92vh] overflow-y-auto">
+        <DialogContent 
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="w-[94vw] md:w-full max-w-3xl bg-white border border-white shadow-[0_4px_16px_rgba(0,0,0,0.08),0_16px_40px_rgba(0,0,0,0.12),0_40px_80px_-20px_rgba(0,0,0,0.15)] p-0 overflow-hidden rounded-[30px] md:rounded-[40px] [&>button]:hidden duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.9] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.95] data-[state=open]:slide-in-from-left-0 data-[state=open]:slide-in-from-top-0 data-[state=closed]:slide-out-to-left-0 data-[state=closed]:slide-out-to-top-0 max-h-[92vh] overflow-y-auto"
+        >
           {selectedProduct && (
             <div className="grid grid-cols-1 md:grid-cols-2 relative">
               
@@ -1841,7 +1844,10 @@ export default function ProductListingPage() {
 
       {/* 3. CHECKOUT DIALOG / POPUP */}
       <Dialog open={isCheckoutOpen} onOpenChange={handleCheckoutClose}>
-        <DialogContent className="w-[94vw] md:w-full max-w-md bg-white border border-zinc-200 text-zinc-900 rounded-3xl p-6 max-h-[92vh] overflow-y-auto">
+        <DialogContent 
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="w-[94vw] md:w-full max-w-md bg-white border border-zinc-200 text-zinc-900 rounded-3xl p-6 max-h-[92vh] overflow-y-auto"
+        >
           {checkoutSuccess ? (
             <div className="py-8 text-center space-y-6">
               <div className="size-16 rounded-full bg-[#bef264]/10 text-zinc-900 flex items-center justify-center border border-[#bef264]/20 mx-auto">
