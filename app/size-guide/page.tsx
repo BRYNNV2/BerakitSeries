@@ -7,21 +7,14 @@ import {
   Menu,
   X,
   ChevronDown,
-  Search,
-  HelpCircle,
-  ArrowRight,
-  Package,
-  CreditCard,
-  Shirt,
-  MessageCircle,
   Facebook,
   Twitter,
   Instagram,
   Youtube,
-  ArrowUpRight,
+  Ruler,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import {
   DropdownMenu,
@@ -29,126 +22,55 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { gsap } from "gsap";
 
-interface FAQItem {
-  id: string;
-  question: string;
-  answer: string;
-  category: "produk" | "pembayaran" | "pengiriman";
-}
-
-const FAQ_ITEMS: FAQItem[] = [
-  {
-    id: "p1",
-    question: "Apakah batik Berakit Series adalah batik tulis asli?",
-    answer: "Ya, seluruh koleksi premium kami merupakan batik tulis asli 100% buatan tangan oleh perajin lokal di Desa Wisata Berakit, Bintan. Kami tidak menggunakan mesin cetak/printing untuk menjaga nilai seni dan keaslian warisan budaya.",
-    category: "produk",
-  },
-  {
-    id: "p2",
-    question: "Bahan kain apa yang digunakan untuk pakaian Berakit Series?",
-    answer: "Kami menggunakan bahan katun premium (Katun Primissima) dan sutra pilihan. Karakteristik bahannya halus, sejuk saat dikenakan, menyerap keringat dengan baik, dan sangat nyaman digunakan dalam aktivitas sehari-hari maupun acara formal.",
-    category: "produk",
-  },
-  {
-    id: "p3",
-    question: "Bagaimana cara merawat pakaian batik tulis agar warnanya tetap awet?",
-    answer: "Untuk perawatan optimal, cuci pakaian secara manual menggunakan sabun lerak khusus batik atau sampo bayi. Jangan direndam terlalu lama, jangan disikat, dan cukup diangin-anginkan di tempat teduh tanpa terkena sinar matahari langsung saat menjemur.",
-    category: "produk",
-  },
-  {
-    id: "p4",
-    question: "Apakah bisa memesan ukuran kustom (custom size)?",
-    answer: "Tentu saja! Kami melayani pemesanan dengan ukuran kustom (seperti panjang baju, lingkar dada, atau panjang lengan). Anda dapat menghubungi tim layanan pelanggan kami melalui tombol WhatsApp yang tertera atau lewat formulir Contact Us.",
-    category: "produk",
-  },
-  {
-    id: "t1",
-    question: "Bagaimana cara melakukan pemesanan di website ini?",
-    answer: "Cukup masuk ke halaman Collections, pilih produk batik favorit Anda, tentukan ukuran, lalu masukkan ke keranjang belanja. Klik ikon Keranjang di kanan atas, lakukan checkout, isi formulir pengiriman, dan lakukan pembayaran sesuai instruksi.",
-    category: "pembayaran",
-  },
-  {
-    id: "t2",
-    question: "Metode pembayaran apa saja yang didukung?",
-    answer: "Kami menerima pembayaran melalui Transfer Bank (Bank BRI dan Bank Riau Kepri Syariah). Selain itu, kami juga mendukung metode Bayar di Tempat (COD) untuk area pengiriman tertentu.",
-    category: "pembayaran",
-  },
-  {
-    id: "t3",
-    question: "Apakah saya harus mengunggah bukti transfer setelah membayar?",
-    answer: "Ya. Untuk mempercepat verifikasi pembayaran dan proses pengemasan pesanan Anda, harap unggah foto atau screenshot bukti transfer bank yang valid pada halaman checkout sebelum mengirimkan pesanan.",
-    category: "pembayaran",
-  },
-  {
-    id: "k1",
-    question: "Berapa lama estimasi pengiriman pesanan saya?",
-    answer: "Pengiriman dilakukan langsung dari Kabupaten Bintan. Estimasi pengiriman untuk wilayah Kepulauan Riau & Jakarta adalah 2-4 hari kerja, sedangkan untuk wilayah luar pulau lainnya berkisar antara 3-7 hari kerja tergantung opsi ekspedisi.",
-    category: "pengiriman",
-  },
-  {
-    id: "k2",
-    question: "Apakah saya bisa menukar produk jika ukurannya tidak pas?",
-    answer: "Bisa. Kami memfasilitasi penukaran ukuran (size exchange) maksimal 3 hari setelah pesanan Anda terima. Pastikan tag label masih terpasang rapi, baju belum dicuci, dan belum digunakan. Ongkos kirim penukaran ditanggung sepenuhnya oleh pembeli.",
-    category: "pengiriman",
-  },
-  {
-    id: "k3",
-    question: "Bagaimana cara melacak pengiriman pesanan saya?",
-    answer: "Setiap pesanan yang telah dikirimkan ke kurir akan mendapatkan nomor resi resmi. Nomor resi tersebut akan dikirimkan oleh sistem kami langsung ke nomor WhatsApp yang Anda daftarkan saat melakukan checkout.",
-    category: "pengiriman",
-  },
-];
-
-export default function FAQPage() {
+export default function SizeGuidePage() {
   const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [cartItemCount, setCartItemCount] = React.useState(0);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
-  const [activeCategory, setActiveCategory] = React.useState<"all" | "produk" | "pembayaran" | "pengiriman">("all");
-  const [openItems, setOpenItems] = React.useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = React.useState<"pria" | "wanita" | "cara-mengukur">("pria");
 
   React.useEffect(() => {
-    const fetchUserData = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data?.session?.user) {
-        setCurrentUser(data.session.user);
+    // Page fade-in animation
+    gsap.fromTo(
+      ".animate-fade-in",
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.8, ease: "power3.out", stagger: 0.15 }
+    );
+
+    // Fetch user session
+    const fetchUser = async () => {
+      if (supabase) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            setCurrentUser(session.user);
+          }
+        } catch (e) {
+          console.warn("Failed fetching session:", e);
+        }
       }
     };
-    fetchUserData();
+    fetchUser();
 
+    // Fetch cart count
     const updateCartCount = () => {
-      const stored = localStorage.getItem("berakit_cart");
-      if (stored) {
-        try {
-          const items = JSON.parse(stored);
-          const count = items.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0);
-          setCartItemCount(count);
-        } catch (e) {
-          console.error(e);
+      try {
+        const storedCart = localStorage.getItem("berakit_cart");
+        if (storedCart) {
+          const cartItems = JSON.parse(storedCart);
+          const totalItems = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+          setCartItemCount(totalItems);
         }
+      } catch (err) {
+        console.warn("Failed parsing cart data:", err);
       }
     };
     updateCartCount();
     window.addEventListener("storage", updateCartCount);
     return () => window.removeEventListener("storage", updateCartCount);
   }, []);
-
-  const toggleAccordion = (id: string) => {
-    setOpenItems((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
-
-  const filteredFAQs = FAQ_ITEMS.filter((item) => {
-    const matchesSearch =
-      item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.answer.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === "all" || item.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
 
   return (
     <div className="min-h-screen bg-[#faf9f5] text-zinc-900 flex flex-col font-sans overflow-x-hidden pt-16">
@@ -168,6 +90,7 @@ export default function FAQPage() {
           >
             BERAKIT SERIES.
           </span>
+          
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             <a
@@ -271,7 +194,7 @@ export default function FAQPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => router.push("/faq")}
-                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#bef264] bg-black rounded-xl cursor-pointer outline-none"
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
                   FAQs
                 </DropdownMenuItem>
@@ -291,13 +214,14 @@ export default function FAQPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => router.push("/size-guide")}
-                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#bef264] bg-black rounded-xl cursor-pointer outline-none"
                 >
                   Size Guide
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
+
           <div className="flex items-center gap-4 sm:gap-6">
             {currentUser ? (
               <button
@@ -379,7 +303,7 @@ export default function FAQPage() {
                 Gallery
               </a>
 
-              {/* Company Accordion / Nested Items */}
+              {/* Company Accordion */}
               <div className="py-2 border-b border-zinc-100 flex flex-col gap-2">
                 <span 
                   className="text-lg font-bold"
@@ -421,7 +345,7 @@ export default function FAQPage() {
                 </div>
               </div>
 
-              {/* Support Accordion / Nested Items */}
+              {/* Support Accordion */}
               <div className="py-2 border-b border-zinc-100 flex flex-col gap-2">
                 <span 
                   className="text-lg font-bold"
@@ -440,7 +364,7 @@ export default function FAQPage() {
                   </a>
                   <a
                     href="/faq"
-                    className="text-sm font-bold text-zinc-950 py-1 hover:text-[#bef264] transition-colors"
+                    className="text-sm font-bold text-zinc-550 py-1 hover:text-[#bef264] transition-colors"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -462,7 +386,7 @@ export default function FAQPage() {
                   </div>
                   <a
                     href="/size-guide"
-                    className="text-sm font-bold text-zinc-550 py-1 hover:text-[#bef264] transition-colors"
+                    className="text-sm font-bold text-zinc-950 py-1 hover:text-[#bef264] transition-colors"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -472,241 +396,259 @@ export default function FAQPage() {
               </div>
             </nav>
           </div>
-          <div className="pt-6 border-t border-zinc-100 flex flex-col gap-4">
-            {currentUser ? (
-              <button
-                className="w-full h-11 border border-zinc-300 rounded-xl font-bold uppercase text-xs"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  router.push("/dashboard");
-                }}
-              >
-                Dashboard
-              </button>
-            ) : (
-              <button
-                className="w-full h-11 border border-zinc-300 rounded-xl font-bold uppercase text-xs"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  router.push("/login");
-                }}
-              >
-                Login
-              </button>
-            )}
-          </div>
         </div>
       )}
 
       {/* Main Content */}
-      <main className="flex-grow w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-20 animate-in fade-in duration-500">
-        {/* Title / Hero */}
-        <section className="text-left mb-12 md:mb-16">
-          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] block mb-2 font-mono">
-            Pusat Bantuan
-          </span>
-          <h1
-            className="text-5xl md:text-7xl font-black tracking-tighter uppercase text-zinc-950 select-none relative"
-            style={{ fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 700 }}
+      <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-8 lg:px-12 py-12 sm:py-20">
+        
+        {/* Intro */}
+        <section className="text-center space-y-4 mb-16 animate-fade-in">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-100 text-zinc-500 border border-zinc-200/50 text-[10px] font-bold uppercase tracking-widest">
+            <Ruler className="size-3.5 text-[#bef264]" /> Size Guide & Measurements
+          </div>
+          <h1 
+            className="text-4xl sm:text-6xl font-black uppercase text-zinc-950 tracking-tight leading-none"
+            style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
           >
-            FAQS<span className="text-[#bef264]">.</span>
+            PANDUAN UKURAN<span className="text-[#bef264]">.</span>
           </h1>
-          <p className="text-sm text-zinc-500 font-semibold mt-4 max-w-xl leading-relaxed">
-            Temukan jawaban atas pertanyaan-pertanyaan yang paling sering diajukan seputar produk batik tulis kami, pemesanan, metode pembayaran, serta kebijakan pengiriman.
+          <p className="text-zinc-550 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed font-medium">
+            Untuk memastikan fitting pakaian batik Anda nyaman dan sempurna, harap perhatikan panduan pengukuran kami di bawah ini sebelum membeli.
           </p>
         </section>
 
-        {/* Search & Category Filter Section */}
-        <section className="mb-12 space-y-6">
-          <div className="relative max-w-lg">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4.5 text-zinc-400" />
-            <Input
-              type="text"
-              placeholder="Cari pertanyaan atau jawaban..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 bg-white border border-zinc-200 focus:ring-1 focus:ring-zinc-400 h-12 rounded-2xl text-sm font-medium shadow-sm transition-all"
-            />
-            {searchQuery && (
+        {/* Visual & Table Grid */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start mb-20">
+          
+          {/* Left Column: Visual Guide (uploaded image SizeGuide.png) */}
+          <div className="lg:col-span-6 space-y-6 animate-fade-in">
+            <div className="bg-white border border-zinc-200/60 p-4 sm:p-6 rounded-[32px] shadow-sm relative overflow-hidden group">
+              <div className="aspect-[4/5] bg-zinc-50 rounded-2xl overflow-hidden flex items-center justify-center border border-zinc-100">
+                <img 
+                  src="/SizeGuide.png" 
+                  alt="Panduan Ukuran Batik Berakit Series"
+                  className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
+                />
+              </div>
+              <div className="mt-4 flex items-center gap-2.5 text-zinc-400 bg-zinc-50 rounded-xl p-3 border border-zinc-100">
+                <Info className="size-4 text-[#bef264] shrink-0" />
+                <span className="text-[10px] font-bold uppercase tracking-wider leading-relaxed text-left font-mono">
+                  Gambar di atas merupakan ilustrasi panduan titik pengukuran standar pakaian Berakit Series.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Interactive Tabs and Size Tables */}
+          <div className="lg:col-span-6 space-y-8 animate-fade-in text-left">
+            {/* Custom Tab Selector */}
+            <div className="flex bg-zinc-100 p-1.5 rounded-full border border-zinc-200/50">
               <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400 hover:text-zinc-600 font-mono"
+                onClick={() => setActiveTab("pria")}
+                className={`flex-1 py-3 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 ${
+                  activeTab === "pria"
+                    ? "bg-black text-[#bef264] shadow-md"
+                    : "text-zinc-500 hover:text-zinc-900"
+                }`}
               >
-                CLEAR
+                Kemeja Pria
               </button>
+              <button
+                onClick={() => setActiveTab("wanita")}
+                className={`flex-1 py-3 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 ${
+                  activeTab === "wanita"
+                    ? "bg-black text-[#bef264] shadow-md"
+                    : "text-zinc-500 hover:text-zinc-900"
+                }`}
+              >
+                Blouse Wanita
+              </button>
+              <button
+                onClick={() => setActiveTab("cara-mengukur")}
+                className={`flex-1 py-3 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-300 ${
+                  activeTab === "cara-mengukur"
+                    ? "bg-black text-[#bef264] shadow-md"
+                    : "text-zinc-500 hover:text-zinc-900"
+                }`}
+              >
+                Cara Mengukur
+              </button>
+            </div>
+
+            {/* Tab 1: Kemeja Pria Table */}
+            {activeTab === "pria" && (
+              <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="border border-zinc-200/60 rounded-3xl overflow-hidden bg-white shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs font-medium border-collapse">
+                      <thead>
+                        <tr className="bg-zinc-950 text-white uppercase text-[10px] tracking-widest font-mono border-none">
+                          <th className="px-5 py-4 font-black">Ukuran</th>
+                          <th className="px-5 py-4 font-black">Lebar Dada (LD)</th>
+                          <th className="px-5 py-4 font-black">Panjang Baju</th>
+                          <th className="px-5 py-4 font-black">Lebar Bahu</th>
+                          <th className="px-5 py-4 font-black">Panjang Lengan</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100 font-semibold text-zinc-700">
+                        <tr className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-5 py-4 font-black text-zinc-950">S</td>
+                          <td className="px-5 py-4 font-mono">48 cm</td>
+                          <td className="px-5 py-4 font-mono">68 cm</td>
+                          <td className="px-5 py-4 font-mono">42 cm</td>
+                          <td className="px-5 py-4 font-mono">23 cm</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-5 py-4 font-black text-zinc-950">M</td>
+                          <td className="px-5 py-4 font-mono">51 cm</td>
+                          <td className="px-5 py-4 font-mono">70 cm</td>
+                          <td className="px-5 py-4 font-mono">44 cm</td>
+                          <td className="px-5 py-4 font-mono">24 cm</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-5 py-4 font-black text-zinc-950">L</td>
+                          <td className="px-5 py-4 font-mono">54 cm</td>
+                          <td className="px-5 py-4 font-mono">72 cm</td>
+                          <td className="px-5 py-4 font-mono">46 cm</td>
+                          <td className="px-5 py-4 font-mono">25 cm</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-5 py-4 font-black text-zinc-950">XL</td>
+                          <td className="px-5 py-4 font-mono">57 cm</td>
+                          <td className="px-5 py-4 font-mono">74 cm</td>
+                          <td className="px-5 py-4 font-mono">48 cm</td>
+                          <td className="px-5 py-4 font-mono">26 cm</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-5 py-4 font-black text-zinc-950">XXL</td>
+                          <td className="px-5 py-4 font-mono">60 cm</td>
+                          <td className="px-5 py-4 font-mono">76 cm</td>
+                          <td className="px-5 py-4 font-mono">50 cm</td>
+                          <td className="px-5 py-4 font-mono">27 cm</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <p className="text-[11px] text-zinc-400 font-medium leading-relaxed font-mono">
+                  * Catatan: Toleransi perbedaan ukuran sekitar ± 1-2 cm wajar karena proses penjahitan batik tulis handmade.
+                </p>
+              </div>
             )}
-          </div>
 
-          {/* Categories Tab Buttons */}
-          <div className="flex flex-wrap gap-2.5">
-            <button
-              onClick={() => setActiveCategory("all")}
-              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 border ${
-                activeCategory === "all"
-                  ? "bg-black border-black text-[#bef264] shadow-sm"
-                  : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-black"
-              }`}
-            >
-              Semua Pertanyaan
-            </button>
-            <button
-              onClick={() => setActiveCategory("produk")}
-              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 border flex items-center gap-2 ${
-                activeCategory === "produk"
-                  ? "bg-black border-black text-[#bef264] shadow-sm"
-                  : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-black"
-              }`}
-            >
-              <Shirt className="size-3.5" /> Produk & Bahan
-            </button>
-            <button
-              onClick={() => setActiveCategory("pembayaran")}
-              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 border flex items-center gap-2 ${
-                activeCategory === "pembayaran"
-                  ? "bg-black border-black text-[#bef264] shadow-sm"
-                  : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-black"
-              }`}
-            >
-              <CreditCard className="size-3.5" /> Pemesanan & Pembayaran
-            </button>
-            <button
-              onClick={() => setActiveCategory("pengiriman")}
-              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 border flex items-center gap-2 ${
-                activeCategory === "pengiriman"
-                  ? "bg-black border-black text-[#bef264] shadow-sm"
-                  : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-black"
-              }`}
-            >
-              <Package className="size-3.5" /> Pengiriman & Kebijakan
-            </button>
-          </div>
-        </section>
+            {/* Tab 2: Blouse Wanita Table */}
+            {activeTab === "wanita" && (
+              <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="border border-zinc-200/60 rounded-3xl overflow-hidden bg-white shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs font-medium border-collapse">
+                      <thead>
+                        <tr className="bg-zinc-950 text-white uppercase text-[10px] tracking-widest font-mono border-none">
+                          <th className="px-5 py-4 font-black">Ukuran</th>
+                          <th className="px-5 py-4 font-black">Lebar Dada (LD)</th>
+                          <th className="px-5 py-4 font-black">Panjang Baju</th>
+                          <th className="px-5 py-4 font-black">Lingkar Pinggul</th>
+                          <th className="px-5 py-4 font-black">Panjang Lengan</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100 font-semibold text-zinc-700">
+                        <tr className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-5 py-4 font-black text-zinc-950">S</td>
+                          <td className="px-5 py-4 font-mono">44 cm</td>
+                          <td className="px-5 py-4 font-mono">60 cm</td>
+                          <td className="px-5 py-4 font-mono">92 cm</td>
+                          <td className="px-5 py-4 font-mono">40 cm</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-5 py-4 font-black text-zinc-950">M</td>
+                          <td className="px-5 py-4 font-mono">46 cm</td>
+                          <td className="px-5 py-4 font-mono">62 cm</td>
+                          <td className="px-5 py-4 font-mono">96 cm</td>
+                          <td className="px-5 py-4 font-mono">41 cm</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-5 py-4 font-black text-zinc-950">L</td>
+                          <td className="px-5 py-4 font-mono">48 cm</td>
+                          <td className="px-5 py-4 font-mono">64 cm</td>
+                          <td className="px-5 py-4 font-mono">100 cm</td>
+                          <td className="px-5 py-4 font-mono">42 cm</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-5 py-4 font-black text-zinc-950">XL</td>
+                          <td className="px-5 py-4 font-mono">51 cm</td>
+                          <td className="px-5 py-4 font-mono">66 cm</td>
+                          <td className="px-5 py-4 font-mono">106 cm</td>
+                          <td className="px-5 py-4 font-mono">43 cm</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-50/50 transition-colors">
+                          <td className="px-5 py-4 font-black text-zinc-950">XXL</td>
+                          <td className="px-5 py-4 font-mono">54 cm</td>
+                          <td className="px-5 py-4 font-mono">68 cm</td>
+                          <td className="px-5 py-4 font-mono">112 cm</td>
+                          <td className="px-5 py-4 font-mono">44 cm</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <p className="text-[11px] text-zinc-400 font-medium leading-relaxed font-mono">
+                  * Catatan: Toleransi perbedaan ukuran sekitar ± 1-2 cm wajar karena proses penjahitan batik tulis handmade.
+                </p>
+              </div>
+            )}
 
-        {/* FAQs Accordion Grid */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-8 space-y-4">
-            {filteredFAQs.length > 0 ? (
-              filteredFAQs.map((item) => {
-                const isOpen = !!openItems[item.id];
-                return (
-                  <div
-                    key={item.id}
-                    className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-sm transition-all duration-300 hover:border-zinc-300"
-                  >
-                    <button
-                      onClick={() => toggleAccordion(item.id)}
-                      className="w-full px-6 py-5 flex items-center justify-between text-left gap-4 outline-none select-none cursor-pointer"
-                    >
-                      <span
-                        className="text-base font-bold text-zinc-950 tracking-tight"
-                        style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                      >
-                        {item.question}
-                      </span>
-                      <span
-                        className={`shrink-0 p-1 rounded-full bg-zinc-50 text-zinc-600 border border-zinc-200 transition-transform duration-300 ${
-                          isOpen ? "rotate-180 bg-zinc-950 text-white border-zinc-950" : ""
-                        }`}
-                      >
-                        <ChevronDown className="size-4" />
-                      </span>
-                    </button>
-
-                    <div
-                      className={`transition-all duration-300 ease-in-out ${
-                        isOpen ? "max-h-[500px] border-t border-zinc-100" : "max-h-0"
-                      } overflow-hidden`}
-                    >
-                      <div className="px-6 py-5 text-sm text-zinc-500 font-medium leading-relaxed bg-zinc-50/30">
-                        {item.answer}
-                      </div>
+            {/* Tab 3: Cara Mengukur */}
+            {activeTab === "cara-mengukur" && (
+              <div className="space-y-6 animate-in fade-in duration-300 text-left">
+                <div className="space-y-4">
+                  <div className="flex gap-4 items-start">
+                    <span className="size-8 rounded-full bg-black text-[#bef264] flex items-center justify-center text-xs font-black font-mono shrink-0">1</span>
+                    <div>
+                      <h4 className="font-extrabold text-sm uppercase text-zinc-900">Lebar Dada (LD)</h4>
+                      <p className="text-zinc-550 text-xs leading-relaxed mt-1">
+                        Bentangkan baju Anda di permukaan yang datar. Ukur dari batas ketiak kiri lurus secara mendatar hingga batas ketiak kanan.
+                      </p>
                     </div>
                   </div>
-                );
-              })
-            ) : (
-              <div className="bg-white border border-zinc-200 rounded-3xl p-12 text-center space-y-4">
-                <HelpCircle className="size-12 text-zinc-300 mx-auto" />
-                <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">Tidak Ada Pertanyaan Ditemukan</h3>
-                <p className="text-xs text-zinc-400 font-semibold max-w-md mx-auto">
-                  Cobalah kata kunci pencarian yang lain atau ganti filter kategori untuk menemukan pertanyaan yang Anda cari.
-                </p>
-                <Button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setActiveCategory("all");
-                  }}
-                  className="bg-black hover:bg-zinc-800 text-white rounded-xl h-10 px-5 text-xs font-bold uppercase tracking-wider transition-colors"
-                >
-                  Reset Pencarian
-                </Button>
+
+                  <div className="flex gap-4 items-start">
+                    <span className="size-8 rounded-full bg-black text-[#bef264] flex items-center justify-center text-xs font-black font-mono shrink-0">2</span>
+                    <div>
+                      <h4 className="font-extrabold text-sm uppercase text-zinc-900">Panjang Baju</h4>
+                      <p className="text-zinc-550 text-xs leading-relaxed mt-1">
+                        Ukur tegak lurus mulai dari batas jahitan kerah/bahu paling atas hingga ujung bawah kemeja/blouse.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 items-start">
+                    <span className="size-8 rounded-full bg-black text-[#bef264] flex items-center justify-center text-xs font-black font-mono shrink-0">3</span>
+                    <div>
+                      <h4 className="font-extrabold text-sm uppercase text-zinc-900">Panjang Lengan</h4>
+                      <p className="text-zinc-550 text-xs leading-relaxed mt-1">
+                        Ukur mulai dari batas jahitan pundak terluar menyusuri lengan baju hingga bagian ujung pergelangan kemeja/blouse.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-[#bef264]/10 border border-[#bef264]/20 rounded-2xl p-4 flex gap-3 items-start">
+                  <Info className="size-5 text-zinc-900 shrink-0 mt-0.5" />
+                  <p className="text-xs text-zinc-800 leading-relaxed font-semibold">
+                    <strong>Tips Belanja Batik:</strong> Jika ukuran tubuh Anda berada di antara dua opsi, kami menyarankan untuk memilih ukuran yang lebih besar agar batik tetap nyaman dikenakan saat bergerak.
+                  </p>
+                </div>
               </div>
             )}
           </div>
-
-          {/* Help Desk / Contact CTA Sidebar */}
-          <div className="lg:col-span-4 space-y-6">
-            <div className="bg-white border border-zinc-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm text-left">
-              <div className="p-3 bg-[#bef264]/20 rounded-2xl text-black inline-block">
-                <MessageCircle className="size-6" />
-              </div>
-              <div className="space-y-2">
-                <h3
-                  className="text-xl font-bold uppercase tracking-tight text-zinc-950"
-                  style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                >
-                  Punya Pertanyaan Lain?
-                </h3>
-                <p className="text-xs text-zinc-400 font-semibold leading-relaxed">
-                  Jika Anda tidak menemukan jawaban yang Anda cari di halaman FAQ ini, tim layanan pelanggan kami siap membantu Anda secara langsung.
-                </p>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <Button
-                  onClick={() => router.push("/contact")}
-                  className="w-full bg-black hover:bg-zinc-800 text-white rounded-xl h-12 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors duration-200"
-                >
-                  Kirim Pesan Formulir <ArrowRight className="size-3.5" />
-                </Button>
-
-                <a
-                  href="https://wa.me/6281234567890"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full border border-zinc-200 hover:border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-800 rounded-xl h-12 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-200"
-                >
-                  Hubungi Via WhatsApp
-                </a>
-              </div>
-            </div>
-
-            {/* Quick tips box */}
-            <div className="bg-zinc-950 text-white rounded-3xl p-6 sm:p-8 text-left relative overflow-hidden shadow-sm">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#bef264]/10 rounded-full blur-2xl"></div>
-              <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest font-mono">Tips Belanja</h4>
-              <h3
-                className="text-lg font-bold uppercase tracking-tight mt-2 text-white"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-              >
-                Keaslian Produk Terjamin
-              </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed font-semibold mt-2">
-                Setiap helai kain batik Berakit memiliki ciri khas motif pesisir laut dan dilengkapi dengan sertifikat garansi keaslian langsung dari BUMDes Berakit Maju.
-              </p>
-            </div>
-          </div>
         </section>
+
       </main>
 
       {/* Footer Section */}
-      <footer 
-        className="w-full bg-[#050505] py-16 border-t border-zinc-900 relative z-10 overflow-hidden text-white"
-      >
+      <footer className="w-full bg-[#050505] py-16 border-t border-zinc-900 relative z-10 overflow-hidden text-white">
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
-          {/* Top Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-16 text-left relative z-10">
             {/* Column 1: Logo, Description & Socials */}
             <div className="lg:col-span-2 space-y-6">
@@ -795,7 +737,7 @@ export default function FAQPage() {
                 <li><a href="/faq" className="hover:text-[#bef264] transition-colors">FAQs</a></li>
                 <li><a href="/contact" className="hover:text-[#bef264] transition-colors">Shipping</a></li>
                 <li><a href="/contact" className="hover:text-[#bef264] transition-colors">Returns</a></li>
-                <li><a href="/contact" className="hover:text-[#bef264] transition-colors">Size Guide</a></li>
+                <li><a href="/size-guide" className="hover:text-[#bef264] transition-colors">Size Guide</a></li>
               </ul>
             </div>
 

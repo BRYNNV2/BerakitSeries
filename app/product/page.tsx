@@ -905,11 +905,10 @@ export default function ProductListingPage() {
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  disabled
-                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
+                  onClick={() => router.push("/size-guide")}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  <span>Size Guide</span>
-                  <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
+                  Size Guide
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1109,13 +1108,14 @@ export default function ProductListingPage() {
                     <span>Returns</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
-                  <div
-                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
+                  <a
+                    href="/size-guide"
+                    className="text-sm font-bold text-zinc-550 py-1 hover:text-[#bef264] transition-colors"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <span>Size Guide</span>
-                    <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
-                  </div>
+                    Size Guide
+                  </a>
                 </div>
               </div>
             </nav>
@@ -1484,7 +1484,12 @@ export default function ProductListingPage() {
                   <div>
                     <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-zinc-900 mb-3">
                       <span>PILIH UKURAN</span>
-                      <span className="underline cursor-pointer text-zinc-400 hover:text-zinc-600 transition-colors">PANDUAN UKURAN</span>
+                      <span 
+                        onClick={() => router.push("/size-guide")}
+                        className="underline cursor-pointer text-zinc-400 hover:text-zinc-600 transition-colors"
+                      >
+                        PANDUAN UKURAN
+                      </span>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {selectedProduct.size_variants.map((v: any) => (
