@@ -15,6 +15,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  Facebook,
+  Twitter,
+  Instagram,
+  Youtube,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -347,18 +351,16 @@ export default function AboutPage() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
                 <DropdownMenuItem 
-                  disabled
-                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
+                  onClick={() => router.push("/contact")}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  <span>Contact Us</span>
-                  <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
+                  Contact Us
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  disabled
-                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
+                  onClick={() => router.push("/faq")}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  <span>FAQs</span>
-                  <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
+                  FAQs
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   disabled
@@ -542,20 +544,22 @@ export default function AboutPage() {
                   Support
                 </span>
                 <div className="pl-4 flex flex-col gap-2 border-l border-zinc-200">
-                  <div
-                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
+                  <a
+                    href="/contact"
+                    className="text-sm font-bold text-zinc-550 py-1 hover:text-[#bef264] transition-colors"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <span>Contact Us</span>
-                    <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
-                  </div>
-                  <div
-                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
+                    Contact Us
+                  </a>
+                  <a
+                    href="/faq"
+                    className="text-sm font-bold text-zinc-550 py-1 hover:text-[#bef264] transition-colors"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                    onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <span>FAQs</span>
-                    <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
-                  </div>
+                    FAQs
+                  </a>
                   <div
                     className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
@@ -883,25 +887,60 @@ export default function AboutPage() {
         </section>
       </main>
 
-      {/* Footer (Matching Reference) */}
-      <footer className="w-full bg-[#09090b] text-white pt-16 pb-8 border-t border-zinc-900 relative z-10">
-        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 space-y-12">
-          {/* Top footer row */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 items-start text-left">
-            {/* Column 1: Logo & Tagline */}
-            <div className="space-y-4 md:col-span-1">
-              <span
-                className="uppercase tracking-normal font-black text-2xl"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+      {/* Footer Section */}
+      <footer 
+        className="w-full bg-[#050505] py-16 border-t border-zinc-900 relative z-10 overflow-hidden text-white"
+      >
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
+          {/* Top Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-16 text-left relative z-10">
+            {/* Column 1: Logo, Description & Socials */}
+            <div className="lg:col-span-2 space-y-6">
+              <span 
+                className="text-white uppercase tracking-tighter block"
+                style={{
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontWeight: 900,
+                  fontSize: "24px",
+                  lineHeight: "1.0"
+                }}
               >
-                BERAKIT SERIES.
+                BERAKIT SERIES<span className="text-[#bef264]">.</span>
               </span>
-              <p
-                className="text-xs text-zinc-500 leading-relaxed font-semibold max-w-[240px]"
+              <p 
+                className="text-zinc-400 text-sm max-w-sm leading-relaxed font-normal"
                 style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
               >
                 Eksplorasi mahakarya kain batik tulis pesisir Berakit. Elevate Your Style in Every Reality.
               </p>
+              
+              {/* Social icons */}
+              <div className="flex items-center gap-3">
+                <a 
+                  href="#" 
+                  className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
+                >
+                  <Facebook className="size-4" />
+                </a>
+                <a 
+                  href="#" 
+                  className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
+                >
+                  <Twitter className="size-4" />
+                </a>
+                <a 
+                  href="#" 
+                  className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
+                >
+                  <Instagram className="size-4" />
+                </a>
+                <a 
+                  href="#" 
+                  className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
+                >
+                  <Youtube className="size-4" />
+                </a>
+              </div>
             </div>
 
             {/* Column 2: SHOP */}
@@ -938,11 +977,11 @@ export default function AboutPage() {
                 SUPPORT
               </h5>
               <ul className="space-y-2 text-sm text-zinc-500 font-medium">
-                <li><a href="mailto:mfyansah@student.umrah.ac.id" className="hover:text-[#bef264] transition-colors">Contact Us</a></li>
-                <li><a href="/#faq-section" className="hover:text-[#bef264] transition-colors">FAQs</a></li>
-                <li><a href="/#faq-section" className="hover:text-[#bef264] transition-colors">Shipping</a></li>
-                <li><a href="/#faq-section" className="hover:text-[#bef264] transition-colors">Returns</a></li>
-                <li><a href="/#faq-section" className="hover:text-[#bef264] transition-colors">Size Guide</a></li>
+                <li><a href="/contact" className="hover:text-[#bef264] transition-colors">Contact Us</a></li>
+                <li><a href="/faq" className="hover:text-[#bef264] transition-colors">FAQs</a></li>
+                <li><a href="/contact" className="hover:text-[#bef264] transition-colors">Shipping</a></li>
+                <li><a href="/contact" className="hover:text-[#bef264] transition-colors">Returns</a></li>
+                <li><a href="/contact" className="hover:text-[#bef264] transition-colors">Size Guide</a></li>
               </ul>
             </div>
 
@@ -960,20 +999,30 @@ export default function AboutPage() {
           </div>
 
           {/* Bottom Copyright & Built by */}
-          <div className="pt-8 border-t border-zinc-900/60 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span
+          <div className="pt-8 border-t border-zinc-900/60 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
+            <span 
               className="text-xs text-zinc-600 font-semibold"
               style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
             >
               © 2026 BERAKIT SERIES. All rights reserved.
             </span>
-            <span
+            <span 
               className="text-xs text-zinc-600 font-semibold"
               style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
             >
               Designed & Built by <span className="text-[#bef264] font-bold">BERAKIT SERIES</span>
             </span>
           </div>
+        </div>
+
+        {/* Faint Background Watermark */}
+        <div className="absolute inset-x-0 bottom-6 flex justify-center pointer-events-none select-none overflow-hidden z-0">
+          <span 
+            className="text-[18vw] font-black text-white/[0.012] tracking-widest leading-none uppercase" 
+            style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+          >
+            BERAKIT
+          </span>
         </div>
       </footer>
     </div>

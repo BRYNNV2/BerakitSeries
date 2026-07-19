@@ -7,192 +7,151 @@ import {
   Menu,
   X,
   ChevronDown,
-  Briefcase,
-  MapPin,
-  Clock,
-  Send,
-  CheckCircle2,
-  FileText,
-  Compass,
-  Users,
-  Award,
-  Leaf,
+  Search,
+  HelpCircle,
+  ArrowRight,
+  Package,
+  CreditCard,
+  Shirt,
+  MessageCircle,
   Facebook,
   Twitter,
   Instagram,
   Youtube,
-  ArrowUpRight
+  ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/lib/supabase";
-import { gsap } from "gsap";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
 
-interface JobRole {
+interface FAQItem {
   id: string;
-  title: string;
-  department: string;
-  location: string;
-  type: string;
-  description: string;
-  requirements: string[];
+  question: string;
+  answer: string;
+  category: "produk" | "pembayaran" | "pengiriman";
 }
 
-const OPEN_ROLES: JobRole[] = [
+const FAQ_ITEMS: FAQItem[] = [
   {
-    id: "role-1",
-    title: "Batik Motif Designer",
-    department: "Creative & Design",
-    location: "Desa Berakit, Bintan",
-    type: "Full-Time",
-    description: "Kembangkan motif batik pesisir baru khas Bintan yang memadukan keindahan bahari dengan estetika modern.",
-    requirements: [
-      "Menguasai teknik canting batik tradisional & sketsa digital",
-      "Memiliki apresiasi mendalam terhadap warisan budaya lokal Bintan",
-      "Mampu bekerja kolaboratif dengan kelompok perajin wanita di desa",
-      "Menyertakan portfolio motif batik atau ilustrasi tekstil"
-    ]
+    id: "p1",
+    question: "Apakah batik Berakit Series adalah batik tulis asli?",
+    answer: "Ya, seluruh koleksi premium kami merupakan batik tulis asli 100% buatan tangan oleh perajin lokal di Desa Wisata Berakit, Bintan. Kami tidak menggunakan mesin cetak/printing untuk menjaga nilai seni dan keaslian warisan budaya.",
+    category: "produk",
   },
   {
-    id: "role-2",
-    title: "Digital Marketing & Storyteller",
-    department: "Marketing & Sales",
-    location: "Hybrid (Bintan / Remote)",
-    type: "Full-Time",
-    description: "Bagikan dedikasi perajin kami ke dunia luar. Buat konten bercerita (storytelling) premium dan kelola kehadiran digital Berakit Series.",
-    requirements: [
-      "Pengalaman 2+ tahun dalam Social Media Management & Copywriting",
-      "Keahlian fotografi/videografi dasar & pengeditan konten visual mobile",
-      "Memiliki empati tinggi untuk menyampaikan kisah sosial perajin lokal",
-      "Fasih berbahasa Indonesia & Inggris"
-    ]
+    id: "p2",
+    question: "Bahan kain apa yang digunakan untuk pakaian Berakit Series?",
+    answer: "Kami menggunakan bahan katun premium (Katun Primissima) dan sutra pilihan. Karakteristik bahannya halus, sejuk saat dikenakan, menyerap keringat dengan baik, dan sangat nyaman digunakan dalam aktivitas sehari-hari maupun acara formal.",
+    category: "produk",
   },
   {
-    id: "role-3",
-    title: "Operations & Quality Control Lead",
-    department: "Operations",
-    location: "Desa Berakit, Bintan",
-    type: "Full-Time",
-    description: "Kelola alur kerja produksi kain batik, pastikan standar kualitas kain sutra & katun premium terjaga, serta koordinasikan pengemasan.",
-    requirements: [
-      "Pengalaman dalam manajemen produksi ritel, kriya, atau tekstil",
-      "Ketelitian tinggi terhadap detail detail cacat lilin malam atau pewarnaan",
-      "Mampu memimpin koordinasi harian kelompok perajin",
-      "Domisili atau bersedia menetap di Bintan"
-    ]
-  }
+    id: "p3",
+    question: "Bagaimana cara merawat pakaian batik tulis agar warnanya tetap awet?",
+    answer: "Untuk perawatan optimal, cuci pakaian secara manual menggunakan sabun lerak khusus batik atau sampo bayi. Jangan direndam terlalu lama, jangan disikat, dan cukup diangin-anginkan di tempat teduh tanpa terkena sinar matahari langsung saat menjemur.",
+    category: "produk",
+  },
+  {
+    id: "p4",
+    question: "Apakah bisa memesan ukuran kustom (custom size)?",
+    answer: "Tentu saja! Kami melayani pemesanan dengan ukuran kustom (seperti panjang baju, lingkar dada, atau panjang lengan). Anda dapat menghubungi tim layanan pelanggan kami melalui tombol WhatsApp yang tertera atau lewat formulir Contact Us.",
+    category: "produk",
+  },
+  {
+    id: "t1",
+    question: "Bagaimana cara melakukan pemesanan di website ini?",
+    answer: "Cukup masuk ke halaman Collections, pilih produk batik favorit Anda, tentukan ukuran, lalu masukkan ke keranjang belanja. Klik ikon Keranjang di kanan atas, lakukan checkout, isi formulir pengiriman, dan lakukan pembayaran sesuai instruksi.",
+    category: "pembayaran",
+  },
+  {
+    id: "t2",
+    question: "Metode pembayaran apa saja yang didukung?",
+    answer: "Kami menerima pembayaran melalui Transfer Bank (Bank BRI dan Bank Riau Kepri Syariah). Selain itu, kami juga mendukung metode Bayar di Tempat (COD) untuk area pengiriman tertentu.",
+    category: "pembayaran",
+  },
+  {
+    id: "t3",
+    question: "Apakah saya harus mengunggah bukti transfer setelah membayar?",
+    answer: "Ya. Untuk mempercepat verifikasi pembayaran dan proses pengemasan pesanan Anda, harap unggah foto atau screenshot bukti transfer bank yang valid pada halaman checkout sebelum mengirimkan pesanan.",
+    category: "pembayaran",
+  },
+  {
+    id: "k1",
+    question: "Berapa lama estimasi pengiriman pesanan saya?",
+    answer: "Pengiriman dilakukan langsung dari Kabupaten Bintan. Estimasi pengiriman untuk wilayah Kepulauan Riau & Jakarta adalah 2-4 hari kerja, sedangkan untuk wilayah luar pulau lainnya berkisar antara 3-7 hari kerja tergantung opsi ekspedisi.",
+    category: "pengiriman",
+  },
+  {
+    id: "k2",
+    question: "Apakah saya bisa menukar produk jika ukurannya tidak pas?",
+    answer: "Bisa. Kami memfasilitasi penukaran ukuran (size exchange) maksimal 3 hari setelah pesanan Anda terima. Pastikan tag label masih terpasang rapi, baju belum dicuci, dan belum digunakan. Ongkos kirim penukaran ditanggung sepenuhnya oleh pembeli.",
+    category: "pengiriman",
+  },
+  {
+    id: "k3",
+    question: "Bagaimana cara melacak pengiriman pesanan saya?",
+    answer: "Setiap pesanan yang telah dikirimkan ke kurir akan mendapatkan nomor resi resmi. Nomor resi tersebut akan dikirimkan oleh sistem kami langsung ke nomor WhatsApp yang Anda daftarkan saat melakukan checkout.",
+    category: "pengiriman",
+  },
 ];
 
-export default function CareersPage() {
+export default function FAQPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [cartItemCount, setCartItemCount] = React.useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const [selectedRole, setSelectedRole] = React.useState<string>("");
-  const [formSubmitted, setFormSubmitted] = React.useState(false);
-  const [submitting, setSubmitting] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [activeCategory, setActiveCategory] = React.useState<"all" | "produk" | "pembayaran" | "pengiriman">("all");
+  const [openItems, setOpenItems] = React.useState<Record<string, boolean>>({});
 
-  // Form states
-  const [formData, setFormData] = React.useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    portfolioLink: "",
-    coverLetter: ""
-  });
-
-  // Fetch session user
   React.useEffect(() => {
-    const fetchUser = async () => {
-      if (supabase) {
+    const fetchUserData = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.user) {
+        setCurrentUser(data.session.user);
+      }
+    };
+    fetchUserData();
+
+    const updateCartCount = () => {
+      const stored = localStorage.getItem("berakit_cart");
+      if (stored) {
         try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            let role = session.user.role;
-            if (!role) {
-              try {
-                const { data: pData } = await supabase
-                  .from("profiles")
-                  .select("role")
-                  .eq("id", session.user.id)
-                  .single();
-                if (pData?.role) role = pData.role;
-              } catch (err) {
-                console.warn("Failed fetching profile role:", err);
-              }
-            }
-            setCurrentUser({ ...session.user, role: role || "buyer" });
-          }
+          const items = JSON.parse(stored);
+          const count = items.reduce((acc: number, item: any) => acc + (item.quantity || 1), 0);
+          setCartItemCount(count);
         } catch (e) {
-          console.warn("Failed fetching session:", e);
+          console.error(e);
         }
       }
     };
-    fetchUser();
+    updateCartCount();
+    window.addEventListener("storage", updateCartCount);
+    return () => window.removeEventListener("storage", updateCartCount);
   }, []);
 
-  // Fetch cart item count
-  React.useEffect(() => {
-    const cartData = localStorage.getItem("berakit_cart");
-    if (cartData) {
-      try {
-        const parsed = JSON.parse(cartData);
-        setCartItemCount(parsed.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  }, []);
-
-  // GSAP animation
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  React.useEffect(() => {
-    if (containerRef.current) {
-      gsap.fromTo(
-        ".entrance-animate",
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: "power3.out" }
-      );
-    }
-  }, []);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const toggleAccordion = (id: string) => {
+    setOpenItems((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
-  const handleApplySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedRole) {
-      toast.error("Silakan pilih posisi lowongan terlebih dahulu.");
-      return;
-    }
-    if (!formData.fullName || !formData.email || !formData.phone) {
-      toast.error("Silakan lengkapi nama, email, dan nomor telepon Anda.");
-      return;
-    }
-
-    setSubmitting(true);
-    // Simulate API request
-    setTimeout(() => {
-      setSubmitting(false);
-      setFormSubmitted(true);
-      toast.success("Lamaran Anda berhasil dikirim! Kami akan menghubungi Anda segera.");
-    }, 1500);
-  };
+  const filteredFAQs = FAQ_ITEMS.filter((item) => {
+    const matchesSearch =
+      item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.answer.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = activeCategory === "all" || item.category === activeCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-[#faf9f5] text-zinc-900 flex flex-col font-sans overflow-x-hidden pt-16">
+    <div className="min-h-screen bg-[#faf9f5] text-zinc-900 flex flex-col font-sans overflow-x-hidden pt-16">
       {/* Header */}
       <header className="fixed top-0 inset-x-0 z-40 w-full border-b border-zinc-200/50 bg-[#faf9f5]/90 backdrop-blur-md">
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
@@ -209,6 +168,7 @@ export default function CareersPage() {
           >
             BERAKIT SERIES.
           </span>
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-8">
             <a
               href="/"
@@ -252,7 +212,7 @@ export default function CareersPage() {
 
             {/* Dropdown Menu for Company */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 relative transition-all duration-300 opacity-100 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-[#bef264] outline-none cursor-pointer" style={{
+              <DropdownMenuTrigger className="flex items-center gap-1 relative opacity-60 hover:opacity-100 transition-all duration-300 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#bef264] outline-none cursor-pointer" style={{
                 fontFamily: "'Inter', system-ui, sans-serif",
                 fontWeight: 700,
                 fontSize: "14px",
@@ -270,7 +230,7 @@ export default function CareersPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => router.push("/careers")}
-                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#bef264] bg-black rounded-xl cursor-pointer outline-none"
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
                   Careers
                 </DropdownMenuItem>
@@ -293,7 +253,7 @@ export default function CareersPage() {
 
             {/* Dropdown Menu for Support */}
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 relative opacity-60 hover:opacity-100 transition-all duration-300 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#bef264] outline-none cursor-pointer" style={{
+              <DropdownMenuTrigger className="flex items-center gap-1 relative transition-all duration-300 opacity-100 after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-full after:bg-[#bef264] outline-none cursor-pointer" style={{
                 fontFamily: "'Inter', system-ui, sans-serif",
                 fontWeight: 700,
                 fontSize: "14px",
@@ -311,7 +271,7 @@ export default function CareersPage() {
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => router.push("/faq")}
-                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#bef264] bg-black rounded-xl cursor-pointer outline-none"
                 >
                   FAQs
                 </DropdownMenuItem>
@@ -346,13 +306,11 @@ export default function CareersPage() {
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontWeight: 700,
+                  fontSize: "14px",
+                  lineHeight: "20px",
                   color: "lab(7.78201 -0.0000149012 0)",
-                  fontSize: "12px",
-                  lineHeight: "16px",
                 }}
-                onClick={() =>
-                  router.push(currentUser.role === "admin" ? "/admin" : "/dashboard")
-                }
+                onClick={() => router.push("/dashboard")}
               >
                 Dashboard
               </button>
@@ -362,64 +320,40 @@ export default function CareersPage() {
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontWeight: 700,
+                  fontSize: "14px",
+                  lineHeight: "20px",
                   color: "lab(7.78201 -0.0000149012 0)",
-                  fontSize: "12px",
-                  lineHeight: "16px",
                 }}
                 onClick={() => router.push("/login")}
               >
-                Sign In
+                Login
               </button>
             )}
             <button
-              className="relative text-black hover:opacity-80 transition-opacity"
-              onClick={() => router.push("/product")}
+              onClick={() => router.push("/product?show_cart=true")}
+              className="relative p-2 hover:bg-zinc-100 rounded-full transition-colors"
             >
-              <ShoppingBag className="size-[20px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
+              <ShoppingBag className="size-5 text-zinc-900" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-[#bef264] text-black text-[9px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center animate-pulse">
+                <span className="absolute -top-1 -right-1 bg-black text-[#bef264] text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#faf9f5]">
                   {cartItemCount}
                 </span>
               )}
             </button>
             <button
-              className="md:hidden text-black hover:opacity-80 transition-opacity"
+              className="md:hidden p-2 hover:bg-zinc-100 rounded-full transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              <Menu className="size-[22px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
+              {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
           </div>
         </div>
       </header>
 
-      {/* Mobile Drawer */}
-      <div
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden overflow-hidden ${
-          isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={() => setIsMobileMenuOpen(false)}
-      >
-        <div
-          className={`absolute top-0 right-0 w-[80%] max-w-[300px] h-full bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col justify-between ${
-            isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
-          }`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div>
-            <div className="flex items-center justify-between mb-8">
-              <span
-                className="uppercase tracking-normal font-black text-xl"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
-              >
-                BERAKIT SERIES.
-              </span>
-              <button
-                className="text-black hover:opacity-80 transition-opacity"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <X className="size-6" strokeWidth={2.5} style={{ color: "lab(2.75381 0 0)" }} />
-              </button>
-            </div>
+      {/* Mobile Menu Drawer */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 top-16 z-30 bg-[#faf9f5] flex flex-col p-6 overflow-y-auto animate-in fade-in slide-in-from-top duration-300">
+          <div className="flex flex-col gap-6">
             <nav className="flex flex-col gap-4">
               <a
                 href="/"
@@ -457,7 +391,7 @@ export default function CareersPage() {
                 <div className="pl-4 flex flex-col gap-2 border-l border-zinc-200">
                   <a
                     href="/about"
-                    className="text-sm font-bold text-zinc-500 py-1 hover:text-[#bef264] transition-colors"
+                    className="text-sm font-bold text-zinc-550 py-1 hover:text-[#bef264] transition-colors"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -465,7 +399,7 @@ export default function CareersPage() {
                   </a>
                   <a
                     href="/careers"
-                    className="text-sm font-bold text-zinc-955 py-1 hover:text-[#bef264] transition-colors"
+                    className="text-sm font-bold text-zinc-550 py-1 hover:text-[#bef264] transition-colors"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -507,7 +441,7 @@ export default function CareersPage() {
                   </a>
                   <a
                     href="/faq"
-                    className="text-sm font-bold text-zinc-550 py-1 hover:text-[#bef264] transition-colors"
+                    className="text-sm font-bold text-zinc-950 py-1 hover:text-[#bef264] transition-colors"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
@@ -541,262 +475,227 @@ export default function CareersPage() {
           <div className="pt-6 border-t border-zinc-100 flex flex-col gap-4">
             {currentUser ? (
               <button
-                className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors"
+                className="w-full h-11 border border-zinc-300 rounded-xl font-bold uppercase text-xs"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  router.push(currentUser.role === "admin" ? "/admin" : "/dashboard");
+                  router.push("/dashboard");
                 }}
               >
                 Dashboard
               </button>
             ) : (
               <button
-                className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors"
+                className="w-full h-11 border border-zinc-300 rounded-xl font-bold uppercase text-xs"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                 onClick={() => {
                   setIsMobileMenuOpen(false);
                   router.push("/login");
                 }}
               >
-                Sign In
+                Login
               </button>
             )}
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Content */}
-      <main className="flex-1 w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 pt-16 pb-24 text-left">
-        {/* Page Hero */}
-        <section className="pt-16 pb-8 space-y-4">
-          <span className="text-[11px] font-bold tracking-widest text-zinc-400 uppercase block entrance-animate">
-            WE ARE HIRING
+      <main className="flex-grow w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-12 md:py-20 animate-in fade-in duration-500">
+        {/* Title / Hero */}
+        <section className="text-left mb-12 md:mb-16">
+          <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] block mb-2 font-mono">
+            Pusat Bantuan
           </span>
           <h1
-            className="uppercase tracking-tight text-black text-5xl sm:text-6xl lg:text-7xl font-black leading-none entrance-animate"
-            style={{ fontFamily: "'Oswald', sans-serif" }}
+            className="text-5xl md:text-7xl font-black tracking-tighter uppercase text-zinc-950 select-none relative"
+            style={{ fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 700 }}
           >
-            CAREERS<span className="text-[#bef264]">.</span>
+            FAQS<span className="text-[#bef264]">.</span>
           </h1>
-          <p className="text-zinc-500 text-sm max-w-xl font-medium leading-relaxed entrance-animate">
-            Bergabunglah bersama kami di BUMDes Desa Berakit untuk melestarikan warisan adiluhung kain batik tulis pesisir Bintan sekaligus berinovasi di kancah modern.
+          <p className="text-sm text-zinc-500 font-semibold mt-4 max-w-xl leading-relaxed">
+            Temukan jawaban atas pertanyaan-pertanyaan yang paling sering diajukan seputar produk batik tulis kami, pemesanan, metode pembayaran, serta kebijakan pengiriman.
           </p>
         </section>
 
-        {/* Core Values Section */}
-        <section className="py-12 border-t border-zinc-200 grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-1 space-y-4">
-            <h3 className="text-xl font-black uppercase tracking-tight text-zinc-900" style={{ fontFamily: "'Oswald', sans-serif" }}>
-              KENAPA BERGABUNG?
-            </h3>
-            <p className="text-xs text-zinc-500 leading-relaxed font-semibold">
-              Di Berakit Series, kami bukan sekadar memproduksi batik, melainkan membangun ekosistem pemberdayaan desa.
-            </p>
+        {/* Search & Category Filter Section */}
+        <section className="mb-12 space-y-6">
+          <div className="relative max-w-lg">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4.5 text-zinc-400" />
+            <Input
+              type="text"
+              placeholder="Cari pertanyaan atau jawaban..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-11 pr-4 bg-white border border-zinc-200 focus:ring-1 focus:ring-zinc-400 h-12 rounded-2xl text-sm font-medium shadow-sm transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400 hover:text-zinc-600 font-mono"
+              >
+                CLEAR
+              </button>
+            )}
           </div>
-          <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="bg-[#faf9f5] border border-zinc-200 p-6 rounded-2xl flex flex-col justify-between group hover:shadow-lg transition-all duration-300">
-              <Compass className="size-8 text-black mb-4 group-hover:scale-110 transition-transform" />
-              <div>
-                <h4 className="font-bold text-sm uppercase mb-1">Cultural Preservation</h4>
-                <p className="text-xs text-zinc-500 leading-relaxed">Menjaga kelestarian motif khas laut Desa Berakit agar tetap hidup.</p>
-              </div>
-            </div>
-            <div className="bg-[#faf9f5] border border-zinc-200 p-6 rounded-2xl flex flex-col justify-between group hover:shadow-lg transition-all duration-300">
-              <Users className="size-8 text-black mb-4 group-hover:scale-110 transition-transform" />
-              <div>
-                <h4 className="font-bold text-sm uppercase mb-1">Local Empowerment</h4>
-                <p className="text-xs text-zinc-500 leading-relaxed">Memberdayakan perajin lokal & meningkatkan kesejahteraan BUMDes.</p>
-              </div>
-            </div>
-            <div className="bg-[#faf9f5] border border-zinc-200 p-6 rounded-2xl flex flex-col justify-between group hover:shadow-lg transition-all duration-300">
-              <Award className="size-8 text-black mb-4 group-hover:scale-110 transition-transform" />
-              <div>
-                <h4 className="font-bold text-sm uppercase mb-1">Modern Fusion</h4>
-                <p className="text-xs text-zinc-500 leading-relaxed">Memadukan warisan canting lilin malam tradisional dengan presentasi digital.</p>
-              </div>
-            </div>
+
+          {/* Categories Tab Buttons */}
+          <div className="flex flex-wrap gap-2.5">
+            <button
+              onClick={() => setActiveCategory("all")}
+              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 border ${
+                activeCategory === "all"
+                  ? "bg-black border-black text-[#bef264] shadow-sm"
+                  : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-black"
+              }`}
+            >
+              Semua Pertanyaan
+            </button>
+            <button
+              onClick={() => setActiveCategory("produk")}
+              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 border flex items-center gap-2 ${
+                activeCategory === "produk"
+                  ? "bg-black border-black text-[#bef264] shadow-sm"
+                  : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-black"
+              }`}
+            >
+              <Shirt className="size-3.5" /> Produk & Bahan
+            </button>
+            <button
+              onClick={() => setActiveCategory("pembayaran")}
+              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 border flex items-center gap-2 ${
+                activeCategory === "pembayaran"
+                  ? "bg-black border-black text-[#bef264] shadow-sm"
+                  : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-black"
+              }`}
+            >
+              <CreditCard className="size-3.5" /> Pemesanan & Pembayaran
+            </button>
+            <button
+              onClick={() => setActiveCategory("pengiriman")}
+              className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-200 border flex items-center gap-2 ${
+                activeCategory === "pengiriman"
+                  ? "bg-black border-black text-[#bef264] shadow-sm"
+                  : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-black"
+              }`}
+            >
+              <Package className="size-3.5" /> Pengiriman & Kebijakan
+            </button>
           </div>
         </section>
 
-        {/* Open Positions Grid */}
-        <section className="py-12 border-t border-zinc-200 grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Left Column: Job Cards */}
-          <div className="lg:col-span-7 space-y-6">
-            <h3 className="text-2xl font-black uppercase tracking-tight text-zinc-900 mb-6" style={{ fontFamily: "'Oswald', sans-serif" }}>
-              POSISI TERSEDIA ({OPEN_ROLES.length})
-            </h3>
-            <div className="space-y-6">
-              {OPEN_ROLES.map((role) => (
-                <div 
-                  key={role.id}
-                  className="bg-white border border-zinc-200/80 p-6 sm:p-8 rounded-2xl shadow-sm space-y-4 hover:border-zinc-400 transition-all duration-300"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest font-mono">{role.department}</span>
-                      <h4 className="text-lg sm:text-xl font-bold uppercase tracking-tight text-zinc-950">{role.title}</h4>
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge className="bg-zinc-100 text-zinc-800 text-[9px] font-bold uppercase tracking-widest border-none hover:bg-zinc-100 flex items-center gap-1"><MapPin className="size-2.5" />{role.location}</Badge>
-                      <Badge className="bg-[#bef264]/20 text-black text-[9px] font-bold uppercase tracking-widest border-none hover:bg-[#bef264]/30 flex items-center gap-1"><Clock className="size-2.5" />{role.type}</Badge>
-                    </div>
-                  </div>
-                  <p className="text-xs text-zinc-500 leading-relaxed font-semibold">{role.description}</p>
-                  
-                  <div className="space-y-2 pt-2">
-                    <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest block font-mono">PERSYARATAN:</span>
-                    <ul className="list-disc pl-4 space-y-1 text-xs text-zinc-600 font-medium">
-                      {role.requirements.map((req, index) => (
-                        <li key={index}>{req}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div className="pt-4 border-t border-zinc-100 flex justify-end">
-                    <Button 
-                      disabled
-                      className="bg-zinc-100 text-zinc-400 rounded-full text-xs font-bold uppercase tracking-wider px-5 py-2 border-none cursor-not-allowed"
+        {/* FAQs Accordion Grid */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="lg:col-span-8 space-y-4">
+            {filteredFAQs.length > 0 ? (
+              filteredFAQs.map((item) => {
+                const isOpen = !!openItems[item.id];
+                return (
+                  <div
+                    key={item.id}
+                    className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-sm transition-all duration-300 hover:border-zinc-300"
+                  >
+                    <button
+                      onClick={() => toggleAccordion(item.id)}
+                      className="w-full px-6 py-5 flex items-center justify-between text-left gap-4 outline-none select-none cursor-pointer"
                     >
-                      Coming Soon
-                    </Button>
+                      <span
+                        className="text-base font-bold text-zinc-950 tracking-tight"
+                        style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                      >
+                        {item.question}
+                      </span>
+                      <span
+                        className={`shrink-0 p-1 rounded-full bg-zinc-50 text-zinc-600 border border-zinc-200 transition-transform duration-300 ${
+                          isOpen ? "rotate-180 bg-zinc-950 text-white border-zinc-950" : ""
+                        }`}
+                      >
+                        <ChevronDown className="size-4" />
+                      </span>
+                    </button>
+
+                    <div
+                      className={`transition-all duration-300 ease-in-out ${
+                        isOpen ? "max-h-[500px] border-t border-zinc-100" : "max-h-0"
+                      } overflow-hidden`}
+                    >
+                      <div className="px-6 py-5 text-sm text-zinc-500 font-medium leading-relaxed bg-zinc-50/30">
+                        {item.answer}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                );
+              })
+            ) : (
+              <div className="bg-white border border-zinc-200 rounded-3xl p-12 text-center space-y-4">
+                <HelpCircle className="size-12 text-zinc-300 mx-auto" />
+                <h3 className="text-lg font-bold text-zinc-900 uppercase tracking-tight">Tidak Ada Pertanyaan Ditemukan</h3>
+                <p className="text-xs text-zinc-400 font-semibold max-w-md mx-auto">
+                  Cobalah kata kunci pencarian yang lain atau ganti filter kategori untuk menemukan pertanyaan yang Anda cari.
+                </p>
+                <Button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setActiveCategory("all");
+                  }}
+                  className="bg-black hover:bg-zinc-800 text-white rounded-xl h-10 px-5 text-xs font-bold uppercase tracking-wider transition-colors"
+                >
+                  Reset Pencarian
+                </Button>
+              </div>
+            )}
           </div>
 
-          {/* Right Column: Application Form */}
-          <div id="apply-form" className="lg:col-span-5">
-            <div className="bg-white border border-zinc-200 p-8 rounded-3xl shadow-lg sticky top-24 space-y-6">
+          {/* Help Desk / Contact CTA Sidebar */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white border border-zinc-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm text-left">
+              <div className="p-3 bg-[#bef264]/20 rounded-2xl text-black inline-block">
+                <MessageCircle className="size-6" />
+              </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-black uppercase tracking-tight text-zinc-950" style={{ fontFamily: "'Oswald', sans-serif" }}>
-                  KIRIM LAMARAN ANDA
+                <h3
+                  className="text-xl font-bold uppercase tracking-tight text-zinc-950"
+                  style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                >
+                  Punya Pertanyaan Lain?
                 </h3>
-                <p className="text-xs text-zinc-400 font-medium">
-                  Formulir lamaran saat ini dinonaktifkan karena belum ada lowongan aktif yang dibuka.
+                <p className="text-xs text-zinc-400 font-semibold leading-relaxed">
+                  Jika Anda tidak menemukan jawaban yang Anda cari di halaman FAQ ini, tim layanan pelanggan kami siap membantu Anda secara langsung.
                 </p>
               </div>
 
-              {formSubmitted ? (
-                <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-                  <CheckCircle2 className="size-16 text-[#bef264] animate-bounce" />
-                  <h4 className="text-lg font-bold uppercase tracking-tight">Lamaran Terkirim!</h4>
-                  <p className="text-xs text-zinc-500 leading-relaxed max-w-xs">
-                    Terima kasih telah mendaftar. Tim rekrutmen BUMDes Desa Berakit akan meninjau berkas Anda dan menghubungi Anda via email segera.
-                  </p>
-                  <Button 
-                    onClick={() => {
-                      setFormSubmitted(false);
-                      setFormData({
-                        fullName: "",
-                        email: "",
-                        phone: "",
-                        portfolioLink: "",
-                        coverLetter: ""
-                      });
-                      setSelectedRole("");
-                    }}
-                    className="bg-black hover:bg-zinc-800 text-white rounded-full text-xs font-bold uppercase tracking-wider px-6 py-2 border-none"
-                  >
-                    Kirim Lamaran Lain
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleApplySubmit} className="space-y-4 opacity-60">
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest font-mono">Pilih Posisi *</label>
-                    <select 
-                      disabled
-                      name="role"
-                      value={selectedRole}
-                      onChange={(e) => setSelectedRole(e.target.value)}
-                      className="w-full h-11 px-3 rounded-lg border border-zinc-200 text-xs bg-[#faf9f5] outline-none font-medium text-zinc-400 cursor-not-allowed"
-                    >
-                      <option value="">-- Pilih Lowongan Kerja --</option>
-                      {OPEN_ROLES.map((role) => (
-                        <option key={role.id} value={role.id}>{role.title} ({role.department})</option>
-                      ))}
-                    </select>
-                  </div>
+              <div className="space-y-3 pt-2">
+                <Button
+                  onClick={() => router.push("/contact")}
+                  className="w-full bg-black hover:bg-zinc-800 text-white rounded-xl h-12 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors duration-200"
+                >
+                  Kirim Pesan Formulir <ArrowRight className="size-3.5" />
+                </Button>
 
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest font-mono">Nama Lengkap *</label>
-                    <Input 
-                      disabled
-                      type="text" 
-                      name="fullName"
-                      placeholder="Masukkan nama lengkap Anda" 
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      className="w-full bg-[#faf9f5] border-zinc-200 text-xs focus:ring-1 focus:ring-zinc-400 h-11 rounded-lg px-4 cursor-not-allowed"
-                      required
-                    />
-                  </div>
+                <a
+                  href="https://wa.me/6281234567890"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full border border-zinc-200 hover:border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-800 rounded-xl h-12 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-200"
+                >
+                  Hubungi Via WhatsApp
+                </a>
+              </div>
+            </div>
 
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest font-mono">Alamat Email *</label>
-                    <Input 
-                      disabled
-                      type="email" 
-                      name="email"
-                      placeholder="nama@email.com" 
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full bg-[#faf9f5] border-zinc-200 text-xs focus:ring-1 focus:ring-zinc-400 h-11 rounded-lg px-4 cursor-not-allowed"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest font-mono">Nomor Telepon / WhatsApp *</label>
-                    <Input 
-                      disabled
-                      type="tel" 
-                      name="phone"
-                      placeholder="0812xxxxxxxx" 
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className="w-full bg-[#faf9f5] border-zinc-200 text-xs focus:ring-1 focus:ring-zinc-400 h-11 rounded-lg px-4 cursor-not-allowed"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest font-mono">Link Portfolio / CV *</label>
-                    <Input 
-                      disabled
-                      type="url" 
-                      name="portfolioLink"
-                      placeholder="Google Drive, Dropbox, atau LinkedIn link" 
-                      value={formData.portfolioLink}
-                      onChange={handleInputChange}
-                      className="w-full bg-[#faf9f5] border-zinc-200 text-xs focus:ring-1 focus:ring-zinc-400 h-11 rounded-lg px-4 cursor-not-allowed"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] font-black text-zinc-400 uppercase tracking-widest font-mono">Surat Pengantar / Mengapa Anda? *</label>
-                    <textarea 
-                      disabled
-                      name="coverLetter"
-                      rows={4}
-                      placeholder="Ceritakan minat dan kualifikasi singkat Anda..." 
-                      value={formData.coverLetter}
-                      onChange={handleInputChange}
-                      className="w-full p-4 rounded-lg bg-[#faf9f5] border border-zinc-200 text-xs outline-none focus:ring-1 focus:ring-zinc-400 transition-all font-medium text-zinc-400 cursor-not-allowed"
-                      required
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    disabled
-                    className="w-full bg-zinc-100 text-zinc-400 rounded-lg h-12 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 mt-4 border-none cursor-not-allowed"
-                  >
-                    Coming Soon
-                  </Button>
-                </form>
-              )}
+            {/* Quick tips box */}
+            <div className="bg-zinc-950 text-white rounded-3xl p-6 sm:p-8 text-left relative overflow-hidden shadow-sm">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#bef264]/10 rounded-full blur-2xl"></div>
+              <h4 className="text-xs font-black text-zinc-400 uppercase tracking-widest font-mono">Tips Belanja</h4>
+              <h3
+                className="text-lg font-bold uppercase tracking-tight mt-2 text-white"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                Keaslian Produk Terjamin
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed font-semibold mt-2">
+                Setiap helai kain batik Berakit memiliki ciri khas motif pesisir laut dan dilengkapi dengan sertifikat garansi keaslian langsung dari BUMDes Berakit Maju.
+              </p>
             </div>
           </div>
         </section>
