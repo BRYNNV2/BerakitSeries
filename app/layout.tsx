@@ -41,8 +41,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/LogoBerakit.png" type="image/png" sizes="any" />
-        <link rel="apple-touch-icon" href="/LogoBerakit.png" />
+        <link rel="icon" href="/LogoBerakit.png?v=2" type="image/png" sizes="any" />
+        <link rel="shortcut icon" href="/LogoBerakit.png?v=2" type="image/png" />
+        <link rel="apple-touch-icon" href="/LogoBerakit.png?v=2" />
       </head>
       <body
         className={`${inter.variable} ${geistMono.variable} ${oswald.variable} antialiased`}
