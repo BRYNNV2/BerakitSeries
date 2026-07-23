@@ -815,9 +815,12 @@ export default function UserDashboard() {
         <body>
           <div class="label-card">
             <div class="header">
-              <div>
-                <div class="brand">BUMDES BERAKIT MAJU</div>
-                <div class="sub-brand">BERAKIT SERIES // BUKTI PESANAN & KARTU RETUR PEMBELI</div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="/LogoBerakit.png" style="max-height: 42px; width: auto; object-fit: contain;" alt="Logo Berakit" />
+                <div>
+                  <div class="brand">BUMDES BERAKIT MAJU</div>
+                  <div class="sub-brand">BERAKIT SERIES // BUKTI PESANAN & KARTU RETUR PEMBELI</div>
+                </div>
               </div>
               <div class="barcode-box">
                 <div class="barcode-text">${resi}</div>

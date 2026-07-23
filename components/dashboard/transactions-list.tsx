@@ -248,10 +248,13 @@ export function TransactionsList() {
         </head>
         <body>
           <div class="label-card">
-            <div class="header">
-              <div>
-                <div class="brand">BUMDES BERAKIT MAJU</div>
-                <div class="sub-brand">BERAKIT SERIES // LABEL PENGIRIMAN & RETUR RESMI</div>
+            <div class="header" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #111827; padding-bottom: 12px; margin-bottom: 16px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="/LogoBerakit.png" style="max-height: 42px; width: auto; object-fit: contain;" alt="Logo Berakit" />
+                <div>
+                  <div class="brand">BUMDES BERAKIT MAJU</div>
+                  <div class="sub-brand">BERAKIT SERIES // LABEL PENGIRIMAN & RETUR RESMI</div>
+                </div>
               </div>
               <div class="barcode-box">
                 <div class="barcode-text">${resi}</div>

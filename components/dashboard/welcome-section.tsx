@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   ChevronDown,
   Download,
   Upload,
@@ -27,6 +34,9 @@ import {
   CheckCircle2,
   AlertCircle,
   FileSpreadsheet,
+  Calendar,
+  Filter,
+  Printer,
 } from "lucide-react";
 import { supabase, withTimeout } from "@/lib/supabase";
 
@@ -60,6 +70,45 @@ export function WelcomeSection() {
   const [importLoading, setImportLoading] = React.useState(false);
   const [importError, setImportError] = React.useState("");
   const [importSuccess, setImportSuccess] = React.useState("");
+
+  // PDF Report Dialog & Date Range States
+  const [isPdfModalOpen, setIsPdfModalOpen] = React.useState(false);
+  const [datePreset, setDatePreset] = React.useState<"all" | "today" | "7days" | "month" | "30days" | "custom">("month");
+  const [startDate, setStartDate] = React.useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+  });
+  const [endDate, setEndDate] = React.useState(() => new Date().toISOString().slice(0, 10));
+  const [pdfStatusFilter, setPdfStatusFilter] = React.useState("all");
+  const [pdfLoading, setPdfLoading] = React.useState(false);
+
+  const handlePresetChange = (preset: string) => {
+    setDatePreset(preset as any);
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+
+    if (preset === "today") {
+      setStartDate(todayStr);
+      setEndDate(todayStr);
+    } else if (preset === "7days") {
+      const d7 = new Date(today);
+      d7.setDate(d7.getDate() - 7);
+      setStartDate(d7.toISOString().slice(0, 10));
+      setEndDate(todayStr);
+    } else if (preset === "month") {
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().slice(0, 10);
+      setStartDate(firstDay);
+      setEndDate(todayStr);
+    } else if (preset === "30days") {
+      const d30 = new Date(today);
+      d30.setDate(d30.getDate() - 30);
+      setStartDate(d30.toISOString().slice(0, 10));
+      setEndDate(todayStr);
+    } else if (preset === "all") {
+      setStartDate("");
+      setEndDate("");
+    }
+  };
 
   const loadPendingCount = React.useCallback(async () => {
     setLoading(true);
@@ -359,8 +408,9 @@ export function WelcomeSection() {
     reader.readAsText(importFile);
   };
 
-  // Printable Government/Cooperative PDF generator
+  // Printable Government/Cooperative PDF generator with Date Range Filter
   const handlePrintPdf = async () => {
+    setPdfLoading(true);
     const { products, transactions } = await fetchAllData();
 
     // Default BUMDes details
@@ -382,11 +432,32 @@ export function WelcomeSection() {
       }
     }
 
+    // Filter transactions by Date Range and Status Filter
+    const filteredTransactions = transactions.filter((t: any) => {
+      // Status filter
+      if (pdfStatusFilter !== "all") {
+        if (pdfStatusFilter === "Selesai" && t.status !== "Selesai") return false;
+        if (pdfStatusFilter === "Pending" && t.status !== "Pending") return false;
+        if (pdfStatusFilter === "Dikirim" && !t.status?.startsWith("Dikirim") && t.status !== "Diproses") return false;
+      }
+
+      // Date Range filter
+      if (t.created_at) {
+        const txDateStr = new Date(t.created_at).toISOString().slice(0, 10);
+        if (startDate && txDateStr < startDate) return false;
+        if (endDate && txDateStr > endDate) return false;
+      }
+
+      return true;
+    });
+
     // Calculations
-    const totalRevenue = transactions
+    const totalRevenue = filteredTransactions
       .filter((t: any) => t.status === "Selesai")
       .reduce((sum: number, t: any) => sum + (t.total_amount || 0), 0);
-    const completedCount = transactions.filter((t: any) => t.status === "Selesai").length;
+    const completedCount = filteredTransactions.filter((t: any) => t.status === "Selesai").length;
+    const pendingCountInPeriod = filteredTransactions.filter((t: any) => t.status === "Pending").length;
+    const shippingCountInPeriod = filteredTransactions.filter((t: any) => t.status?.startsWith("Dikirim") || t.status === "Diproses").length;
 
     const formatter = new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -394,268 +465,193 @@ export function WelcomeSection() {
       maximumFractionDigits: 0,
     });
 
-    // Create a temporary print container inside the main document body
-    const printContainerId = "bumdes-pdf-print-container";
-    let printEl = document.getElementById(printContainerId);
-    if (printEl) {
-      printEl.remove();
+    const formatDateFriendly = (dStr: string) => {
+      if (!dStr) return "-";
+      return new Date(dStr).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+    };
+
+    let periodLabel = "Seluruh Riwayat Transaksi";
+    if (startDate && endDate) {
+      if (startDate === endDate) {
+        periodLabel = `Hari Ini (${formatDateFriendly(startDate)})`;
+      } else {
+        periodLabel = `${formatDateFriendly(startDate)} s.d. ${formatDateFriendly(endDate)}`;
+      }
+    } else if (startDate) {
+      periodLabel = `Sejak ${formatDateFriendly(startDate)}`;
+    } else if (endDate) {
+      periodLabel = `Hingga ${formatDateFriendly(endDate)}`;
     }
 
-    printEl = document.createElement("div");
-    printEl.id = printContainerId;
+    const todayPrintStr = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    // Generate table rows
+    const rowsHtml = filteredTransactions.length === 0
+      ? `<tr><td colspan="6" style="text-align: center; padding: 20px; color: #6b7280; font-style: italic;">Tidak ada data transaksi ditemukan untuk periode rentang tanggal ini.</td></tr>`
+      : filteredTransactions.map((t: any, idx: number) => {
+          const dateStr = t.created_at ? new Date(t.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "-";
+          let statusBadgeColor = "#3b82f6";
+          if (t.status === "Selesai") statusBadgeColor = "#10b981";
+          else if (t.status === "Pending") statusBadgeColor = "#f59e0b";
+          else if (t.status === "Dibatalkan") statusBadgeColor = "#ef4444";
+
+          return `
+            <tr style="border-bottom: 1px solid #e5e7eb; font-size: 11px;">
+              <td style="padding: 8px 10px; font-family: monospace;">${idx + 1}</td>
+              <td style="padding: 8px 10px; font-family: monospace; font-weight: bold;">${t.id}</td>
+              <td style="padding: 8px 10px;">${dateStr}</td>
+              <td style="padding: 8px 10px; font-weight: 600;">${t.customer_name || "Pelanggan"} <span style="font-size: 9px; color: #6b7280;">(${t.payment_method || "COD"})</span></td>
+              <td style="padding: 8px 10px; text-align: center;">
+                <span style="display: inline-block; background: ${statusBadgeColor}15; color: ${statusBadgeColor}; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; border: 1px solid ${statusBadgeColor}40;">
+                  ${t.status || "Pending"}
+                </span>
+              </td>
+              <td style="padding: 8px 10px; text-align: right; font-weight: bold;">${formatter.format(t.total_amount || 0)}</td>
+            </tr>
+          `;
+        }).join("");
 
     const htmlContent = `
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        
-        #bumdes-pdf-print-container {
-          font-family: 'Inter', sans-serif;
-          color: #1f2937;
-          padding: 40px;
-          background: white !important;
-          min-height: 100vh;
-        }
-        .header-table {
-          width: 100%;
-          border-collapse: collapse;
-          border-bottom: 3px double #374151;
-          padding-bottom: 16px;
-          margin-bottom: 24px;
-        }
-        .header-logo {
-          width: 60px;
-          height: 60px;
-          background: linear-gradient(135deg, #6e3ff3, #aa8ef9);
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-size: 30px;
-          font-weight: bold;
-          margin-right: 16px;
-        }
-        .header-info h1 {
-          margin: 0 0 4px 0;
-          font-size: 22px;
-          font-weight: 700;
-          color: #111827;
-          letter-spacing: -0.025em;
-        }
-        .header-info p {
-          margin: 0 0 2px 0;
-          font-size: 12px;
-          color: #4b5563;
-        }
-        .report-title {
-          text-align: center;
-          font-size: 15px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin: 24px 0;
-          color: #111827;
-        }
-        .stats-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-          margin-bottom: 32px;
-        }
-        .stat-card {
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          padding: 16px;
-          background-color: #f9fafb;
-        }
-        .stat-label {
-          font-size: 10px;
-          font-weight: 600;
-          text-transform: uppercase;
-          color: #6b7280;
-          letter-spacing: 0.05em;
-        }
-        .stat-value {
-          font-size: 18px;
-          font-weight: 700;
-          color: #111827;
-          margin-top: 4px;
-        }
-        .table-title {
-          font-size: 13px;
-          font-weight: 600;
-          margin-bottom: 12px;
-          color: #111827;
-          border-left: 3px solid #6e3ff3;
-          padding-left: 8px;
-        }
-        table.data-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 40px;
-        }
-        table.data-table th {
-          background-color: #f3f4f6;
-          border-bottom: 2px solid #e5e7eb;
-          padding: 10px 12px;
-          text-align: left;
-          font-weight: 600;
-          color: #374151;
-          font-size: 10px;
-          text-transform: uppercase;
-        }
-        table.data-table td {
-          padding: 10px 12px;
-          border-bottom: 1px solid #f3f4f6;
-          color: #4b5563;
-        }
-        table.data-table tr:last-child td {
-          border-bottom: 2px solid #e5e7eb;
-        }
-        .badge {
-          display: inline-block;
-          padding: 2px 6px;
-          border-radius: 9999px;
-          font-size: 9px;
-          font-weight: 600;
-          text-transform: uppercase;
-        }
-        .badge-selesai { background-color: #d1fae5; color: #065f46; }
-        .badge-diproses { background-color: #dbeafe; color: #1e40af; }
-        .badge-pending { background-color: #fef3c7; color: #92400e; }
-        .badge-dibatalkan { background-color: #fee2e2; color: #991b1b; }
-        
-        .signature-area {
-          margin-top: 50px;
-          width: 100%;
-          page-break-inside: avoid;
-        }
-        .signature-box {
-          float: right;
-          width: 220px;
-          text-align: center;
-        }
-        .signature-line {
-          margin-top: 70px;
-          border-bottom: 1px solid #4b5563;
-          margin-bottom: 4px;
-        }
-        
-        @media print {
-          body > *:not(#bumdes-pdf-print-container) {
-            display: none !important;
-          }
-          #bumdes-pdf-print-container {
-            display: block !important;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-          }
-        }
-        @media screen {
-          #bumdes-pdf-print-container {
-            display: none !important;
-          }
-        }
-      </style>
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Laporan Penjualan BUMDes Berakit - ${periodLabel}</title>
+          <style>
+            @page { size: A4; margin: 15mm; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #111827; background: #fff; margin: 0; padding: 20px; }
+            .report-card { max-width: 800px; margin: 0 auto; }
+            .header-table { width: 100%; border-bottom: 3px double #111827; padding-bottom: 16px; margin-bottom: 20px; }
+            .logo-box { width: 50px; height: 50px; background: #166534; color: white; font-weight: 900; font-size: 24px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+            .brand-name { font-size: 20px; font-weight: 900; color: #166534; letter-spacing: -0.5px; }
+            .sub-info { font-size: 11px; color: #4b5563; margin-top: 2px; }
+            .report-meta { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+            .period-title { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #374151; }
+            .period-value { font-size: 13px; font-weight: 900; color: #166534; margin-top: 2px; }
+            .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+            .stat-card { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 12px; text-align: center; }
+            .stat-title { font-size: 9px; font-weight: 800; text-transform: uppercase; color: #166534; margin-bottom: 4px; }
+            .stat-value { font-size: 14px; font-weight: 900; color: #111827; }
+            .table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            .table th { background: #f3f4f6; font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 8px 10px; text-align: left; border: 1px solid #e5e7eb; color: #374151; }
+            .signatures { display: flex; justify-content: space-between; margin-top: 40px; page-break-inside: avoid; }
+            .sig-box { width: 220px; text-align: center; font-size: 11px; }
+            .sig-space { height: 60px; }
+          </style>
+        </head>
+        <body>
+          <div class="report-card">
+            <table class="header-table">
+              <tr>
+                <td style="width: 75px; padding-right: 12px; vertical-align: middle;">
+                  <img src="/LogoBerakit.png" style="max-height: 60px; max-width: 75px; object-fit: contain; display: block;" alt="Logo BUMDes Berakit" />
+                </td>
+                <td style="vertical-align: middle;">
+                  <div class="brand-name">${bumdesName.toUpperCase()}</div>
+                  <div class="sub-brand" style="font-size: 10px; font-weight: 800; color: #6b7280;">UNIT USES PERDAGANGAN BATIK SERIES DESA BERAKIT</div>
+                  <div class="sub-info">${bumdesAddress} | Telp: ${bumdesPhone} | Email: ${bumdesEmail}</div>
+                </td>
+              </tr>
+            </table>
 
-      <table class="header-table">
-        <tr>
-          <td style="width: 76px;">
-            <div class="header-logo">B</div>
-          </td>
-          <td class="header-info">
-            <h1>${bumdesName}</h1>
-            <p>${bumdesAddress}</p>
-            <p>Email: ${bumdesEmail} | Telp: ${bumdesPhone}</p>
-          </td>
-        </tr>
-      </table>
+            <div class="report-meta">
+              <div>
+                <div class="period-title">📄 LAPORAN REKAPITULASI PENJUALAN TOKO DESA</div>
+                <div class="period-value">PERIODE: ${periodLabel.toUpperCase()}</div>
+              </div>
+              <div style="text-align: right; font-size: 10.5px; color: #6b7280;">
+                <div>Tanggal Cetak: <strong>${todayPrintStr}</strong></div>
+                <div>Status Filter: <strong>${pdfStatusFilter === "all" ? "Semua Status" : pdfStatusFilter}</strong></div>
+              </div>
+            </div>
 
-      <div class="report-title">Laporan Keuangan & Kinerja Usaha BUMDes</div>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-title">OMSET PENJUALAN</div>
+                <div class="stat-value" style="color: #166534;">${formatter.format(totalRevenue)}</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-title">TOTAL TRANSAKSI</div>
+                <div class="stat-value">${filteredTransactions.length} Pesanan</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-title">SELESAI (LUNAS)</div>
+                <div class="stat-value" style="color: #10b981;">${completedCount} Pesanan</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-title">PROSES / PENDING</div>
+                <div class="stat-value" style="color: #f59e0b;">${pendingCountInPeriod + shippingCountInPeriod} Pesanan</div>
+              </div>
+            </div>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Total Pendapatan Bersih</div>
-          <div class="stat-value" style="color: #059669;">${formatter.format(totalRevenue)}</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Transaksi Berhasil</div>
-          <div class="stat-value">${completedCount} Penjualan</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Jenis Produk</div>
-          <div class="stat-value">${products.length} Item</div>
-        </div>
-      </div>
+            <div style="font-size: 10.5px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; color: #374151;">Daftar Rincian Transaksi (${filteredTransactions.length}):</div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width: 30px;">NO</th>
+                  <th>ID PESANAN</th>
+                  <th>TANGGAL</th>
+                  <th>NAMA PELANGGAN</th>
+                  <th style="text-align: center;">STATUS</th>
+                  <th style="text-align: right;">TOTAL BAYAR</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
 
-      <div class="table-title">Daftar Transaksi BUMDes</div>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Tanggal</th>
-            <th>Nama Pelanggan</th>
-            <th>Alamat Pengiriman</th>
-            <th>Pembayaran</th>
-            <th>Status</th>
-            <th style="text-align: right;">Total Belanja</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${
-            transactions.length === 0
-              ? '<tr><td colspan="6" style="text-align: center;">Belum ada data transaksi masuk.</td></tr>'
-              : transactions
-                  .map(
-                    (t: any) => `
-            <tr>
-              <td>${new Date(t.created_at || Date.now()).toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}</td>
-              <td style="font-weight: 500; color: #111827;">${t.customer_name}</td>
-              <td>${t.address || "Desa Berakit"}</td>
-              <td style="text-transform: uppercase; font-size: 10px;">${t.payment_method || "COD"}</td>
-              <td>
-                <span class="badge badge-${(t.status || "Pending").toLowerCase()}">${t.status || "Pending"}</span>
-              </td>
-              <td style="text-align: right; font-weight: 600; color: #111827;">${formatter.format(t.total_amount || 0)}</td>
-            </tr>
-          `
-                  )
-                  .join("")
-          }
-        </tbody>
-      </table>
-
-      <div class="signature-area">
-        <div class="signature-box">
-          <p>Desa Berakit, ${new Date().toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}</p>
-          <p style="font-weight: 600; margin-top: 4px;">Kepala BUMDes Berakit</p>
-          <div class="signature-line"></div>
-          <p style="font-size: 11px; color: #6b7280;">NIP: ${new Date().getFullYear()}-BRKT-01</p>
-        </div>
-        <div style="clear: both;"></div>
-      </div>
+            <div class="signatures">
+              <div class="sig-box">
+                <div>Mengetahui,</div>
+                <div style="font-weight: bold; margin-top: 2px;">Kepala Desa Berakit</div>
+                <div class="sig-space"></div>
+                <div style="font-weight: bold; border-bottom: 1px solid #111827; display: inline-block; padding: 0 15px;">( ________________________ )</div>
+              </div>
+              <div class="sig-box">
+                <div>Berakit, ${todayPrintStr}</div>
+                <div style="font-weight: bold; margin-top: 2px;">Direktur BUMDes Berakit Maju</div>
+                <div class="sig-space"></div>
+                <div style="font-weight: bold; border-bottom: 1px solid #111827; display: inline-block; padding: 0 15px;">( ________________________ )</div>
+              </div>
+            </div>
+          </div>
+        </body>
+      </html>
     `;
 
-    printEl.innerHTML = htmlContent;
-    document.body.appendChild(printEl);
+    // Iframe Print Engine (Zero blank window)
+    let iframe = document.getElementById("pdf-report-print-iframe") as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = "pdf-report-print-iframe";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      document.body.appendChild(iframe);
+    }
 
-    // Give browser a short tick to parse stylesheets and then trigger printing
-    setTimeout(() => {
-      window.print();
-      
-      // Cleanup after print dialog is closed
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (doc) {
+      doc.open();
+      doc.write(htmlContent);
+      doc.close();
+
       setTimeout(() => {
-        if (printEl) printEl.remove();
-      }, 1000);
-    }, 100);
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        setPdfLoading(false);
+        setIsPdfModalOpen(false);
+      }, 300);
+    } else {
+      setPdfLoading(false);
+    }
   };
 
   return (
@@ -705,9 +701,9 @@ export function WelcomeSection() {
                 Ekspor Transaksi (CSV)
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handlePrintPdf} className="cursor-pointer">
-                <FileText className="size-4 mr-2" />
-                Cetak PDF Laporan
+              <DropdownMenuItem onClick={() => setIsPdfModalOpen(true)} className="cursor-pointer">
+                <FileText className="size-4 mr-2 text-indigo-500" />
+                Cetak PDF Laporan Penjualan
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -840,6 +836,122 @@ export function WelcomeSection() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sales PDF Report Date Range Modal */}
+      <Dialog open={isPdfModalOpen} onOpenChange={setIsPdfModalOpen}>
+        <DialogContent className="max-w-[460px] p-5 border-border/80">
+          <DialogHeader>
+            <DialogTitle className="text-sm font-bold flex items-center gap-2">
+              <Printer className="size-4 text-indigo-500" />
+              Cetak Laporan Penjualan PDF
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground pt-1">
+              Pilih rentang tanggal dan status transaksi untuk diunduh sebagai laporan resmi PDF.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-left">
+            {/* Quick Preset Selector */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Pilihan Rentang Waktu Cepat</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: "month", label: "Bulan Ini" },
+                  { id: "7days", label: "7 Hari Terakhir" },
+                  { id: "30days", label: "30 Hari Terakhir" },
+                  { id: "today", label: "Hari Ini" },
+                  { id: "all", label: "Semua Waktu" },
+                  { id: "custom", label: "Kustom Tanggal" },
+                ].map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => handlePresetChange(p.id)}
+                    className={`py-1.5 px-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                      datePreset === p.id
+                        ? "bg-indigo-600 border-indigo-600 text-white shadow-xs"
+                        : "bg-muted/40 border-border text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Date Inputs */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <Calendar className="size-3 text-indigo-500" /> Tanggal Mulai
+                </label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setDatePreset("custom");
+                  }}
+                  className="h-9 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <Calendar className="size-3 text-indigo-500" /> Tanggal Sampai
+                </label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setDatePreset("custom");
+                  }}
+                  className="h-9 text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                <Filter className="size-3 text-indigo-500" /> Status Transaksi
+              </label>
+              <Select value={pdfStatusFilter} onValueChange={setPdfStatusFilter}>
+                <SelectTrigger className="h-9 w-full text-xs">
+                  <SelectValue placeholder="Pilih Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Status Transaksi</SelectItem>
+                  <SelectItem value="Selesai">Hanya Transaksi Selesai (Lunas)</SelectItem>
+                  <SelectItem value="Dikirim">Dalam Proses / Dikirim</SelectItem>
+                  <SelectItem value="Pending">Hanya Pesanan Pending</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-row justify-end gap-2.5 pt-4 border-t mt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={pdfLoading}
+              onClick={() => setIsPdfModalOpen(false)}
+              className="h-8 text-xs font-semibold px-3 cursor-pointer"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              disabled={pdfLoading}
+              onClick={handlePrintPdf}
+              className="h-8 text-xs font-semibold px-4 bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 cursor-pointer"
+            >
+              {pdfLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Printer className="size-3.5" />}
+              {pdfLoading ? "Memproses..." : "Cetak Laporan PDF"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
