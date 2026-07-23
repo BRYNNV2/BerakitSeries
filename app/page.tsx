@@ -43,6 +43,7 @@ import {
   Youtube,
   Menu,
   ChevronDown,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -761,6 +762,17 @@ export default function StorefrontPage() {
 
   // Cart operations
   const addToCart = (product: Product) => {
+    if (currentUser?.role === "admin") {
+      toast.error("Mode Admin Terdeteksi", {
+        description: "Akun Admin BUMDes tidak dapat melakukan pembelian produk. Silakan gunakan akun Pembeli untuk berbelanja.",
+        duration: 4500,
+        action: {
+          label: "Dashboard Admin",
+          onClick: () => router.push("/dashboard"),
+        },
+      });
+      return;
+    }
     setCart((prevCart) => {
       const existing = prevCart.find((item) => item.product.id === product.id);
       if (existing) {
@@ -798,6 +810,17 @@ export default function StorefrontPage() {
   // Submit checkout
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (currentUser?.role === "admin") {
+      toast.error("Mode Admin Terdeteksi", {
+        description: "Akun Admin BUMDes tidak dapat membuat pesanan transaksi.",
+        action: {
+          label: "Dashboard Admin",
+          onClick: () => router.push("/dashboard"),
+        },
+      });
+      setIsCheckoutOpen(false);
+      return;
+    }
     if (!customerName || !customerPhone || !customerAddress) {
       toast.error("Harap lengkapi semua kolom formulir.");
       return;
@@ -2837,10 +2860,41 @@ export default function StorefrontPage() {
                 <p className="text-[10px] text-zinc-400 text-left leading-relaxed">
                   Pajak dan biaya pengiriman akan dihitung pada saat checkout. Semua produk dikirim langsung dari Desa Berakit.
                 </p>
+                {currentUser?.role === "admin" && (
+                  <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2 text-left">
+                    <AlertTriangle className="size-4 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-bold text-amber-600 dark:text-amber-400">Mode Admin Terdeteksi</p>
+                      <p className="text-[10px] text-amber-600/80 dark:text-amber-400/80 leading-normal">
+                        Akun Anda adalah Admin BUMDes. Admin tidak diizinkan membuat pesanan transaksi.
+                      </p>
+                      <button 
+                        onClick={() => {
+                          setIsCartOpen(false);
+                          router.push("/dashboard");
+                        }}
+                        className="text-[10px] font-bold text-amber-500 hover:underline pt-1 block cursor-pointer"
+                      >
+                        Ke Dashboard Admin &rarr;
+                      </button>
+                    </div>
+                  </div>
+                )}
                 <div className="pt-1 flex gap-3">
                   <Button
                     className="flex-1 h-12 bg-[#bef264] hover:bg-[#b2e658] text-black font-extrabold uppercase text-xs tracking-widest rounded-full flex items-center justify-center gap-2 shadow-md shadow-[#bef264]/10 hover:shadow-[#bef264]/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-none"
                     onClick={() => {
+                      if (currentUser?.role === "admin") {
+                        toast.error("Mode Admin Terdeteksi", {
+                          description: "Akun Admin BUMDes tidak diizinkan melakukan transaksi pembelian.",
+                          duration: 4000,
+                          action: {
+                            label: "Dashboard Admin",
+                            onClick: () => router.push("/dashboard"),
+                          },
+                        });
+                        return;
+                      }
                       setIsCartOpen(false);
                       setIsCheckoutOpen(true);
                     }}
