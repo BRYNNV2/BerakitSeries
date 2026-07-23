@@ -27,9 +27,9 @@ export const metadata: Metadata = {
   title: "BERAKIT SERIES",
   description: "BUMDES Desa Berakit - Elevate Your Style in Every Reality.",
   icons: {
-    icon: "/LogoBerakit.png",
-    shortcut: "/LogoBerakit.png",
-    apple: "/LogoBerakit.png",
+    icon: "/LogoBerakit-favicon.png?v=3",
+    shortcut: "/LogoBerakit-favicon.png?v=3",
+    apple: "/LogoBerakit-favicon.png?v=3",
   },
 };
 
@@ -41,9 +41,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/LogoBerakit.png?v=2" type="image/png" sizes="any" />
-        <link rel="shortcut icon" href="/LogoBerakit.png?v=2" type="image/png" />
-        <link rel="apple-touch-icon" href="/LogoBerakit.png?v=2" />
+        <link rel="icon" href="/LogoBerakit-favicon.png?v=3" type="image/png" sizes="any" />
+        <link rel="shortcut icon" href="/LogoBerakit-favicon.png?v=3" type="image/png" />
+        <link rel="apple-touch-icon" href="/LogoBerakit-favicon.png?v=3" />
       </head>
       <body
         className={`${inter.variable} ${geistMono.variable} ${oswald.variable} antialiased`}
