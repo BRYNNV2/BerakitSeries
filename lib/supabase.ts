@@ -249,6 +249,23 @@ const createLocalClient = (): any => {
             }
           }
           return { data: { publicUrl: "/batik-center.png" } };
+        },
+        remove: async (paths: string[]) => {
+          try {
+            const res = await fetch("/api/storage", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ bucket, paths }),
+            });
+            if (!res.ok) {
+              const errData = await res.json().catch(() => ({}));
+              return { data: null, error: { message: errData.error || "Storage removal failed" } };
+            }
+            const { data, error } = await res.json();
+            return { data, error };
+          } catch (err: any) {
+            return { data: null, error: { message: err.message } };
+          }
         }
       })
     },

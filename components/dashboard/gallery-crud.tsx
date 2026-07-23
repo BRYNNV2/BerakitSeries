@@ -395,6 +395,24 @@ export function GalleryCrud() {
     setSubmitting(true);
     if (isUsingSupabase && supabase) {
       try {
+        // Hapus file gambar dari Supabase Storage / Local Uploads jika ada
+        if (deletingItem.image_url) {
+          try {
+            let fileName = "";
+            if (deletingItem.image_url.includes("/storage/v1/object/public/gallery/")) {
+              fileName = deletingItem.image_url.split("/storage/v1/object/public/gallery/").pop()?.split("?")[0] || "";
+            } else if (deletingItem.image_url.includes("/uploads/")) {
+              fileName = deletingItem.image_url.split("/uploads/").pop()?.split("?")[0] || "";
+            }
+            if (fileName) {
+              await supabase.storage.from("gallery").remove([fileName]);
+            }
+          } catch (storageErr) {
+            console.warn("Gagal menghapus file dari Supabase Storage:", storageErr);
+          }
+        }
+
+        // Hapus baris dari tabel database 'gallery'
         const { data, error } = await supabase
           .from("gallery")
           .delete()
@@ -403,7 +421,7 @@ export function GalleryCrud() {
 
         if (error) throw error;
         if (!data || data.length === 0) {
-          throw new Error("Kebijakan keamanan RLS memblokir aksi hapus.");
+          throw new Error("Data tidak terhapus di Supabase. Pastikan RLS (Row Level Security) pada tabel 'gallery' sudah dinonaktifkan atau buat Kebijakan (Policy) DELETE.");
         }
 
         addActivityLog(
@@ -411,7 +429,7 @@ export function GalleryCrud() {
           `Menghapus foto galeri '${deletingItem.title}' (Supabase)`,
           "gallery"
         );
-        toast.success("Foto galeri berhasil dihapus.");
+        toast.success("Foto galeri berhasil dihapus dari database & storage Supabase.");
         await loadData();
         setIsDeleteOpen(false);
       } catch (err: any) {

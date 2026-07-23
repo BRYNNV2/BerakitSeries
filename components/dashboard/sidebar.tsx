@@ -112,17 +112,22 @@ export function DashboardSidebar({
         try {
           const response = await withTimeout(supabase.auth.getUser());
           const user = response?.data?.user;
-          if (user) {
-            const dbName = user.user_metadata?.full_name;
-            const dbAvatar = user.user_metadata?.avatar_url;
+          
+          // Fetch settings table for admin_avatar / admin_name fallback
+          const { data: setRes } = await supabase.from("settings").select("admin_name, admin_avatar").eq("id", "bumdes_config").single();
+
+          if (user || setRes) {
             const localProfile = localProfileStr ? JSON.parse(localProfileStr) : null;
+            const dbName = user?.user_metadata?.full_name || setRes?.admin_name;
+            const dbAvatar = user?.user_metadata?.avatar_url || setRes?.admin_avatar;
 
             const name = dbName || localProfile?.name || "Admin BUMDes";
             const avatar = dbAvatar || localProfile?.avatar || "https://api.dicebear.com/9.x/glass/svg?seed=Berakit";
-            const email = user.email || "admin@berakit.desa.id";
+            const email = user?.email || localProfile?.email || "admin@berakit.desa.id";
 
-            setAdminProfile({ name, email, avatar });
-            localStorage.setItem("berakit_admin_profile", JSON.stringify({ name, email, avatar }));
+            const finalProfile = { name, email, avatar };
+            setAdminProfile(finalProfile);
+            localStorage.setItem("berakit_admin_profile", JSON.stringify(finalProfile));
           }
         } catch (err) {
           // Silently ignore — local profile already loaded above

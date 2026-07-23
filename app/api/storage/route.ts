@@ -89,4 +89,45 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { bucket, paths } = await req.json();
+    if (!paths || !Array.isArray(paths) || paths.length === 0) {
+      return NextResponse.json({ data: [], error: null });
+    }
+
+    if (!useLocalJsonDb && supabaseServer) {
+      try {
+        const { data, error } = await supabaseServer.storage.from(bucket).remove(paths);
+        if (!error) {
+          return NextResponse.json({ data, error: null });
+        }
+        console.warn(`Supabase Storage remove warning (${error.message}).`);
+      } catch (err: any) {
+        console.warn(`Supabase Storage remove exception (${err.message}).`);
+      }
+    }
+
+    // Local upload directory fallback
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    for (const p of paths) {
+      const fileName = path.basename(p);
+      const fullPath = path.join(uploadDir, fileName);
+      if (fs.existsSync(fullPath)) {
+        try {
+          fs.unlinkSync(fullPath);
+        } catch (e) {
+          console.warn("Failed to delete local upload file:", fullPath);
+        }
+      }
+    }
+
+    return NextResponse.json({ data: paths, error: null });
+  } catch (err: any) {
+    console.error("Storage delete proxy error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
 export const dynamic = "force-dynamic";

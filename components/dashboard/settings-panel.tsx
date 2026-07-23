@@ -190,10 +190,19 @@ export function SettingsPanel() {
         setSettings(loadedSettings);
         localStorage.setItem("berakit_settings", JSON.stringify(loadedSettings));
 
+        // Read local profile first to prevent overwriting custom uploaded avatar with default values
+        const localProfileStr = typeof window !== "undefined" ? localStorage.getItem("berakit_admin_profile") : null;
+        let localProfile: { name?: string; email?: string; avatar?: string } | null = null;
+        if (localProfileStr) {
+          try {
+            localProfile = JSON.parse(localProfileStr);
+          } catch (e) {}
+        }
+
         const loadedProfile = {
-          name: userData?.user?.user_metadata?.full_name || data.admin_name || adminName,
-          email: currentLoggedInEmail,
-          avatar: userData?.user?.user_metadata?.avatar_url || data.admin_avatar || adminAvatar,
+          name: data.admin_name || userData?.user?.user_metadata?.full_name || localProfile?.name || adminName,
+          email: currentLoggedInEmail || data.admin_email || localProfile?.email || adminEmail,
+          avatar: data.admin_avatar || userData?.user?.user_metadata?.avatar_url || localProfile?.avatar || adminAvatar,
         };
         setAdminProfile(loadedProfile);
         localStorage.setItem("berakit_admin_profile", JSON.stringify(loadedProfile));
@@ -285,10 +294,11 @@ export function SettingsPanel() {
           account_holder: settings.accountHolder,
           flat_shipping_rate: settings.flatShippingRate,
           min_free_shipping: settings.minFreeShipping,
+          admin_name: profileName,
+          admin_email: profileEmail,
+          admin_avatar: profileAvatar,
           updated_at: new Date().toISOString(),
         };
-
-
 
         const { error } = await supabase
           .from("settings")
@@ -318,8 +328,8 @@ export function SettingsPanel() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 1024 * 1024) {
-      toast.error("Ukuran file tidak boleh melebihi 1MB.");
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Ukuran file tidak boleh melebihi 2MB.");
       return;
     }
 
@@ -341,6 +351,16 @@ export function SettingsPanel() {
         .getPublicUrl(filePath);
 
       setProfileAvatar(publicUrl);
+
+      // Immediately sync with Zustand & localStorage
+      const updatedProfile = {
+        name: profileName || adminName,
+        email: profileEmail || adminEmail,
+        avatar: publicUrl,
+      };
+      setAdminProfile(updatedProfile);
+      localStorage.setItem("berakit_admin_profile", JSON.stringify(updatedProfile));
+
       toast.success("Foto profil berhasil diunggah ke Supabase Storage!");
     } catch (err: any) {
       console.error("Gagal mengunggah foto profil:", err);
