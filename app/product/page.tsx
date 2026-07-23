@@ -33,6 +33,8 @@ import {
   Eye,
   ChevronDown,
   AlertTriangle,
+  Printer,
+  Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -127,26 +129,84 @@ export default function ProductListingPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<any>(null);
 
+  const checkIsAdmin = React.useCallback(() => {
+    if (currentUser?.role === "admin") return true;
+    if (typeof window !== "undefined") {
+      if (
+        localStorage.getItem("berakit_admin_auth") === "true" ||
+        localStorage.getItem("berakit_user_role") === "admin"
+      ) {
+        return true;
+      }
+      try {
+        const stored = localStorage.getItem("berakit_mock_user");
+        if (stored) {
+          const u = JSON.parse(stored);
+          if (u?.role === "admin" || u?.email === "admin@berakit.desa.id") return true;
+        }
+      } catch (e) {}
+    }
+    return false;
+  }, [currentUser]);
+
   React.useEffect(() => {
     const fetchUser = async () => {
+      // 1. Check local storage admin flags
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("berakit_mock_user");
+          if (stored) {
+            const u = JSON.parse(stored);
+            if (u?.role === "admin" || u?.email === "admin@berakit.desa.id") {
+              localStorage.setItem("berakit_admin_auth", "true");
+              localStorage.setItem("berakit_user_role", "admin");
+              setCurrentUser({ ...u, role: "admin" });
+            }
+          }
+        } catch (e) {}
+      }
+
       if (supabase) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
-            let role = session.user.role;
-            if (!role) {
+            let appRole = "buyer";
+
+            if (session.user.email === "admin@berakit.desa.id") {
+              appRole = "admin";
+            } else {
+              // ALWAYS query profiles table for custom user roles (do NOT rely on session.user.role which is 'authenticated')
               try {
                 const { data: pData } = await supabase
                   .from("profiles")
                   .select("role")
                   .eq("id", session.user.id)
                   .single();
-                if (pData?.role) role = pData.role;
+
+                if (pData?.role) {
+                  appRole = pData.role;
+                } else if (session.user.user_metadata?.role) {
+                  appRole = session.user.user_metadata.role;
+                } else if (session.user.app_metadata?.role) {
+                  appRole = session.user.app_metadata.role;
+                }
               } catch (err) {
                 console.warn("Failed fetching profile role on product mount:", err);
+                if (session.user.user_metadata?.role) {
+                  appRole = session.user.user_metadata.role;
+                }
               }
             }
-            setCurrentUser({ ...session.user, role: role || "buyer" });
+
+            if (appRole === "admin") {
+              localStorage.setItem("berakit_admin_auth", "true");
+              localStorage.setItem("berakit_user_role", "admin");
+            } else {
+              localStorage.removeItem("berakit_admin_auth");
+              localStorage.setItem("berakit_user_role", "buyer");
+            }
+
+            setCurrentUser({ ...session.user, role: appRole });
           }
         } catch (e) {
           console.warn("Failed fetching session in product catalog:", e);
@@ -254,7 +314,7 @@ export default function ProductListingPage() {
             console.warn("Failed fetching profile for checkout autofill:", err);
           }
         }
-        
+
         // 2. Fetch address book (Supabase + localStorage merge)
         try {
           let list: any[] = [];
@@ -266,7 +326,7 @@ export default function ProductListingPage() {
               .order("is_primary", { ascending: false });
             if (addrData) list = addrData;
           }
-          
+
           const localAddrsStr = localStorage.getItem(`berakit_addresses_${currentUser.id}`);
           if (localAddrsStr) {
             const localAddrs = JSON.parse(localAddrsStr);
@@ -276,10 +336,10 @@ export default function ProductListingPage() {
               }
             });
           }
-          
+
           list.sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0));
           setAddressBook(list);
-          
+
           // Select primary address automatically if it exists
           const primary = list.find(a => a.is_primary);
           if (primary) {
@@ -355,7 +415,7 @@ export default function ProductListingPage() {
           // Update Cache
           localStorage.setItem("berakit_products_cache", JSON.stringify(data));
           localStorage.setItem("berakit_products_cache_time", now.toString());
-          
+
           // Sync with general product database
           localStorage.setItem("berakit_products", JSON.stringify(data));
         } else {
@@ -525,7 +585,7 @@ export default function ProductListingPage() {
 
   // Cart operations
   const addToCart = (product: any, quantity = 1, size?: string, length?: number) => {
-    if (currentUser?.role === "admin") {
+    if (checkIsAdmin()) {
       toast.error("Mode Admin Terdeteksi", {
         description: "Akun Admin BUMDes tidak dapat melakukan pembelian produk. Silakan gunakan akun Pembeli untuk berbelanja.",
         duration: 4500,
@@ -561,7 +621,7 @@ export default function ProductListingPage() {
 
     const cartItemId = `${product.id}-${sizeLabel}`;
     const existing = cart.find((item) => item.id === cartItemId);
-    
+
     const cartProduct = {
       ...product,
       price: resolvedPrice,
@@ -578,10 +638,10 @@ export default function ProductListingPage() {
       );
       updateCart(updated);
     } else {
-      updateCart([...cart, { 
-        id: cartItemId, 
-        product: cartProduct, 
-        quantity: Math.min(quantity, maxStock) 
+      updateCart([...cart, {
+        id: cartItemId,
+        product: cartProduct,
+        quantity: Math.min(quantity, maxStock)
       }]);
     }
     toast.success(`${product.name} (${sizeLabel}) ditambahkan ke keranjang`);
@@ -605,7 +665,7 @@ export default function ProductListingPage() {
     updateCart(updated);
   };
 
-  const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
   const cartSubtotal = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
   const checkoutSubtotal = checkoutItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
@@ -615,7 +675,7 @@ export default function ProductListingPage() {
   // Checkout submit
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentUser?.role === "admin") {
+    if (checkIsAdmin()) {
       toast.error("Mode Admin Terdeteksi", {
         description: "Akun Admin BUMDes tidak diizinkan membuat pesanan transaksi.",
         action: {
@@ -667,17 +727,43 @@ export default function ProductListingPage() {
       }
     }
 
-    // Fetch user if logged in
+    // Fetch user if logged in & verify admin role real-time
     let loggedInUserId = null;
+    let isUserAdmin = false;
     if (supabase) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           loggedInUserId = user.id;
+          if (user.email === "admin@berakit.desa.id" || user.user_metadata?.role === "admin" || user.role === "admin") {
+            isUserAdmin = true;
+          } else {
+            const { data: pData } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", user.id)
+              .single();
+            if (pData?.role === "admin") {
+              isUserAdmin = true;
+            }
+          }
         }
       } catch (err) {
         console.warn("Failed fetching user during checkout:", err);
       }
+    }
+
+    if (checkIsAdmin() || isUserAdmin) {
+      toast.error("Mode Admin Terdeteksi", {
+        description: "Akun Admin BUMDes tidak diizinkan membuat pesanan transaksi.",
+        action: {
+          label: "Dashboard Admin",
+          onClick: () => router.push("/dashboard"),
+        },
+      });
+      setIsSubmitting(false);
+      setIsCheckoutOpen(false);
+      return;
     }
 
     const checkoutSubtotal = checkoutItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
@@ -725,9 +811,9 @@ export default function ProductListingPage() {
                 return v;
               });
               const totalStock = updatedVariants.reduce((sum: number, v: any) => sum + (v.stock || 0), 0);
-              await supabase.from("products").update({ 
+              await supabase.from("products").update({
                 size_variants: updatedVariants,
-                stock: totalStock 
+                stock: totalStock
               }).eq("id", item.product.id);
             }
           } else if (item.product.has_custom_length) {
@@ -749,7 +835,7 @@ export default function ProductListingPage() {
         const insertedId = data && data[0] ? data[0].id : orderId;
         setLastCreatedOrderId(insertedId);
         setCheckoutSuccess(true);
-        
+
         if (isDirectCheckout) {
           // Remove the purchased items from the cart if they exist in the cart
           const checkoutItemIds = checkoutItems.map(item => item.id);
@@ -773,6 +859,130 @@ export default function ProductListingPage() {
     }
   };
 
+  const handlePrintUserReceipt = () => {
+    const itemsList = checkoutItems.length > 0 ? checkoutItems : cart;
+    const itemsHtml = itemsList.map((item: any, idx: number) => {
+      const p = item.product || item;
+      const qty = item.quantity || 1;
+      const price = p.price || 0;
+      return `
+        <tr>
+          <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px;">${idx + 1}. ${p.name} ${p.selectedSize ? `(${p.selectedSize})` : ''}</td>
+          <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px; text-align: center;">${qty}</td>
+          <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px; text-align: right;">Rp ${(price * qty).toLocaleString("id-ID")}</td>
+        </tr>
+      `;
+    }).join("");
+
+    const totalAmount = itemsList.reduce((acc: number, item: any) => acc + (item.product?.price || item.price || 0) * (item.quantity || 1), 0);
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Bukti Resi & Pembelian #${lastCreatedOrderId} - BERAKIT SERIES</title>
+          <style>
+            @page { size: auto; margin: 10mm; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; color: #111827; background: #fff; margin: 0; }
+            .label-card { border: 2px solid #111827; border-radius: 12px; padding: 20px; max-width: 600px; margin: 0 auto; box-shadow: none; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #111827; padding-bottom: 12px; margin-bottom: 16px; }
+            .brand { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #166534; }
+            .sub-brand { font-size: 9px; text-transform: uppercase; color: #4b5563; font-weight: 700; }
+            .barcode-box { text-align: right; }
+            .barcode-text { font-family: monospace; font-size: 13px; font-weight: bold; letter-spacing: 2px; background: #f3f4f6; padding: 4px 10px; border-radius: 6px; display: inline-block; border: 1px solid #d1d5db; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+            .box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; font-size: 11px; }
+            .box-title { font-weight: 800; text-transform: uppercase; font-size: 9.5px; color: #6b7280; margin-bottom: 4px; letter-spacing: 0.5px; }
+            .info-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+            .info-table th { background: #f3f4f6; font-size: 10px; text-transform: uppercase; padding: 6px; text-align: left; border: 1px solid #e5e7eb; }
+            .footer-note { background: #fefce8; border: 1px solid #fef08a; padding: 10px; border-radius: 8px; font-size: 9.5px; color: #854d0e; text-align: center; font-weight: 600; }
+          </style>
+        </head>
+        <body>
+          <div class="label-card">
+            <div class="header">
+              <div>
+                <div class="brand">BUMDES BERAKIT MAJU</div>
+                <div class="sub-brand">BERAKIT SERIES // BUKTI PESANAN & KARTU RETUR PEMBELI</div>
+              </div>
+              <div class="barcode-box">
+                <div class="barcode-text">${lastCreatedOrderId}</div>
+                <div style="font-size: 9px; color: #6b7280; margin-top: 4px; font-weight: bold;">STATUS: PESANAN DIPROSES</div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="box">
+                <div class="box-title">📍 PENGIRIM (SENDER)</div>
+                <strong>BUMDes Berakit Maju (BUMDes Official)</strong><br />
+                Jl. Wisata Pengudang-Berakit, Teluk Sebong<br />
+                Kabupaten Bintan, Kepulauan Riau (29153)<br />
+                Telp: 0812-3456-7890
+              </div>
+              <div class="box">
+                <div class="box-title">👤 PEMBELI (BUYER)</div>
+                <strong style="font-size: 12px; color: #111827;">${customerName}</strong><br />
+                Telp: <strong>${customerPhone}</strong><br />
+                ${customerAddress}
+              </div>
+            </div>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 10.5px; display: flex; justify-content: space-between;">
+              <div><strong>ORDER ID:</strong> ${lastCreatedOrderId}</div>
+              <div><strong>PEMBAYARAN:</strong> ${paymentMethod}</div>
+              <div><strong>TOTAL:</strong> Rp ${totalAmount.toLocaleString("id-ID")}</div>
+            </div>
+
+            <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; color: #374151;">Rincian Barang Dipesan:</div>
+            <table class="info-table">
+              <thead>
+                <tr>
+                  <th>Nama Produk</th>
+                  <th style="text-align: center;">Qty</th>
+                  <th style="text-align: right;">Harga</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div class="footer-note">
+              🛡️ BUKTI RESMI PEMBELIAN & KARTU RETUR GARANSI BUMDES BERAKIT<br />
+              <span style="font-weight: normal; font-size: 9px;">Simpan bukti resi/nota ini sebagai dokumen klaim retur atau garansi barang jika terjadi kendala pengiriman.</span>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    let iframe = document.getElementById("buyer-print-iframe") as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = "buyer-print-iframe";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      document.body.appendChild(iframe);
+    }
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) return;
+
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      toast.success("Bukti Resi & Pembelian siap dicetak / disimpan PDF.");
+    }, 250);
+  };
+
   const handleCheckoutClose = () => {
     setIsCheckoutOpen(false);
     setCheckoutSuccess(false);
@@ -792,7 +1002,7 @@ export default function ProductListingPage() {
       {/* Top Banner Navigation */}
       <header ref={headerRef} className="fixed top-0 inset-x-0 z-40 w-full border-b border-zinc-200/50 bg-white/90 backdrop-blur-md">
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
-          <span 
+          <span
             className="uppercase tracking-normal cursor-pointer select-none"
             style={{
               fontFamily: "'Inter', system-ui, sans-serif",
@@ -860,26 +1070,26 @@ export default function ProductListingPage() {
                 Company <ChevronDown className="size-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => router.push("/about")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
                   About Us
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => router.push("/careers")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
                   Careers
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
                   <span>Press</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
@@ -901,33 +1111,33 @@ export default function ProductListingPage() {
                 Support <ChevronDown className="size-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => router.push("/contact")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
                   Contact Us
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => router.push("/faq")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
                   FAQs
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
                   <span>Shipping</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
                   <span>Returns</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => router.push("/size-guide")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
@@ -942,7 +1152,7 @@ export default function ProductListingPage() {
               <Search className="size-[20px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
             </button>
             {currentUser ? (
-              <button 
+              <button
                 className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
@@ -956,7 +1166,7 @@ export default function ProductListingPage() {
                 Dashboard
               </button>
             ) : (
-              <button 
+              <button
                 className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
@@ -982,7 +1192,7 @@ export default function ProductListingPage() {
               )}
             </button>
             {/* Mobile Hamburger Icon */}
-            <button 
+            <button
               className="md:hidden text-black hover:opacity-80 transition-opacity"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
@@ -993,21 +1203,19 @@ export default function ProductListingPage() {
       </header>
 
       {/* Mobile Navigation Drawer */}
-      <div 
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden overflow-hidden ${
-          isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
+      <div
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden overflow-hidden ${isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
         onClick={() => setIsMobileMenuOpen(false)}
       >
-        <div 
-          className={`absolute top-0 right-0 w-[80%] max-w-[300px] h-full bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col justify-between ${
-            isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+        <div
+          className={`absolute top-0 right-0 w-[80%] max-w-[300px] h-full bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col justify-between ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+            }`}
           onClick={(e) => e.stopPropagation()}
         >
           <div>
             <div className="flex items-center justify-between mb-8">
-              <span 
+              <span
                 className="uppercase tracking-normal font-black text-xl"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
@@ -1016,14 +1224,14 @@ export default function ProductListingPage() {
               >
                 BERAKIT SERIES.
               </span>
-              <button 
+              <button
                 className="text-black hover:opacity-80 transition-opacity"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <X className="size-6" strokeWidth={2.5} style={{ color: "lab(2.75381 0 0)" }} />
               </button>
             </div>
-            
+
             <nav className="flex flex-col gap-4">
               <a
                 href="/"
@@ -1052,7 +1260,7 @@ export default function ProductListingPage() {
 
               {/* Company Accordion / Nested Items */}
               <div className="py-2 border-b border-zinc-100 flex flex-col gap-2">
-                <span 
+                <span
                   className="text-lg font-bold"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 >
@@ -1094,7 +1302,7 @@ export default function ProductListingPage() {
 
               {/* Support Accordion / Nested Items */}
               <div className="py-2 border-b border-zinc-100 flex flex-col gap-2">
-                <span 
+                <span
                   className="text-lg font-bold"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 >
@@ -1143,10 +1351,10 @@ export default function ProductListingPage() {
               </div>
             </nav>
           </div>
-          
+
           <div className="pt-6 border-t border-zinc-100 flex flex-col gap-4">
             {currentUser ? (
-              <button 
+              <button
                 className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
@@ -1156,7 +1364,7 @@ export default function ProductListingPage() {
                 Dashboard
               </button>
             ) : (
-              <button 
+              <button
                 className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
@@ -1172,16 +1380,16 @@ export default function ProductListingPage() {
 
       {/* Main Content Body */}
       <main className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-10 flex-1">
-        
+
         {/* Title Section (Matching Reference: THE ARCHIVE & EXPLORE COLLECTION) */}
         <div ref={titleSectionRef} className="space-y-1 mb-8 text-left">
-          <span 
+          <span
             className="text-[11px] font-bold tracking-widest text-[#94a3b8] uppercase block"
             style={{ fontFamily: "var(--font-sans), system-ui, sans-serif" }}
           >
             THE ARCHIVE
           </span>
-          <h1 
+          <h1
             className="uppercase tracking-tight text-black text-4xl sm:text-5xl lg:text-6xl font-black leading-none"
             style={{ fontFamily: "var(--font-oswald), sans-serif" }}
           >
@@ -1190,7 +1398,7 @@ export default function ProductListingPage() {
         </div>
 
         {/* Filter & Search Bar Container (Matching Reference: Pill bar structure) */}
-        <div 
+        <div
           ref={filterBarRef}
           className="w-full bg-white border border-zinc-200/80 rounded-2xl md:rounded-full p-3 mb-10 flex flex-col md:flex-row items-center gap-4 justify-between shadow-xs relative z-30"
         >
@@ -1230,10 +1438,10 @@ export default function ProductListingPage() {
               {filteredProducts.length} ITEMS
             </span>
             <div className="h-6 w-px bg-zinc-200 hidden md:block" />
-            
+
             {/* Custom Sort Dropdown styled exactly like Image 2 */}
             <div ref={sortRef} className="relative w-full md:w-auto">
-              <div 
+              <div
                 className="w-full md:w-auto h-12 px-6 rounded-full border border-zinc-200 bg-white text-xs font-bold uppercase tracking-wider text-zinc-700 hover:bg-zinc-50 transition-colors flex items-center justify-between md:justify-start gap-3 select-none cursor-pointer"
                 onClick={() => setIsSortOpen(!isSortOpen)}
               >
@@ -1254,52 +1462,49 @@ export default function ProductListingPage() {
 
               {/* Dropdown Floating Card */}
               {isSortOpen && (
-                <div 
+                <div
                   className="absolute right-0 top-[calc(100%+8px)] z-50 bg-white border border-zinc-200/60 rounded-[28px] p-3 w-[220px] shadow-xl shadow-zinc-200/50 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                   {/* Option 1: Newest */}
-                  <div 
+                  <div
                     onClick={() => {
                       setSortBy("newest");
                       setIsSortOpen(false);
                     }}
-                    className={`p-4 flex flex-col items-start text-left cursor-pointer rounded-[20px] transition-all ${
-                      sortBy === "newest" 
-                        ? "bg-[#090d16] text-white" 
+                    className={`p-4 flex flex-col items-start text-left cursor-pointer rounded-[20px] transition-all ${sortBy === "newest"
+                        ? "bg-[#090d16] text-white"
                         : "text-zinc-600 hover:text-black hover:bg-zinc-50"
-                    }`}
+                      }`}
                   >
                     <span className="text-[11px] tracking-wider font-extrabold leading-tight">NEWEST</span>
                     <span className="text-[11px] tracking-wider font-extrabold leading-tight">ARRIVALS</span>
                   </div>
 
                   {/* Option 2: Price Low to High */}
-                  <div 
+                  <div
                     onClick={() => {
                       setSortBy("price-low");
                       setIsSortOpen(false);
                     }}
-                    className={`p-4 flex flex-col items-start text-left cursor-pointer rounded-[20px] transition-all ${
-                      sortBy === "price-low" 
-                        ? "bg-[#090d16] text-white" 
+                    className={`p-4 flex flex-col items-start text-left cursor-pointer rounded-[20px] transition-all ${sortBy === "price-low"
+                        ? "bg-[#090d16] text-white"
                         : "text-zinc-600 hover:text-black hover:bg-zinc-50"
-                    }`}
+                      }`}
                   >
                     <span className="text-[11px] tracking-wider font-extrabold leading-tight">PRICE: LOW TO</span>
                     <span className="text-[11px] tracking-wider font-extrabold leading-tight">HIGH</span>
                   </div>
 
                   {/* Option 3: Price High to Low */}
-                  <div 
+                  <div
                     onClick={() => {
                       setSortBy("price-high");
                       setIsSortOpen(false);
                     }}
-                    className={`p-4 flex flex-col items-start text-left cursor-pointer rounded-[20px] transition-all ${
-                      sortBy === "price-high" 
-                        ? "bg-[#090d16] text-white" 
+                    className={`p-4 flex flex-col items-start text-left cursor-pointer rounded-[20px] transition-all ${sortBy === "price-high"
+                        ? "bg-[#090d16] text-white"
                         : "text-zinc-600 hover:text-black hover:bg-zinc-50"
-                    }`}
+                      }`}
                   >
                     <span className="text-[11px] tracking-wider font-extrabold leading-tight">PRICE: HIGH TO</span>
                     <span className="text-[11px] tracking-wider font-extrabold leading-tight">LOW</span>
@@ -1323,8 +1528,8 @@ export default function ProductListingPage() {
               <h3 className="text-lg font-bold text-zinc-800 uppercase" style={{ fontFamily: "'Oswald', sans-serif" }}>No Products Found</h3>
               <p className="text-zinc-500 text-sm max-w-sm">We couldn&apos;t find any batik matching your current filters. Try resetting search or selecting a different category.</p>
             </div>
-            <Button 
-              onClick={() => { setSelectedCategory("all"); setSearchQuery(""); }} 
+            <Button
+              onClick={() => { setSelectedCategory("all"); setSearchQuery(""); }}
               className="bg-black hover:bg-zinc-800 text-white rounded-full px-6 py-2 text-xs font-bold uppercase tracking-wider mt-2"
             >
               Reset Filters
@@ -1334,8 +1539,8 @@ export default function ProductListingPage() {
           <>
             <div ref={gridRef} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6 sm:gap-x-6 sm:gap-y-10">
               {slicedProducts.map((product) => (
-                <div 
-                  key={product.id} 
+                <div
+                  key={product.id}
                   className="product-card-animate group flex flex-col cursor-pointer"
                   onClick={() => {
                     setSelectedProduct(product);
@@ -1357,7 +1562,7 @@ export default function ProductListingPage() {
                           </Badge>
                         )}
                       </div>
-                      
+
                       {/* Main Image */}
                       <img
                         src={product.image_url}
@@ -1365,10 +1570,10 @@ export default function ProductListingPage() {
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                       />
-                      
+
                       {/* Quick View button — hidden on mobile tap-first UX, shown on hover desktop */}
                       <div className="absolute inset-0 bg-black/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-[500ms] ease-[cubic-bezier(0.16,1,0.3,1)] hidden sm:flex items-end justify-center pb-6">
-                        <div 
+                        <div
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedProduct(product);
@@ -1386,7 +1591,7 @@ export default function ProductListingPage() {
                   {/* Info Under Card */}
                   <div className="mt-2.5 sm:mt-4 flex flex-col text-left px-1 sm:px-0">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-4">
-                      <span 
+                      <span
                         className="font-bold text-xs sm:text-base text-zinc-900 uppercase tracking-tight line-clamp-2 sm:line-clamp-1 group-hover:text-black transition-colors leading-tight"
                         style={{ fontFamily: "'Inter', sans-serif" }}
                       >
@@ -1423,15 +1628,15 @@ export default function ProductListingPage() {
         // Prevent immediate close if click outside is triggered while closing
         if (!isClosing) setIsQuickViewOpen(open);
       }}>
-        <DialogContent 
+        <DialogContent
           onOpenAutoFocus={(e) => e.preventDefault()}
           className="w-[94vw] md:w-full max-w-3xl bg-white border border-white shadow-[0_4px_16px_rgba(0,0,0,0.08),0_16px_40px_rgba(0,0,0,0.12),0_40px_80px_-20px_rgba(0,0,0,0.15)] p-0 overflow-hidden rounded-[30px] md:rounded-[40px] [&>button]:hidden duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.9] data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-[0.95] data-[state=open]:slide-in-from-left-0 data-[state=open]:slide-in-from-top-0 data-[state=closed]:slide-out-to-left-0 data-[state=closed]:slide-out-to-top-0 max-h-[92vh] overflow-y-auto"
         >
           {selectedProduct && (
             <div className="grid grid-cols-1 md:grid-cols-2 relative">
-              
+
               {/* Custom Close Button with Spinner Animation on Click/Hover */}
-              <div 
+              <div
                 onClick={() => {
                   setIsClosing(true);
                   setTimeout(() => {
@@ -1470,24 +1675,24 @@ export default function ProductListingPage() {
                       {selectedProduct.category}
                     </span>
                     <span className="text-[10px] font-mono font-bold text-zinc-400 mr-10">
-                      STOCK: {selectedProduct.is_active === false 
-                        ? 0 
-                        : (selectedProduct.has_sizes 
-                          ? activeStock 
-                          : selectedProduct.has_custom_length 
+                      STOCK: {selectedProduct.is_active === false
+                        ? 0
+                        : (selectedProduct.has_sizes
+                          ? activeStock
+                          : selectedProduct.has_custom_length
                             ? `${(selectedProduct.stock / 100).toFixed(1)} m`
                             : selectedProduct.stock)}
                     </span>
                   </div>
-                  
+
                   {/* Title (Oswald/Inter bold condensed uppercase) */}
-                  <DialogTitle 
+                  <DialogTitle
                     className="text-2xl md:text-4xl font-black uppercase text-zinc-950 leading-[1.05] tracking-tight mb-1"
                     style={{ fontFamily: "'Inter', sans-serif" }}
                   >
                     {selectedProduct.name}
                   </DialogTitle>
-                  
+
                   {/* Price */}
                   <span className="text-lg md:text-[22px] font-black text-zinc-950 block">
                     Rp {activePrice.toLocaleString("id-ID")}
@@ -1495,7 +1700,7 @@ export default function ProductListingPage() {
 
                   {/* Horizontal Divider (matching final reference image) */}
                   <div className="w-full h-px bg-zinc-200/60 my-3 md:my-4" />
-                  
+
                   {/* Description */}
                   <DialogDescription className="text-zinc-500 text-xs leading-relaxed font-medium max-w-xs mt-1">
                     {selectedProduct.description}
@@ -1507,7 +1712,7 @@ export default function ProductListingPage() {
                   <div>
                     <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-zinc-900 mb-3">
                       <span>PILIH UKURAN</span>
-                      <span 
+                      <span
                         onClick={() => router.push("/size-guide")}
                         className="underline cursor-pointer text-zinc-400 hover:text-zinc-600 transition-colors"
                       >
@@ -1521,13 +1726,12 @@ export default function ProductListingPage() {
                           onClick={() => {
                             if (v.stock > 0) setSelectedSize(v.size);
                           }}
-                          className={`h-11 px-4 rounded-full text-xs font-extrabold transition-all duration-300 border flex items-center justify-center cursor-pointer select-none ${
-                            v.stock === 0
+                          className={`h-11 px-4 rounded-full text-xs font-extrabold transition-all duration-300 border flex items-center justify-center cursor-pointer select-none ${v.stock === 0
                               ? "bg-zinc-50 text-zinc-300 border-zinc-100 line-through cursor-not-allowed"
                               : selectedSize === v.size
                                 ? "bg-[#bef264] text-black border-transparent shadow-md shadow-[#bef264]/40 scale-105"
                                 : "bg-white text-zinc-800 border-zinc-200 hover:border-zinc-400 hover:bg-zinc-50"
-                          }`}
+                            }`}
                         >
                           {v.size}
                         </div>
@@ -1543,7 +1747,7 @@ export default function ProductListingPage() {
                       <span>PANJANG KAIN (CENTIMETER)</span>
                       <span className="text-zinc-400 font-mono">Rp {(selectedProduct.price_per_cm || 0).toLocaleString("id-ID")}/cm</span>
                     </div>
-                    
+
                     {/* Centimeter Input Control */}
                     <div className="flex items-center gap-3">
                       <button
@@ -1583,11 +1787,10 @@ export default function ProductListingPage() {
                           key={preset}
                           type="button"
                           onClick={() => setCustomLength(Math.max((selectedProduct.min_length_cm || 100), Math.min(selectedProduct.stock, preset)))}
-                          className={`flex-1 py-1.5 rounded-lg border text-[10px] font-black transition-all cursor-pointer ${
-                            customLength === preset
+                          className={`flex-1 py-1.5 rounded-lg border text-[10px] font-black transition-all cursor-pointer ${customLength === preset
                               ? "bg-zinc-950 text-white border-transparent"
                               : "bg-white text-zinc-700 border-zinc-200 hover:bg-zinc-50"
-                          }`}
+                            }`}
                         >
                           {preset === 100 ? "1 Meter" : `${(preset / 100).toFixed(1)} Meter`}
                         </button>
@@ -1606,7 +1809,7 @@ export default function ProductListingPage() {
                       <span>JUMLAH PEMBELIAN</span>
                       <span className="text-zinc-400 font-mono">Maks: {maxQuantityAllowed}</span>
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
@@ -1649,8 +1852,8 @@ export default function ProductListingPage() {
                       <button
                         onClick={() => {
                           addToCart(
-                            selectedProduct, 
-                            purchaseQty, 
+                            selectedProduct,
+                            purchaseQty,
                             selectedProduct.has_sizes ? selectedSize : undefined,
                             selectedProduct.has_custom_length ? customLength : undefined
                           );
@@ -1666,7 +1869,7 @@ export default function ProductListingPage() {
                       {/* BUY NOW Button (Black) */}
                       <button
                         onClick={() => {
-                          if (currentUser?.role === "admin") {
+                          if (checkIsAdmin()) {
                             toast.error("Mode Admin Terdeteksi", {
                               description: "Akun Admin BUMDes tidak dapat melakukan pembelian produk. Silakan gunakan akun Pembeli untuk berbelanja.",
                               duration: 4500,
@@ -1684,7 +1887,7 @@ export default function ProductListingPage() {
                             }, 1500);
                             return;
                           }
-                          
+
                           let resolvedPrice = selectedProduct.price;
                           let sizeLabel = selectedProduct.has_sizes ? selectedSize : "Standard";
                           let maxStock = selectedProduct.stock;
@@ -1746,16 +1949,14 @@ export default function ProductListingPage() {
       </Dialog>
 
       {/* 2. SHOPPING CART DRAWER (RIGHT SLIDE-OUT) */}
-      <div 
-        className={`fixed inset-0 z-50 bg-black/20 backdrop-blur-2xl transition-opacity duration-300 ${
-          isCartOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
+      <div
+        className={`fixed inset-0 z-50 bg-black/20 backdrop-blur-2xl transition-opacity duration-300 ${isCartOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
         onClick={() => setIsCartOpen(false)}
       >
-        <div 
-          className={`absolute top-0 right-0 w-full sm:w-[420px] h-full bg-white text-zinc-900 shadow-[-8px_0_40px_rgba(0,0,0,0.1)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col ${
-            isCartOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+        <div
+          className={`absolute top-0 right-0 w-full sm:w-[420px] h-full bg-white text-zinc-900 shadow-[-8px_0_40px_rgba(0,0,0,0.1)] transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] flex flex-col ${isCartOpen ? "translate-x-0" : "translate-x-full"
+            }`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Cart Header */}
@@ -1768,7 +1969,7 @@ export default function ProductListingPage() {
                 ({cartItemCount})
               </span>
             </div>
-            <button 
+            <button
               className="text-zinc-400 hover:text-zinc-900 transition-colors p-1"
               onClick={() => setIsCartOpen(false)}
             >
@@ -1791,16 +1992,16 @@ export default function ProductListingPage() {
             ) : (
               <div className="p-5 space-y-3">
                 {cart.map((item) => (
-                  <div 
+                  <div
                     key={item.id || item.product.id}
                     className="bg-zinc-50 border border-zinc-100 rounded-2xl p-4 flex gap-4 items-center animate-in fade-in duration-200"
                   >
                     <div className="size-16 rounded-xl bg-white border border-zinc-100 p-2 shrink-0 flex items-center justify-center">
-                      <img 
-                        src={item.product.image_url} 
-                        alt={item.product.name} 
+                      <img
+                        src={item.product.image_url}
+                        alt={item.product.name}
                         loading="lazy"
-                        className="max-h-full max-w-full object-contain" 
+                        className="max-h-full max-w-full object-contain"
                       />
                     </div>
                     <div className="flex-1 text-left min-w-0">
@@ -1823,14 +2024,14 @@ export default function ProductListingPage() {
                         </span>
                         {/* Quantity Selector */}
                         <div className="flex items-center gap-2 bg-white border border-zinc-200 rounded-full px-2 py-1">
-                          <button 
+                          <button
                             className="text-zinc-400 hover:text-zinc-900 p-0.5 transition-colors cursor-pointer"
                             onClick={() => updateQuantity(item.id || item.product.id, -1)}
                           >
                             <Minus className="size-3" />
                           </button>
                           <span className="text-xs font-bold px-1.5 text-zinc-900">{item.quantity}</span>
-                          <button 
+                          <button
                             className="text-zinc-400 hover:text-zinc-900 p-0.5 transition-colors cursor-pointer"
                             onClick={() => updateQuantity(item.id || item.product.id, 1)}
                           >
@@ -1839,7 +2040,7 @@ export default function ProductListingPage() {
                         </div>
                       </div>
                     </div>
-                    <button 
+                    <button
                       className="text-zinc-300 hover:text-red-500 p-2 shrink-0 transition-colors cursor-pointer"
                       onClick={() => removeFromCart(item.id || item.product.id)}
                     >
@@ -1861,7 +2062,7 @@ export default function ProductListingPage() {
               <p className="text-[10px] text-zinc-400 text-left leading-relaxed">
                 Pajak dan biaya pengiriman akan dihitung pada saat checkout. Semua produk dikirim langsung dari Desa Berakit.
               </p>
-              {currentUser?.role === "admin" && (
+              {checkIsAdmin() && (
                 <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2 text-left">
                   <AlertTriangle className="size-4 text-amber-500 shrink-0 mt-0.5" />
                   <div className="space-y-0.5">
@@ -1869,7 +2070,7 @@ export default function ProductListingPage() {
                     <p className="text-[10px] text-amber-600/80 dark:text-amber-400/80 leading-normal">
                       Akun Anda adalah Admin BUMDes. Admin tidak diizinkan membuat pesanan transaksi.
                     </p>
-                    <button 
+                    <button
                       onClick={() => {
                         setIsCartOpen(false);
                         router.push("/dashboard");
@@ -1882,10 +2083,10 @@ export default function ProductListingPage() {
                 </div>
               )}
               <div className="pt-1 flex gap-3">
-                <Button 
+                <Button
                   className="flex-1 h-12 bg-[#bef264] hover:bg-[#b2e658] text-black font-extrabold uppercase text-xs tracking-widest rounded-full flex items-center justify-center gap-2 shadow-md shadow-[#bef264]/10 hover:shadow-[#bef264]/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-none"
                   onClick={() => {
-                    if (currentUser?.role === "admin") {
+                    if (checkIsAdmin()) {
                       toast.error("Mode Admin Terdeteksi", {
                         description: "Akun Admin BUMDes tidak diizinkan melakukan transaksi pembelian.",
                         duration: 4000,
@@ -1914,7 +2115,7 @@ export default function ProductListingPage() {
 
       {/* 3. CHECKOUT DIALOG / POPUP */}
       <Dialog open={isCheckoutOpen} onOpenChange={handleCheckoutClose}>
-        <DialogContent 
+        <DialogContent
           onOpenAutoFocus={(e) => e.preventDefault()}
           className="w-[94vw] md:w-full max-w-md bg-white border border-zinc-200 text-zinc-900 rounded-3xl p-6 max-h-[92vh] overflow-y-auto"
         >
@@ -1932,12 +2133,23 @@ export default function ProductListingPage() {
                   Terima kasih telah memesan di BERAKIT SERIES. Admin kami akan segera menghubungi Anda melalui nomor telepon untuk konfirmasi pengiriman.
                 </DialogDescription>
               </div>
-              <Button 
-                onClick={handleCheckoutClose}
-                className="w-full bg-[#bef264] hover:bg-[#bef264]/90 text-black font-bold uppercase text-xs tracking-wider py-5 rounded-full"
-              >
-                Kembali Belanja
-              </Button>
+              <div className="space-y-2 w-full pt-2">
+                <Button
+                  type="button"
+                  onClick={handlePrintUserReceipt}
+                  variant="outline"
+                  className="w-full border-zinc-300 hover:bg-zinc-100 text-zinc-900 font-bold uppercase text-xs tracking-wider py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Printer className="size-4" /> Unduh Bukti Resi & Retur (PDF)
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleCheckoutClose}
+                  className="w-full bg-[#bef264] hover:bg-[#bef264]/90 text-black font-bold uppercase text-xs tracking-wider py-4 rounded-full cursor-pointer"
+                >
+                  Kembali Belanja
+                </Button>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleCheckoutSubmit} className="space-y-6 text-left">
@@ -2053,13 +2265,12 @@ export default function ProductListingPage() {
                       type="button"
                       disabled={!isCodAllowed}
                       onClick={() => setPaymentMethod("COD")}
-                      className={`py-3 rounded-xl border text-[11px] font-extrabold uppercase transition-all ${
-                        !isCodAllowed 
+                      className={`py-3 rounded-xl border text-[11px] font-extrabold uppercase transition-all ${!isCodAllowed
                           ? "bg-zinc-50 border-zinc-100 text-zinc-300 opacity-50 cursor-not-allowed"
-                          : paymentMethod === "COD" 
-                            ? "bg-zinc-950 border-zinc-950 text-white shadow-md shadow-zinc-950/15" 
+                          : paymentMethod === "COD"
+                            ? "bg-zinc-950 border-zinc-950 text-white shadow-md shadow-zinc-950/15"
                             : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950"
-                      }`}
+                        }`}
                     >
                       Bayar di Tempat (COD) {!isCodAllowed && " (Nonaktif)"}
                     </button>
@@ -2067,13 +2278,12 @@ export default function ProductListingPage() {
                       type="button"
                       disabled={!isBankAllowed}
                       onClick={() => setPaymentMethod("Transfer")}
-                      className={`py-3 rounded-xl border text-[11px] font-extrabold uppercase transition-all ${
-                        !isBankAllowed 
+                      className={`py-3 rounded-xl border text-[11px] font-extrabold uppercase transition-all ${!isBankAllowed
                           ? "bg-zinc-50 border-zinc-100 text-zinc-300 opacity-50 cursor-not-allowed"
-                          : paymentMethod === "Transfer" 
-                            ? "bg-zinc-950 border-zinc-950 text-white shadow-md shadow-zinc-950/15" 
+                          : paymentMethod === "Transfer"
+                            ? "bg-zinc-950 border-zinc-950 text-white shadow-md shadow-zinc-950/15"
                             : "bg-white border-zinc-200 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950"
-                      }`}
+                        }`}
                     >
                       Transfer Bank {!isBankAllowed && " (Nonaktif)"}
                     </button>
@@ -2085,7 +2295,7 @@ export default function ProductListingPage() {
                   <div className="space-y-4 pt-2 border-t border-zinc-200 animate-in fade-in slide-in-from-top-1 duration-200">
                     <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-4 space-y-3">
                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Rekening Tujuan Transfer</span>
-                      
+
                       {/* Bank 1 */}
                       <div className="flex flex-row items-center justify-between gap-2 py-2 border-b border-zinc-200">
                         <div className="min-w-0 flex-1">

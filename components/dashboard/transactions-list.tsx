@@ -49,6 +49,8 @@ import {
   AlertTriangle,
   Eye,
   Truck,
+  RefreshCw,
+  Printer,
 } from "lucide-react";
 import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
@@ -159,10 +161,185 @@ export function TransactionsList() {
     }
   };
 
+  const generateResiNumber = (courier: string, orderId?: string) => {
+    let prefix = "BRKT";
+    if (courier.includes("J&T")) prefix = "JNT";
+    else if (courier.includes("JNE")) prefix = "JNE";
+    else if (courier.includes("SiCepat")) prefix = "SCP";
+    else if (courier.includes("POS")) prefix = "POS";
+    else if (courier.includes("Lokal")) prefix = "LOKAL";
+
+    const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, "");
+    
+    let orderSuffix = "";
+    if (orderId) {
+      const cleanId = orderId.replace(/\D/g, "");
+      orderSuffix = cleanId.slice(-4) || orderId.slice(-4).toUpperCase();
+    }
+
+    const getRandomCode = () => Math.random().toString(36).substring(2, 7).toUpperCase();
+
+    let candidate = "";
+    let attempts = 0;
+
+    do {
+      const randCode = getRandomCode();
+      candidate = orderSuffix 
+        ? `${prefix}-${dateStr}-${orderSuffix}-${randCode}`
+        : `${prefix}-${dateStr}-${randCode}`;
+
+      // Guarantee no duplicate across all existing transactions
+      const isDuplicate = transactions.some((t) => (t.status || "").includes(candidate));
+      if (!isDuplicate) break;
+      attempts++;
+    } while (attempts < 50);
+
+    return candidate;
+  };
+
+  const handlePrintShippingLabel = (tx: Transaction) => {
+    let itemsList: any[] = [];
+    if (typeof tx.items === "string") {
+      try { itemsList = JSON.parse(tx.items); } catch (e) {}
+    } else if (Array.isArray(tx.items)) {
+      itemsList = tx.items;
+    }
+
+    let courier = "Ekspedisi";
+    let resi = "BELUM TERBIT";
+    if (tx.status && tx.status.startsWith("Dikirim")) {
+      const parts = tx.status.split(":");
+      const trackingParts = parts[1]?.split("|") || [];
+      courier = trackingParts[0]?.trim() || "Ekspedisi";
+      resi = trackingParts[1]?.trim() || "TERDENGAR";
+    } else {
+      resi = `RES-${tx.id.replace(/\D/g, "").slice(-6) || "001"}`;
+    }
+
+    const itemsHtml = itemsList.map((item, idx) => `
+      <tr>
+        <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px;">${idx + 1}. ${item.name} ${item.selected_size ? `(${item.selected_size})` : ''}</td>
+        <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px; text-align: center;">${item.quantity}</td>
+        <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px; text-align: right;">Rp ${(item.price || 0).toLocaleString("id-ID")}</td>
+      </tr>
+    `).join("");
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Label Pengiriman & Retur #${tx.id} - BERAKIT SERIES</title>
+          <style>
+            @page { size: auto; margin: 10mm; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; color: #111827; background: #fff; margin: 0; }
+            .label-card { border: 2px solid #111827; border-radius: 12px; padding: 20px; max-width: 600px; margin: 0 auto; box-shadow: none; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #111827; padding-bottom: 12px; margin-bottom: 16px; }
+            .brand { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #166534; }
+            .sub-brand { font-size: 9px; text-transform: uppercase; color: #4b5563; font-weight: 700; }
+            .barcode-box { text-align: right; }
+            .barcode-text { font-family: monospace; font-size: 13px; font-weight: bold; letter-spacing: 2px; background: #f3f4f6; padding: 4px 10px; border-radius: 6px; display: inline-block; border: 1px solid #d1d5db; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+            .box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; font-size: 11px; }
+            .box-title { font-weight: 800; text-transform: uppercase; font-size: 9.5px; color: #6b7280; margin-bottom: 4px; letter-spacing: 0.5px; }
+            .info-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+            .info-table th { background: #f3f4f6; font-size: 10px; text-transform: uppercase; padding: 6px; text-align: left; border: 1px solid #e5e7eb; }
+            .footer-note { background: #fefce8; border: 1px solid #fef08a; padding: 10px; border-radius: 8px; font-size: 9.5px; color: #854d0e; text-align: center; font-weight: 600; }
+          </style>
+        </head>
+        <body>
+          <div class="label-card">
+            <div class="header">
+              <div>
+                <div class="brand">BUMDES BERAKIT MAJU</div>
+                <div class="sub-brand">BERAKIT SERIES // LABEL PENGIRIMAN & RETUR RESMI</div>
+              </div>
+              <div class="barcode-box">
+                <div class="barcode-text">${resi}</div>
+                <div style="font-size: 9px; color: #6b7280; margin-top: 4px; font-weight: bold;">KURIR: ${courier.toUpperCase()}</div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="box">
+                <div class="box-title">📍 PENGIRIM (SENDER)</div>
+                <strong>BUMDes Berakit Maju (BUMDes Official)</strong><br />
+                Jl. Wisata Pengudang-Berakit, Teluk Sebong<br />
+                Kabupaten Bintan, Kepulauan Riau (29153)<br />
+                Telp: 0812-3456-7890
+              </div>
+              <div class="box">
+                <div class="box-title">👤 PENERIMA (RECEIVER)</div>
+                <strong style="font-size: 12px; color: #111827;">${tx.customer_name}</strong><br />
+                Telp: <strong>${tx.customer_phone}</strong><br />
+                ${tx.address}
+              </div>
+            </div>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 10.5px; display: flex; justify-content: space-between;">
+              <div><strong>ORDER ID:</strong> ${tx.id}</div>
+              <div><strong>PEMBAYARAN:</strong> ${tx.payment_method}</div>
+              <div><strong>TOTAL:</strong> Rp ${(tx.total_amount || 0).toLocaleString("id-ID")}</div>
+            </div>
+
+            <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; color: #374151;">Rincian Barang Dipesan:</div>
+            <table class="info-table">
+              <thead>
+                <tr>
+                  <th>Nama Produk</th>
+                  <th style="text-align: center;">Qty</th>
+                  <th style="text-align: right;">Harga</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div class="footer-note">
+              🛡️ DOKUMEN & KARTU RETUR GARANSI RESMI BUMDES BERAKIT<br />
+              <span style="font-weight: normal; font-size: 9px;">Simpan label resi ini sebagai bukti sah pengiriman. Jika produk rusak/retur garansi, harap sertakan label ini.</span>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Create or reuse hidden iframe to print reliably without blank window
+    let iframe = document.getElementById("shipping-print-iframe") as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = "shipping-print-iframe";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      document.body.appendChild(iframe);
+    }
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) {
+      toast.error("Gagal memuat dokumen cetak.");
+      return;
+    }
+
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      toast.success(`Dokumen Label Resi #${tx.id} siap dicetak / disimpan PDF.`);
+    }, 250);
+  };
+
   const handleShipClick = (tx: Transaction) => {
     setShippingTx(tx);
-    setCourierName("J&T");
-    setTrackingNumber("");
+    const defaultCourier = "J&T Express";
+    setCourierName(defaultCourier);
+    setTrackingNumber(generateResiNumber(defaultCourier, tx.id));
     setIsShipDialogOpen(true);
   };
 
@@ -483,6 +660,10 @@ export function TransactionsList() {
                             <Eye className="size-4 mr-2 text-muted-foreground" />
                             Detail Pesanan
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handlePrintShippingLabel(tx)} className="cursor-pointer font-medium text-indigo-600 focus:text-indigo-600">
+                            <Printer className="size-4 mr-2 text-indigo-500" />
+                            Cetak / Download Label Resi PDF
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           {tx.status !== "Selesai" && !tx.status.startsWith("Dibatalkan") && tx.status !== "Dibatalkan" && (
                             <>
@@ -679,7 +860,17 @@ export function TransactionsList() {
             </div>
           )}
 
-          <DialogFooter className="pt-2 border-t mt-2">
+          <DialogFooter className="pt-2 border-t mt-2 flex flex-row justify-between items-center gap-2">
+            {selectedTx && (
+              <Button
+                type="button"
+                onClick={() => handlePrintShippingLabel(selectedTx)}
+                className="h-8 text-xs font-semibold px-3 bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 cursor-pointer"
+              >
+                <Printer className="size-3.5" />
+                Cetak Label & Bukti Retur PDF
+              </Button>
+            )}
             <Button
               type="button"
               variant="outline"
@@ -708,7 +899,13 @@ export function TransactionsList() {
           <div className="space-y-4 py-3 text-left">
             <div className="space-y-1.5">
               <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Pilih Kurir</label>
-              <Select value={courierName} onValueChange={setCourierName}>
+              <Select 
+                value={courierName} 
+                onValueChange={(val) => {
+                  setCourierName(val);
+                  setTrackingNumber(generateResiNumber(val, shippingTx?.id));
+                }}
+              >
                 <SelectTrigger className="h-9 w-full text-xs">
                   <SelectValue placeholder="Pilih Kurir" />
                 </SelectTrigger>
@@ -723,13 +920,29 @@ export function TransactionsList() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Nomor Resi / Bukti Kirim</label>
-              <Input
-                placeholder="Contoh: JT1093847291 atau Resi-01"
-                value={trackingNumber}
-                onChange={(e) => setTrackingNumber(e.target.value)}
-                className="h-9 text-xs"
-              />
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Nomor Resi / Bukti Kirim</label>
+                <span className="text-[10px] text-indigo-500 font-semibold">✨ Otomatis Terbuat</span>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Contoh: JNT-260723-3456-A8K2"
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  className="h-9 text-xs font-mono font-bold tracking-wider"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTrackingNumber(generateResiNumber(courierName, shippingTx?.id))}
+                  className="h-9 px-2.5 text-[11px] gap-1 shrink-0 cursor-pointer"
+                  title="Generate Nomor Resi Baru"
+                >
+                  <RefreshCw className="size-3 text-indigo-500" />
+                  <span>Acak Resi</span>
+                </Button>
+              </div>
             </div>
           </div>
 

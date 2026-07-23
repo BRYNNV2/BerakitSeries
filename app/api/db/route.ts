@@ -167,6 +167,22 @@ export async function POST(req: NextRequest) {
       }
 
       if (action === "insert") {
+        if (table === "orders") {
+          const itemsToInsert = Array.isArray(data) ? data : [data];
+          for (const item of itemsToInsert) {
+            if (item.user_id && supabaseServer) {
+              try {
+                const { data: prof } = await supabaseServer.from("profiles").select("role, email").eq("id", item.user_id).single();
+                if (prof?.role === "admin" || prof?.email === "admin@berakit.desa.id") {
+                  return NextResponse.json(
+                    { data: null, error: { message: "Akun Admin BUMDes tidak diizinkan membuat pesanan transaksi." } },
+                    { status: 403 }
+                  );
+                }
+              } catch (e) {}
+            }
+          }
+        }
         const { data: resData, error } = await supabaseServer.from(table).insert(data).select();
         return NextResponse.json({ data: resData, error });
       }

@@ -62,10 +62,8 @@ export default function LoginPage() {
             setError(authError.message);
           }
         } else {
-          localStorage.removeItem("berakit_admin_auth");
-          
           const loggedInUser = authData?.user || authData?.session?.user;
-          let userRole = loggedInUser?.role;
+          let userRole = loggedInUser?.role || loggedInUser?.user_metadata?.role || loggedInUser?.app_metadata?.role;
           
           if (loggedInUser && !userRole) {
             try {
@@ -80,9 +78,18 @@ export default function LoginPage() {
             }
           }
 
-          if (userRole === "admin" || email === "admin@berakit.desa.id") {
+          const isAdmin = userRole === "admin" || email === "admin@berakit.desa.id";
+
+          if (isAdmin) {
+            localStorage.setItem("berakit_admin_auth", "true");
+            localStorage.setItem("berakit_user_role", "admin");
+            if (loggedInUser) {
+              localStorage.setItem("berakit_mock_user", JSON.stringify({ ...loggedInUser, role: "admin" }));
+            }
             router.push("/admin");
           } else {
+            localStorage.removeItem("berakit_admin_auth");
+            localStorage.setItem("berakit_user_role", userRole || "buyer");
             router.push("/dashboard");
           }
         }

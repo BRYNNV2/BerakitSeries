@@ -44,6 +44,7 @@ import {
   Menu,
   ChevronDown,
   AlertTriangle,
+  Printer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -122,7 +123,7 @@ export default function StorefrontPage() {
     };
 
     initLenis();
-    
+
     let lastWidth = window.innerWidth;
 
     // Re-evaluate on resize to handle F12 mobile layout toggle without manual page refreshes
@@ -153,7 +154,7 @@ export default function StorefrontPage() {
 
   const collectionsData = React.useMemo(() => {
     const uniqCats = Array.from(new Set(products.map((p) => p.category))).filter(Boolean);
-    
+
     // Default categories if nothing is in the database or to fill up slots
     const defaults = [
       {
@@ -234,26 +235,84 @@ export default function StorefrontPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<any>(null);
 
+  const checkIsAdmin = React.useCallback(() => {
+    if (currentUser?.role === "admin") return true;
+    if (typeof window !== "undefined") {
+      if (
+        localStorage.getItem("berakit_admin_auth") === "true" ||
+        localStorage.getItem("berakit_user_role") === "admin"
+      ) {
+        return true;
+      }
+      try {
+        const stored = localStorage.getItem("berakit_mock_user");
+        if (stored) {
+          const u = JSON.parse(stored);
+          if (u?.role === "admin" || u?.email === "admin@berakit.desa.id") return true;
+        }
+      } catch (e) {}
+    }
+    return false;
+  }, [currentUser]);
+
   React.useEffect(() => {
     const fetchUser = async () => {
+      // 1. Check local storage admin flags
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("berakit_mock_user");
+          if (stored) {
+            const u = JSON.parse(stored);
+            if (u?.role === "admin" || u?.email === "admin@berakit.desa.id") {
+              localStorage.setItem("berakit_admin_auth", "true");
+              localStorage.setItem("berakit_user_role", "admin");
+              setCurrentUser({ ...u, role: "admin" });
+            }
+          }
+        } catch (e) {}
+      }
+
       if (supabase) {
         try {
           const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            let role = session.user.role;
-            if (!role) {
+          const user = session?.user;
+          if (user) {
+            let appRole = "buyer";
+            if (user.email === "admin@berakit.desa.id") {
+              appRole = "admin";
+            } else {
+              // Fetch role from profiles table
               try {
                 const { data: pData } = await supabase
                   .from("profiles")
                   .select("role")
-                  .eq("id", session.user.id)
+                  .eq("id", user.id)
                   .single();
-                if (pData?.role) role = pData.role;
+
+                if (pData?.role) {
+                  appRole = pData.role;
+                } else if (user.role && user.role !== "authenticated") {
+                  appRole = user.role;
+                }
               } catch (err) {
-                console.warn("Failed fetching profile role on home mount:", err);
+                console.warn("Failed fetching profile role:", err);
+                if (user.role && user.role !== "authenticated") {
+                  appRole = user.role;
+                }
               }
             }
-            setCurrentUser({ ...session.user, role: role || "buyer" });
+
+            if (appRole === "admin") {
+              localStorage.setItem("berakit_admin_auth", "true");
+              localStorage.setItem("berakit_user_role", "admin");
+              const updatedUser = { ...user, role: "admin" };
+              localStorage.setItem("berakit_mock_user", JSON.stringify(updatedUser));
+              setCurrentUser(updatedUser);
+            } else {
+              localStorage.removeItem("berakit_admin_auth");
+              localStorage.setItem("berakit_user_role", "buyer");
+              setCurrentUser({ ...user, role: appRole });
+            }
           }
         } catch (e) {
           console.warn("Failed to get session on mount:", e);
@@ -341,7 +400,7 @@ export default function StorefrontPage() {
           // Update Cache
           localStorage.setItem("berakit_products_cache", JSON.stringify(data));
           localStorage.setItem("berakit_products_cache_time", now.toString());
-          
+
           // Sync with general product database
           localStorage.setItem("berakit_products", JSON.stringify(data));
         }
@@ -429,10 +488,10 @@ export default function StorefrontPage() {
   React.useEffect(() => {
     const marqueeEl = marqueeRef.current;
     if (!marqueeEl) return;
-    
+
     // Start from -50% to have buffer on left and right
     gsap.set(marqueeEl, { xPercent: -50 });
-    
+
     // Tween from -50 to -25 to move to the right (speed adjusted to be clean and elegant)
     const tween = gsap.to(marqueeEl, {
       xPercent: -25,
@@ -441,20 +500,20 @@ export default function StorefrontPage() {
       ease: "none",
       paused: false
     });
-    
+
     tweenRef.current = tween;
-    
+
     const handleMouseEnter = () => {
       gsap.to(tween, { timeScale: 0, duration: 0.3, ease: "power2.out", overwrite: "auto" });
     };
-    
+
     const handleMouseLeave = () => {
       gsap.to(tween, { timeScale: 1, duration: 0.5, ease: "power2.out", overwrite: "auto" });
     };
-    
+
     marqueeEl.addEventListener("mouseenter", handleMouseEnter);
     marqueeEl.addEventListener("mouseleave", handleMouseLeave);
-    
+
     return () => {
       if (tween) tween.kill();
       marqueeEl.removeEventListener("mouseenter", handleMouseEnter);
@@ -470,7 +529,7 @@ export default function StorefrontPage() {
     const heroCtaTarget = heroCtaRef.current || ".hero-cta-container";
 
     // 3. Header reveal
-    tl.fromTo(headerTarget, 
+    tl.fromTo(headerTarget,
       { y: -60, opacity: 0 },
       { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" }
     );
@@ -754,7 +813,7 @@ export default function StorefrontPage() {
   const filteredProducts = React.useMemo(() => {
     return products.filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            p.description.toLowerCase().includes(searchQuery.toLowerCase());
+        p.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategory === "Semua" || p.category === selectedCategory;
       return matchesSearch && matchesCategory;
     });
@@ -762,7 +821,7 @@ export default function StorefrontPage() {
 
   // Cart operations
   const addToCart = (product: Product) => {
-    if (currentUser?.role === "admin") {
+    if (checkIsAdmin()) {
       toast.error("Mode Admin Terdeteksi", {
         description: "Akun Admin BUMDes tidak dapat melakukan pembelian produk. Silakan gunakan akun Pembeli untuk berbelanja.",
         duration: 4500,
@@ -810,7 +869,7 @@ export default function StorefrontPage() {
   // Submit checkout
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentUser?.role === "admin") {
+    if (checkIsAdmin()) {
       toast.error("Mode Admin Terdeteksi", {
         description: "Akun Admin BUMDes tidak dapat membuat pesanan transaksi.",
         action: {
@@ -826,19 +885,43 @@ export default function StorefrontPage() {
       return;
     }
 
-    setIsSubmitting(true);
-
-    // Fetch user if logged in
+    // Fetch user if logged in & verify admin role real-time
     let loggedInUserId = null;
+    let isUserAdmin = false;
     if (supabase) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           loggedInUserId = user.id;
+          if (user.email === "admin@berakit.desa.id" || user.user_metadata?.role === "admin" || user.role === "admin") {
+            isUserAdmin = true;
+          } else {
+            const { data: pData } = await supabase
+              .from("profiles")
+              .select("role")
+              .eq("id", user.id)
+              .single();
+            if (pData?.role === "admin") {
+              isUserAdmin = true;
+            }
+          }
         }
       } catch (err) {
         console.warn("Failed fetching user during checkout:", err);
       }
+    }
+
+    if (checkIsAdmin() || isUserAdmin) {
+      toast.error("Mode Admin Terdeteksi", {
+        description: "Akun Admin BUMDes tidak diizinkan membuat pesanan transaksi.",
+        action: {
+          label: "Dashboard Admin",
+          onClick: () => router.push("/dashboard"),
+        },
+      });
+      setIsSubmitting(false);
+      setIsCheckoutOpen(false);
+      return;
     }
 
     const finalAmount = totalCartPrice + (paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate);
@@ -947,7 +1030,7 @@ export default function StorefrontPage() {
       .join("\n");
 
     const message = `Halo BERAKIT SERIES,\nSaya ingin mengonfirmasi pesanan baru dari website:\n\n*Rincian Pembeli:*\n- Nama: ${customerName}\n- HP: ${customerPhone}\n- Alamat: ${customerAddress}\n\n*Pesanan:*\n${itemsSummary}\n- Ongkos Kirim: Rp ${(paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate).toLocaleString("id-ID")}\n- Total Belanja: *Rp ${(totalCartPrice + (paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate)).toLocaleString("id-ID")}*\n- Metode Bayar: *${paymentMethod}*\n\nMohon untuk segera diproses ya. Terima kasih!`;
-    
+
     const url = `https://api.whatsapp.com/send?phone=${sellerPhone}&text=${encodeURIComponent(message)}`;
     window.open(url, "_blank");
 
@@ -959,6 +1042,130 @@ export default function StorefrontPage() {
     setCustomerName("");
     setCustomerPhone("");
     setCustomerAddress("");
+  };
+
+  const handlePrintUserReceipt = () => {
+    const itemsList = cart;
+    const itemsHtml = itemsList.map((item: any, idx: number) => {
+      const p = item.product || item;
+      const qty = item.quantity || 1;
+      const price = p.price || 0;
+      return `
+        <tr>
+          <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px;">${idx + 1}. ${p.name} ${p.selectedSize ? `(${p.selectedSize})` : ''}</td>
+          <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px; text-align: center;">${qty}</td>
+          <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px; text-align: right;">Rp ${(price * qty).toLocaleString("id-ID")}</td>
+        </tr>
+      `;
+    }).join("");
+
+    const finalTotal = totalCartPrice + (paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate);
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Bukti Resi & Pembelian #${lastCreatedOrderId} - BERAKIT SERIES</title>
+          <style>
+            @page { size: auto; margin: 10mm; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; color: #111827; background: #fff; margin: 0; }
+            .label-card { border: 2px solid #111827; border-radius: 12px; padding: 20px; max-width: 600px; margin: 0 auto; box-shadow: none; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #111827; padding-bottom: 12px; margin-bottom: 16px; }
+            .brand { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #166534; }
+            .sub-brand { font-size: 9px; text-transform: uppercase; color: #4b5563; font-weight: 700; }
+            .barcode-box { text-align: right; }
+            .barcode-text { font-family: monospace; font-size: 13px; font-weight: bold; letter-spacing: 2px; background: #f3f4f6; padding: 4px 10px; border-radius: 6px; display: inline-block; border: 1px solid #d1d5db; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+            .box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; font-size: 11px; }
+            .box-title { font-weight: 800; text-transform: uppercase; font-size: 9.5px; color: #6b7280; margin-bottom: 4px; letter-spacing: 0.5px; }
+            .info-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+            .info-table th { background: #f3f4f6; font-size: 10px; text-transform: uppercase; padding: 6px; text-align: left; border: 1px solid #e5e7eb; }
+            .footer-note { background: #fefce8; border: 1px solid #fef08a; padding: 10px; border-radius: 8px; font-size: 9.5px; color: #854d0e; text-align: center; font-weight: 600; }
+          </style>
+        </head>
+        <body>
+          <div class="label-card">
+            <div class="header">
+              <div>
+                <div class="brand">BUMDES BERAKIT MAJU</div>
+                <div class="sub-brand">BERAKIT SERIES // BUKTI PESANAN & KARTU RETUR PEMBELI</div>
+              </div>
+              <div class="barcode-box">
+                <div class="barcode-text">${lastCreatedOrderId}</div>
+                <div style="font-size: 9px; color: #6b7280; margin-top: 4px; font-weight: bold;">STATUS: PESANAN DIPROSES</div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="box">
+                <div class="box-title">📍 PENGIRIM (SENDER)</div>
+                <strong>BUMDes Berakit Maju (BUMDes Official)</strong><br />
+                Jl. Wisata Pengudang-Berakit, Teluk Sebong<br />
+                Kabupaten Bintan, Kepulauan Riau (29153)<br />
+                Telp: 0812-3456-7890
+              </div>
+              <div class="box">
+                <div class="box-title">👤 PEMBELI (BUYER)</div>
+                <strong style="font-size: 12px; color: #111827;">${customerName}</strong><br />
+                Telp: <strong>${customerPhone}</strong><br />
+                ${customerAddress}
+              </div>
+            </div>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 10.5px; display: flex; justify-content: space-between;">
+              <div><strong>ORDER ID:</strong> ${lastCreatedOrderId}</div>
+              <div><strong>PEMBAYARAN:</strong> ${paymentMethod}</div>
+              <div><strong>TOTAL:</strong> Rp ${finalTotal.toLocaleString("id-ID")}</div>
+            </div>
+
+            <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; color: #374151;">Rincian Barang Dipesan:</div>
+            <table class="info-table">
+              <thead>
+                <tr>
+                  <th>Nama Produk</th>
+                  <th style="text-align: center;">Qty</th>
+                  <th style="text-align: right;">Harga</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div class="footer-note">
+              🛡️ BUKTI RESMI PEMBELIAN & KARTU RETUR GARANSI BUMDES BERAKIT<br />
+              <span style="font-weight: normal; font-size: 9px;">Simpan bukti resi/nota ini sebagai dokumen klaim retur atau garansi barang jika terjadi kendala pengiriman.</span>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    let iframe = document.getElementById("buyer-print-iframe") as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = "buyer-print-iframe";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      document.body.appendChild(iframe);
+    }
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) return;
+
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      toast.success("Bukti Resi & Pembelian siap dicetak / disimpan PDF.");
+    }, 250);
   };
 
   const marqueeBrands = [
@@ -979,7 +1186,7 @@ export default function StorefrontPage() {
       {/* Top Banner Navigation */}
       <header ref={headerRef} className="fixed top-0 inset-x-0 z-40 w-full border-b border-zinc-200/50 bg-white md:bg-white/90 md:backdrop-blur-md">
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
-          <span 
+          <span
             className="uppercase tracking-normal cursor-pointer select-none"
             style={{
               fontFamily: "'Inter', system-ui, sans-serif",
@@ -1050,26 +1257,26 @@ export default function StorefrontPage() {
                 Company <ChevronDown className="size-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => router.push("/about")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
                   About Us
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => router.push("/careers")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
                   Careers
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
                   <span>Press</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
@@ -1091,33 +1298,33 @@ export default function StorefrontPage() {
                 Support <ChevronDown className="size-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => router.push("/contact")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
                   Contact Us
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => router.push("/faq")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
                   FAQs
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
                   <span>Shipping</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
                   <span>Returns</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => router.push("/size-guide")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
@@ -1132,7 +1339,7 @@ export default function StorefrontPage() {
               <Search className="size-[20px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
             </button>
             {currentUser ? (
-              <button 
+              <button
                 className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
@@ -1146,7 +1353,7 @@ export default function StorefrontPage() {
                 Dashboard
               </button>
             ) : (
-              <button 
+              <button
                 className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
@@ -1172,7 +1379,7 @@ export default function StorefrontPage() {
               )}
             </button>
             {/* Mobile Hamburger Icon */}
-            <button 
+            <button
               className="md:hidden text-black hover:opacity-80 transition-opacity"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
@@ -1183,21 +1390,19 @@ export default function StorefrontPage() {
       </header>
 
       {/* Mobile Navigation Drawer */}
-      <div 
-        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden overflow-hidden ${
-          isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
+      <div
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-all duration-300 md:hidden overflow-hidden ${isMobileMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
         onClick={() => setIsMobileMenuOpen(false)}
       >
-        <div 
-          className={`absolute top-0 right-0 w-[80%] max-w-[300px] h-full bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col justify-between ${
-            isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+        <div
+          className={`absolute top-0 right-0 w-[80%] max-w-[300px] h-full bg-white p-6 shadow-2xl transition-transform duration-300 flex flex-col justify-between ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+            }`}
           onClick={(e) => e.stopPropagation()}
         >
           <div>
             <div className="flex items-center justify-between mb-8">
-              <span 
+              <span
                 className="uppercase tracking-normal font-black text-xl"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
@@ -1206,14 +1411,14 @@ export default function StorefrontPage() {
               >
                 BERAKIT SERIES.
               </span>
-              <button 
+              <button
                 className="text-black hover:opacity-80 transition-opacity"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <X className="size-6" strokeWidth={2.5} style={{ color: "lab(2.75381 0 0)" }} />
               </button>
             </div>
-            
+
             <nav className="flex flex-col gap-4">
               <a
                 href="/"
@@ -1242,7 +1447,7 @@ export default function StorefrontPage() {
 
               {/* Company Accordion / Nested Items */}
               <div className="py-2 border-b border-zinc-100 flex flex-col gap-2">
-                <span 
+                <span
                   className="text-lg font-bold"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 >
@@ -1284,7 +1489,7 @@ export default function StorefrontPage() {
 
               {/* Support Accordion / Nested Items */}
               <div className="py-2 border-b border-zinc-100 flex flex-col gap-2">
-                <span 
+                <span
                   className="text-lg font-bold"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 >
@@ -1333,10 +1538,10 @@ export default function StorefrontPage() {
               </div>
             </nav>
           </div>
-          
+
           <div className="pt-6 border-t border-zinc-100 flex flex-col gap-4">
             {currentUser ? (
-              <button 
+              <button
                 className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
@@ -1346,7 +1551,7 @@ export default function StorefrontPage() {
                 Dashboard
               </button>
             ) : (
-              <button 
+              <button
                 className="w-full py-3 bg-black text-white font-bold rounded-lg uppercase text-sm tracking-wider hover:bg-zinc-800 transition-colors"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
@@ -1361,7 +1566,7 @@ export default function StorefrontPage() {
       </div>
 
       {/* Hero Section */}
-      <section 
+      <section
         id="hero-section"
         className="relative overflow-hidden min-h-[90vh] flex flex-col justify-between bg-white pt-24 pb-12 border-b border-zinc-200/50"
       >
@@ -1371,7 +1576,7 @@ export default function StorefrontPage() {
 
         {/* Big Background Typography (Placed below the header with custom spacing) */}
         <div className="w-full text-center pt-8 pb-4 relative z-0 px-4 sm:px-8 lg:px-12">
-          <h1 
+          <h1
             className="flex flex-col items-center select-none"
             style={{
               fontFamily: "'Inter', system-ui, sans-serif",
@@ -1380,7 +1585,7 @@ export default function StorefrontPage() {
               lineHeight: "24px"
             }}
           >
-            <span 
+            <span
               className="text-[#111111] block hero-text-bg-1 text-center font-black tracking-tighter uppercase leading-[0.85] text-[7vw] sm:text-[8vw]"
               style={{
                 fontFamily: "'Oswald', Impact, sans-serif",
@@ -1389,7 +1594,7 @@ export default function StorefrontPage() {
             >
               ELEVATE YOUR STYLE
             </span>
-            <span 
+            <span
               className="text-[#bef264] block hero-text-bg-2 text-center font-black tracking-tighter uppercase leading-[0.85] text-[7vw] sm:text-[8vw]"
               style={{
                 fontFamily: "'Oswald', Impact, sans-serif",
@@ -1406,9 +1611,9 @@ export default function StorefrontPage() {
           <div className="relative hero-centerpiece-container">
             {/* Ambient product glow */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(190,242,100,0.25)_0%,rgba(190,242,100,0)_70%)] rounded-full opacity-75 pointer-events-none" />
-            <img 
-              src={processedBatikSrc} 
-              alt="BERAKIT SERIES Centerpiece" 
+            <img
+              src={processedBatikSrc}
+              alt="BERAKIT SERIES Centerpiece"
               className="hero-centerpiece h-[320px] sm:h-[420px] md:h-[500px] object-contain relative z-20 select-none pointer-events-none drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)]"
             />
           </div>
@@ -1435,8 +1640,8 @@ export default function StorefrontPage() {
                 Shop Now
               </Button>
             </a>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="border-zinc-200 bg-white hover:bg-zinc-50 text-black font-bold px-8 py-5 rounded-full text-xs uppercase tracking-wider transition-all"
               onClick={() => {
                 const el = document.getElementById("profil");
@@ -1449,9 +1654,9 @@ export default function StorefrontPage() {
 
           {/* Bottom Right Card */}
           <div className="hero-bottom-right-card hidden lg:block relative rounded-3xl overflow-hidden aspect-video w-[220px] border border-zinc-200/50 group cursor-pointer shadow-md">
-            <img 
-              src="/hero-thumbnail.png" 
-              alt="Video Preview" 
+            <img
+              src="/hero-thumbnail.png"
+              alt="Video Preview"
               loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
@@ -1468,7 +1673,7 @@ export default function StorefrontPage() {
 
       {/* Interactive Marquee Section */}
       <div className="w-full bg-white py-12 border-b border-zinc-200/50 overflow-hidden relative">
-        <div 
+        <div
           className="w-full text-center mb-6 uppercase select-none"
           style={{
             fontFamily: "'Inter', system-ui, sans-serif",
@@ -1480,19 +1685,19 @@ export default function StorefrontPage() {
         >
           As Featured In
         </div>
-        
-        <div 
+
+        <div
           className="select-none relative w-full flex items-center overflow-hidden py-4 cursor-pointer"
         >
-          <div 
-            className="flex whitespace-nowrap min-w-full" 
+          <div
+            className="flex whitespace-nowrap min-w-full"
             ref={marqueeRef}
           >
             {/* Set 1 */}
             <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12 shrink-0">
               {marqueeBrands.map((brand, i) => (
-                <span 
-                  key={`s1-${i}`} 
+                <span
+                  key={`s1-${i}`}
                   className="text-[#e5e7eb] hover:text-[rgb(212,249,49)] transition-colors duration-300 select-none cursor-pointer"
                   style={{
                     fontFamily: "'Oswald', Impact, sans-serif",
@@ -1508,8 +1713,8 @@ export default function StorefrontPage() {
             {/* Set 2 */}
             <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12 shrink-0">
               {marqueeBrands.map((brand, i) => (
-                <span 
-                  key={`s2-${i}`} 
+                <span
+                  key={`s2-${i}`}
                   className="text-[#e5e7eb] hover:text-[rgb(212,249,49)] transition-colors duration-300 select-none cursor-pointer"
                   style={{
                     fontFamily: "'Oswald', Impact, sans-serif",
@@ -1525,8 +1730,8 @@ export default function StorefrontPage() {
             {/* Set 3 */}
             <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12 shrink-0">
               {marqueeBrands.map((brand, i) => (
-                <span 
-                  key={`s3-${i}`} 
+                <span
+                  key={`s3-${i}`}
                   className="text-[#e5e7eb] hover:text-[rgb(212,249,49)] transition-colors duration-300 select-none cursor-pointer"
                   style={{
                     fontFamily: "'Oswald', Impact, sans-serif",
@@ -1542,8 +1747,8 @@ export default function StorefrontPage() {
             {/* Set 4 */}
             <div className="flex items-center gap-16 sm:gap-24 px-8 sm:px-12 shrink-0">
               {marqueeBrands.map((brand, i) => (
-                <span 
-                  key={`s4-${i}`} 
+                <span
+                  key={`s4-${i}`}
                   className="text-[#e5e7eb] hover:text-[rgb(212,249,49)] transition-colors duration-300 select-none cursor-pointer"
                   style={{
                     fontFamily: "'Oswald', Impact, sans-serif",
@@ -1561,15 +1766,15 @@ export default function StorefrontPage() {
       </div>
 
       {/* Section 2: Explore Our Collections */}
-      <section 
-        id="collections-section" 
+      <section
+        id="collections-section"
         className="w-full bg-[#fbfcfb] py-16 sm:py-24 border-b border-zinc-200/50"
       >
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
           {/* Header row */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
             <div className="space-y-2 text-left">
-              <span 
+              <span
                 className="block uppercase tracking-[0.25em]"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
@@ -1581,10 +1786,10 @@ export default function StorefrontPage() {
               >
                 Shop By Category
               </span>
-              <h2 
+              <h2
                 className="uppercase text-left flex flex-col lg:flex-row lg:items-end gap-x-4 leading-none"
               >
-                <span 
+                <span
                   className="block tracking-tighter"
                   style={{
                     fontFamily: "'Oswald', Impact, sans-serif",
@@ -1596,7 +1801,7 @@ export default function StorefrontPage() {
                 >
                   Explore Our
                 </span>
-                <span 
+                <span
                   className="block leading-none tracking-tighter"
                   style={{
                     fontFamily: "'Oswald', Impact, sans-serif",
@@ -1611,8 +1816,8 @@ export default function StorefrontPage() {
               </h2>
             </div>
             <div>
-              <a 
-                href="/product" 
+              <a
+                href="/product"
                 className="inline-flex items-center gap-2 uppercase select-none transition-all duration-300 tracking-[0.2em] hover:tracking-[0.3em] hover:text-[rgb(212,249,49)] text-black"
                 style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
@@ -1629,20 +1834,20 @@ export default function StorefrontPage() {
           {/* Cards Grid */}
           <div className="flex flex-col lg:flex-row gap-8 justify-center items-center lg:items-start max-w-[1800px] mx-auto w-full">
             {/* Card 1: Large (Kotak 1) */}
-            <div 
+            <div
               onClick={() => router.push(`/product?category=${encodeURIComponent(collectionsData[0].name)}`)}
               className="collection-card-animate w-full lg:w-[872.5px] h-[500px] lg:h-[850px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900"
             >
               {/* Image */}
-              <img 
-                src={collectionsData[0].image} 
-                alt={collectionsData[0].name} 
+              <img
+                src={collectionsData[0].image}
+                alt={collectionsData[0].name}
                 loading="lazy"
                 className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
               />
               {/* Bottom gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
-              
+
               {/* Card content info */}
               <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                 <div className="space-y-1.5 text-left">
@@ -1661,20 +1866,20 @@ export default function StorefrontPage() {
             </div>
 
             {/* Card 2: Medium (Kotak 2) */}
-            <div 
+            <div
               onClick={() => router.push(`/product?category=${encodeURIComponent(collectionsData[1].name)}`)}
               className="collection-card-animate w-full lg:w-[420.25px] h-[500px] lg:h-[850px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900"
             >
               {/* Image */}
-              <img 
-                src={collectionsData[1].image} 
-                alt={collectionsData[1].name} 
+              <img
+                src={collectionsData[1].image}
+                alt={collectionsData[1].name}
                 loading="lazy"
                 className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
               />
               {/* Bottom gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
-              
+
               {/* Card content info */}
               <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                 <div className="space-y-1.5 text-left">
@@ -1695,20 +1900,20 @@ export default function StorefrontPage() {
             {/* Column 3: Stacked Cards (Kotak 3 & 4) */}
             <div className="flex flex-col gap-8 w-full lg:w-[420.25px]">
               {/* Card 3: Stacked Top (Kotak 3) */}
-              <div 
+              <div
                 onClick={() => router.push(`/product?category=${encodeURIComponent(collectionsData[2].name)}`)}
                 className="collection-card-animate w-full lg:w-[420.25px] h-[240px] lg:h-[409px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900"
               >
                 {/* Image */}
-                <img 
-                  src={collectionsData[2].image} 
-                  alt={collectionsData[2].name} 
+                <img
+                  src={collectionsData[2].image}
+                  alt={collectionsData[2].name}
                   loading="lazy"
                   className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
                 />
                 {/* Bottom gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
-                
+
                 {/* Card content info */}
                 <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                   <div className="space-y-1.5 text-left">
@@ -1727,20 +1932,20 @@ export default function StorefrontPage() {
               </div>
 
               {/* Card 4: Stacked Bottom (Kotak 4) */}
-              <div 
+              <div
                 onClick={() => router.push(`/product?category=${encodeURIComponent(collectionsData[3].name)}`)}
                 className="collection-card-animate w-full lg:w-[420.25px] h-[240px] lg:h-[409px] rounded-[24px] overflow-hidden relative group cursor-pointer shadow-md bg-zinc-900"
               >
                 {/* Image */}
-                <img 
-                  src={collectionsData[3].image} 
-                  alt={collectionsData[3].name} 
+                <img
+                  src={collectionsData[3].image}
+                  alt={collectionsData[3].name}
                   loading="lazy"
                   className="w-full h-full object-cover opacity-85 group-hover:scale-105 transition-transform duration-700"
                 />
                 {/* Bottom gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none" />
-                
+
                 {/* Card content info */}
                 <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between z-10">
                   <div className="space-y-1.5 text-left">
@@ -1765,15 +1970,15 @@ export default function StorefrontPage() {
 
 
       {/* Section 3: Why Choose Us / The Berakit Difference */}
-      <section 
-        id="difference-section" 
+      <section
+        id="difference-section"
         className="w-full bg-white py-16 sm:py-24 border-b border-zinc-200/50"
       >
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12">
           {/* Header Row */}
           <div id="difference-header" className="flex flex-col lg:flex-row lg:items-end justify-between mb-16 gap-8">
             <div className="space-y-2 text-left max-w-[800px]">
-              <span 
+              <span
                 className="block uppercase tracking-[0.25em]"
                 style={{
                   fontFamily: "'Oswald', Impact, sans-serif",
@@ -1785,7 +1990,7 @@ export default function StorefrontPage() {
               >
                 Why Choose Us
               </span>
-              <h2 
+              <h2
                 className="uppercase tracking-tight text-black"
                 style={{
                   fontFamily: "'Oswald', Impact, sans-serif",
@@ -1801,9 +2006,9 @@ export default function StorefrontPage() {
               </h2>
             </div>
             <div className="max-w-[450px] text-left">
-              <p 
+              <p
                 className="text-zinc-500 font-normal"
-                style={{ 
+                style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 400,
@@ -1824,7 +2029,7 @@ export default function StorefrontPage() {
               <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
                 01
               </div>
-              
+
               {/* Icon Container */}
               <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-black transition-all duration-300 group-hover:bg-[#bef264] group-hover:text-black">
                 <Truck className="size-6" />
@@ -1834,13 +2039,13 @@ export default function StorefrontPage() {
               <div className="space-y-4 text-left">
                 <div className="flex items-end justify-between">
                   <div className="space-y-2">
-                    <h3 
+                    <h3
                       className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
                       style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
                     >
                       Free Worldwide Shipping
                     </h3>
-                    <p 
+                    <p
                       className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
                       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     >
@@ -1860,7 +2065,7 @@ export default function StorefrontPage() {
               <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
                 02
               </div>
-              
+
               {/* Icon Container */}
               <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-black transition-all duration-300 group-hover:bg-[#bef264] group-hover:text-black animate-none">
                 <RotateCcw className="size-6" />
@@ -1870,13 +2075,13 @@ export default function StorefrontPage() {
               <div className="space-y-4 text-left">
                 <div className="flex items-end justify-between">
                   <div className="space-y-2">
-                    <h3 
+                    <h3
                       className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
                       style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
                     >
                       30-Day Free Returns
                     </h3>
-                    <p 
+                    <p
                       className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
                       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     >
@@ -1896,7 +2101,7 @@ export default function StorefrontPage() {
               <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
                 03
               </div>
-              
+
               {/* Icon Container */}
               <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-black transition-all duration-300 group-hover:bg-[#bef264] group-hover:text-black">
                 <Shield className="size-6" />
@@ -1906,13 +2111,13 @@ export default function StorefrontPage() {
               <div className="space-y-4 text-left">
                 <div className="flex items-end justify-between">
                   <div className="space-y-2">
-                    <h3 
+                    <h3
                       className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
                       style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
                     >
                       Secure Checkout
                     </h3>
-                    <p 
+                    <p
                       className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
                       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     >
@@ -1932,7 +2137,7 @@ export default function StorefrontPage() {
               <div className="absolute right-6 top-6 text-[100px] font-black text-black/[0.03] select-none leading-none">
                 04
               </div>
-              
+
               {/* Icon Container */}
               <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-black transition-all duration-300 group-hover:bg-[#bef264] group-hover:text-black">
                 <Headphones className="size-6" />
@@ -1942,13 +2147,13 @@ export default function StorefrontPage() {
               <div className="space-y-4 text-left">
                 <div className="flex items-end justify-between">
                   <div className="space-y-2">
-                    <h3 
+                    <h3
                       className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
                       style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
                     >
                       24/7 Customer Support
                     </h3>
-                    <p 
+                    <p
                       className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
                       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     >
@@ -1966,8 +2171,8 @@ export default function StorefrontPage() {
       </section>
 
       {/* Section 4: Voices From The Grid (Horizontal scroll) */}
-      <section 
-        id="voices-section" 
+      <section
+        id="voices-section"
         className="relative w-full lg:h-screen bg-white flex items-center overflow-x-hidden overflow-y-visible lg:overflow-hidden py-16 lg:py-0 border-b border-zinc-200/50"
       >
         {/* Background Grid */}
@@ -1980,9 +2185,9 @@ export default function StorefrontPage() {
               <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#bef264] uppercase tracking-wider">
                 <span className="animate-pulse">⚡</span> LIVE TRANSMISSIONS
               </div>
-              <h2 
+              <h2
                 className="uppercase tracking-tight text-black flex flex-col"
-                style={{ 
+                style={{
                   fontFamily: "'Oswald', Impact, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 900,
@@ -1993,9 +2198,9 @@ export default function StorefrontPage() {
                 <span>VOICES FROM</span>
                 <span>THE GRID<span className="text-[#bef264]">.</span></span>
               </h2>
-              <p 
+              <p
                 className="text-zinc-500 font-normal max-w-[420px]"
-                style={{ 
+                style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 400,
@@ -2013,7 +2218,7 @@ export default function StorefrontPage() {
                 SYNC PROGRESS
               </div>
               <div className="w-[180px] h-[3px] bg-zinc-100 rounded-full overflow-hidden">
-                <div 
+                <div
                   ref={syncProgressBarRef}
                   id="sync-progress-bar"
                   className="h-full bg-[#bef264] w-0 transition-all duration-75"
@@ -2023,12 +2228,12 @@ export default function StorefrontPage() {
           </div>
 
           {/* Right Column - Horizontal Scroll Container */}
-          <div 
-            className="w-full lg:flex-1 overflow-x-auto overflow-y-hidden lg:overflow-hidden relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]" 
+          <div
+            className="w-full lg:flex-1 overflow-x-auto overflow-y-hidden lg:overflow-hidden relative [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             ref={horizontalWrapperRef}
             style={{ touchAction: "pan-y" }}
           >
-            <div 
+            <div
               ref={horizontalContainerRef}
               className="flex gap-8 pl-4 pr-16 py-12"
               style={{ width: "fit-content" }}
@@ -2065,7 +2270,7 @@ export default function StorefrontPage() {
                   avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80"
                 }
               ].map((card, idx) => (
-                <div 
+                <div
                   key={idx}
                   className="voices-card-animate group bg-white border border-zinc-100 hover:border-[#bef264]/80 hover:shadow-[0_0_35px_-5px_rgba(190,242,100,0.35)] rounded-[28px] p-8 w-[380px] sm:w-[420px] h-[440px] flex flex-col justify-between transition-colors transition-shadow duration-300 relative cursor-pointer select-none shrink-0"
                 >
@@ -2076,7 +2281,7 @@ export default function StorefrontPage() {
                   <div className="absolute bottom-4 right-4 text-[10px] font-light text-zinc-300 group-hover:text-[#bef264] transition-colors duration-300 select-none pointer-events-none">+</div>
 
                   {/* Top Quote Icon watermark */}
-                  <div 
+                  <div
                     className="absolute right-8 top-8 text-[120px] font-bold text-[#bef264]/10 select-none leading-none pointer-events-none"
                     style={{ fontFamily: "'Oswald', sans-serif" }}
                   >
@@ -2095,7 +2300,7 @@ export default function StorefrontPage() {
 
                   {/* Card Quote */}
                   <div className="relative z-10 py-4 flex-1 flex items-center">
-                    <p 
+                    <p
                       className="text-base sm:text-lg font-semibold text-zinc-900 leading-relaxed text-left"
                       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     >
@@ -2107,8 +2312,8 @@ export default function StorefrontPage() {
                   <div className="flex items-center justify-between pt-6 border-t border-zinc-100 relative z-10">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <img 
-                          src={card.avatar} 
+                        <img
+                          src={card.avatar}
                           alt={card.user}
                           loading="lazy"
                           className="size-11 rounded-full object-cover border border-zinc-200 group-hover:border-[#bef264] transition-colors duration-300"
@@ -2142,8 +2347,8 @@ export default function StorefrontPage() {
       </section>
 
       {/* Section 5: Frequently Asked Questions (FAQ) Accordion */}
-      <section 
-        id="faq-section" 
+      <section
+        id="faq-section"
         className="relative w-full bg-white py-24 border-b border-zinc-200/50"
       >
         {/* Background Grid */}
@@ -2155,9 +2360,9 @@ export default function StorefrontPage() {
             <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#bef264] uppercase tracking-wider">
               <span>🗂</span> DATABASE QUERY
             </div>
-            <h2 
+            <h2
               className="uppercase tracking-tight text-black flex flex-col"
-              style={{ 
+              style={{
                 fontFamily: "'Oswald', Impact, sans-serif",
                 fontStyle: "normal",
                 fontWeight: 900,
@@ -2168,9 +2373,9 @@ export default function StorefrontPage() {
               <span>FREQUENTLY</span>
               <span>ASKED<span className="text-[#bef264]">.</span></span>
             </h2>
-            <p 
+            <p
               className="text-zinc-500 font-normal max-w-[420px]"
-              style={{ 
+              style={{
                 fontFamily: "'Inter', system-ui, sans-serif",
                 fontStyle: "normal",
                 fontWeight: 400,
@@ -2216,7 +2421,7 @@ export default function StorefrontPage() {
             ].map((faq, idx) => {
               const isOpen = openFaqIndex === idx;
               return (
-                <div 
+                <div
                   key={idx}
                   className={`border-b border-zinc-100 transition-colors duration-300 ${isOpen ? "bg-[#bef264]/5" : "hover:bg-zinc-50/50"}`}
                 >
@@ -2230,9 +2435,9 @@ export default function StorefrontPage() {
                         {String(idx + 1).padStart(2, "0")}
                       </span>
                       {/* Question */}
-                      <span 
+                      <span
                         className={`transition-colors duration-300 ${isOpen ? "text-[#bef264]" : "text-zinc-900 group-hover:text-zinc-700"}`}
-                        style={{ 
+                        style={{
                           fontFamily: "'Inter', system-ui, sans-serif",
                           fontWeight: 500,
                           fontSize: "clamp(18px, 4vw, 24px)",
@@ -2244,7 +2449,7 @@ export default function StorefrontPage() {
                       </span>
                     </div>
                     {/* Plus / Close Icon */}
-                    <span 
+                    <span
                       className={`text-2xl font-light transition-all duration-300 ${isOpen ? "rotate-45 text-[#bef264] scale-110" : "text-zinc-400 group-hover:text-zinc-600"}`}
                       style={{ fontFamily: "'Inter', sans-serif" }}
                     >
@@ -2253,13 +2458,13 @@ export default function StorefrontPage() {
                   </button>
 
                   {/* Answer Panel with smooth transition */}
-                  <div 
+                  <div
                     className={`grid transition-all duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr] opacity-100 pb-6 px-4 sm:px-6" : "grid-rows-[0fr] opacity-0"}`}
                     style={{ overflow: "hidden" }}
                   >
                     <div className="min-h-0">
                       <div className="border-l-2 border-[#bef264] pl-4 py-1">
-                        <p 
+                        <p
                           className="text-xs sm:text-sm text-zinc-500 leading-relaxed font-medium"
                           style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                         >
@@ -2276,8 +2481,8 @@ export default function StorefrontPage() {
       </section>
 
       {/* Section 6: Physical Hub / Satellite Uplink (Maps Section) */}
-      <section 
-        id="hub-section" 
+      <section
+        id="hub-section"
         className="relative w-full py-24 sm:py-32 bg-white flex items-center overflow-hidden border-b border-zinc-200/50"
       >
         {/* Background Grid Pattern */}
@@ -2290,9 +2495,9 @@ export default function StorefrontPage() {
               <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#bef264] uppercase tracking-wider">
                 <span className="size-2 rounded-full bg-[#bef264] animate-pulse" /> SATELLITE UPLINK
               </div>
-              <h2 
+              <h2
                 className="uppercase tracking-tight text-black"
-                style={{ 
+                style={{
                   fontFamily: "'Oswald', Impact, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 900,
@@ -2304,9 +2509,9 @@ export default function StorefrontPage() {
                 <span className="text-zinc-400">HUB</span>
                 <span className="text-[#bef264]">.</span>
               </h2>
-              <p 
+              <p
                 className="text-zinc-500 font-normal"
-                style={{ 
+                style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 400,
@@ -2331,7 +2536,7 @@ export default function StorefrontPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <span 
+                  <span
                     className="block transition-colors duration-300 group-hover:text-[#bef264] uppercase tracking-widest"
                     style={{
                       fontFamily: "Consolas, Monaco, monospace",
@@ -2344,9 +2549,9 @@ export default function StorefrontPage() {
                   >
                     COORDINATES
                   </span>
-                  <h4 
-                    className="transition-colors duration-300 group-hover:text-black uppercase text-xl sm:text-2xl" 
-                    style={{ 
+                  <h4
+                    className="transition-colors duration-300 group-hover:text-black uppercase text-xl sm:text-2xl"
+                    style={{
                       fontFamily: "'Oswald', Impact, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 700,
@@ -2356,9 +2561,9 @@ export default function StorefrontPage() {
                   >
                     BUMDES BERAKIT HQ
                   </h4>
-                  <p 
-                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal max-w-sm text-sm sm:text-base leading-relaxed" 
-                    style={{ 
+                  <p
+                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal max-w-sm text-sm sm:text-base leading-relaxed"
+                    style={{
                       fontFamily: "'Inter', system-ui, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 400,
@@ -2378,7 +2583,7 @@ export default function StorefrontPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <span 
+                  <span
                     className="block transition-colors duration-300 group-hover:text-[#bef264] uppercase tracking-widest"
                     style={{
                       fontFamily: "Consolas, Monaco, monospace",
@@ -2391,9 +2596,9 @@ export default function StorefrontPage() {
                   >
                     OFFLINE ACCESS
                   </span>
-                  <h4 
-                    className="transition-colors duration-300 group-hover:text-black uppercase text-xl sm:text-2xl" 
-                    style={{ 
+                  <h4
+                    className="transition-colors duration-300 group-hover:text-black uppercase text-xl sm:text-2xl"
+                    style={{
                       fontFamily: "'Oswald', Impact, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 700,
@@ -2403,9 +2608,9 @@ export default function StorefrontPage() {
                   >
                     08:00 - 17:00
                   </h4>
-                  <p 
-                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal text-sm sm:text-base leading-relaxed" 
-                    style={{ 
+                  <p
+                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal text-sm sm:text-base leading-relaxed"
+                    style={{
                       fontFamily: "'Inter', system-ui, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 400,
@@ -2425,7 +2630,7 @@ export default function StorefrontPage() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <span 
+                  <span
                     className="block transition-colors duration-300 group-hover:text-[#bef264] uppercase tracking-widest"
                     style={{
                       fontFamily: "Consolas, Monaco, monospace",
@@ -2438,9 +2643,9 @@ export default function StorefrontPage() {
                   >
                     DIGITAL COMM
                   </span>
-                  <h4 
-                    className="transition-colors duration-300 group-hover:text-black uppercase text-xl sm:text-2xl break-all sm:break-normal" 
-                    style={{ 
+                  <h4
+                    className="transition-colors duration-300 group-hover:text-black uppercase text-xl sm:text-2xl break-all sm:break-normal"
+                    style={{
                       fontFamily: "'Oswald', Impact, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 700,
@@ -2450,9 +2655,9 @@ export default function StorefrontPage() {
                   >
                     mfyansah@student.umrah.ac.id
                   </h4>
-                  <p 
-                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal text-sm sm:text-base leading-relaxed" 
-                    style={{ 
+                  <p
+                    className="transition-colors duration-300 group-hover:text-zinc-700 font-normal text-sm sm:text-base leading-relaxed"
+                    style={{
                       fontFamily: "'Inter', system-ui, sans-serif",
                       fontStyle: "normal",
                       fontWeight: 400,
@@ -2469,16 +2674,16 @@ export default function StorefrontPage() {
 
           {/* Right Column - Map Frame */}
           <div className="w-full flex-1 max-w-[840px]">
-            <div 
+            <div
               id="hub-map-container"
               className="relative w-full aspect-square md:aspect-[4/3] rounded-[32px] overflow-hidden border border-zinc-200 bg-zinc-950 shadow-2xl"
             >
               {/* Map iframe */}
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4731.657649311793!2d104.5499708!3d1.210686!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31dbd9beffe89e77%3A0x8496e2d6a6e327df!2sWisata%20Mangrove%20Tanjung%20Berakit!5e1!3m2!1sid!2sid!4v1783596097087!5m2!1sid!2sid" 
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4731.657649311793!2d104.5499708!3d1.210686!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31dbd9beffe89e77%3A0x8496e2d6a6e327df!2sWisata%20Mangrove%20Tanjung%20Berakit!5e1!3m2!1sid!2sid!4v1783596097087!5m2!1sid!2sid"
                 className="w-full h-full border-0 absolute inset-0 pointer-events-none lg:pointer-events-auto"
                 allowFullScreen={true}
-                loading="lazy" 
+                loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 style={{
                   filter: "invert(90%) hue-rotate(180deg) saturate(60%) brightness(95%) contrast(90%)",
@@ -2496,10 +2701,10 @@ export default function StorefrontPage() {
               </div>
 
               {/* Floating Badges */}
-              <a 
-                href="https://maps.google.com/?q=Wisata+Mangrove+Tanjung+Berakit" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+              <a
+                href="https://maps.google.com/?q=Wisata+Mangrove+Tanjung+Berakit"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="absolute top-6 left-6 bg-zinc-950/75 hover:bg-zinc-950 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full text-[10px] font-bold text-white uppercase tracking-wider flex items-center gap-1.5 transition-all duration-300 hover:scale-105"
               >
                 Open in Maps <ArrowRight className="size-3 -rotate-45" />
@@ -2514,15 +2719,15 @@ export default function StorefrontPage() {
       </section>
 
       {/* Section 7: Newsletter (GET 15% OFF YOUR FIRST ORDER.) */}
-      <section 
-        id="newsletter-section" 
+      <section
+        id="newsletter-section"
         className="relative w-full py-24 sm:py-32 bg-white flex items-center overflow-hidden border-b border-zinc-200/50"
       >
         {/* Background Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-40" />
 
         <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
-          <div 
+          <div
             id="newsletter-card"
             className="w-full bg-zinc-950 rounded-[32px] p-8 sm:p-12 lg:p-16 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-12 border border-zinc-800 shadow-2xl"
           >
@@ -2532,9 +2737,9 @@ export default function StorefrontPage() {
 
             {/* Left Column: Heading */}
             <div className="w-full lg:max-w-xl text-left space-y-2 relative z-10">
-              <h2 
+              <h2
                 className="uppercase tracking-tight text-white flex flex-col"
-                style={{ 
+                style={{
                   fontFamily: "'Oswald', Impact, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 900,
@@ -2555,9 +2760,9 @@ export default function StorefrontPage() {
                 <span className="size-1.5 rounded-full bg-[#bef264] animate-pulse" /> JOIN 50,000+ SUBSCRIBERS
               </div>
 
-              <p 
+              <p
                 className="text-zinc-400 font-normal"
-                style={{ 
+                style={{
                   fontFamily: "'Inter', system-ui, sans-serif",
                   fontStyle: "normal",
                   fontWeight: 400,
@@ -2570,13 +2775,13 @@ export default function StorefrontPage() {
 
               {/* Input Form */}
               <form onSubmit={(e) => e.preventDefault()} className="w-full bg-white p-2 rounded-full flex items-center justify-between shadow-lg max-w-[500px]">
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   placeholder="Enter your email address..."
                   className="w-full pl-6 pr-4 py-2 bg-transparent text-zinc-900 placeholder-zinc-400 text-sm focus:outline-none"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                 />
-                <button 
+                <button
                   type="submit"
                   className="bg-[#bef264] hover:bg-[#bef264]/95 text-black font-bold uppercase text-xs tracking-wider px-6 py-3 rounded-full flex items-center gap-2 shrink-0 transition-all duration-300 hover:scale-102 cursor-pointer"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
@@ -2595,8 +2800,8 @@ export default function StorefrontPage() {
       </section>
 
       {/* Footer Section */}
-      <footer 
-        id="footer-section" 
+      <footer
+        id="footer-section"
         className="w-full bg-[#050505] py-16 border-t border-zinc-900 relative z-10 overflow-hidden"
       >
         {/* Style block for continuous marquee looping */}
@@ -2634,7 +2839,7 @@ export default function StorefrontPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-16 text-left relative z-10">
             {/* Column 1: Logo, Description & Socials */}
             <div className="lg:col-span-2 space-y-6">
-              <span 
+              <span
                 className="text-white uppercase tracking-tighter block"
                 style={{
                   fontFamily: "'Oswald', Impact, sans-serif",
@@ -2645,35 +2850,35 @@ export default function StorefrontPage() {
               >
                 BERAKIT SERIES<span className="text-[#bef264]">.</span>
               </span>
-              <p 
+              <p
                 className="text-zinc-400 text-sm max-w-sm leading-relaxed font-normal"
                 style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
               >
                 Premium traditional coastal Batik fashion. Discover the ultimate convergence of cultural heritage and contemporary style.
               </p>
-              
+
               {/* Social icons */}
               <div className="flex items-center gap-3">
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
                 >
                   <Facebook className="size-4" />
                 </a>
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
                 >
                   <Twitter className="size-4" />
                 </a>
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
                 >
                   <Instagram className="size-4" />
                 </a>
-                <a 
-                  href="#" 
+                <a
+                  href="#"
                   className="w-10 h-10 rounded-full border border-zinc-800 flex items-center justify-center text-white hover:text-black hover:bg-[#bef264] hover:border-[#bef264] transition-all duration-300"
                 >
                   <Youtube className="size-4" />
@@ -2736,13 +2941,13 @@ export default function StorefrontPage() {
 
           {/* Bottom Copyright & Built by */}
           <div className="pt-8 border-t border-zinc-900/60 flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
-            <span 
+            <span
               className="text-xs text-zinc-600 font-semibold"
               style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
             >
               © 2026 BERAKIT SERIES. All rights reserved.
             </span>
-            <span 
+            <span
               className="text-xs text-zinc-600 font-semibold"
               style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
             >
@@ -2753,8 +2958,8 @@ export default function StorefrontPage() {
 
         {/* Faint Background Watermark */}
         <div className="absolute inset-x-0 bottom-6 flex justify-center pointer-events-none select-none overflow-hidden z-0">
-          <span 
-            className="text-[18vw] font-black text-white/[0.012] tracking-widest leading-none uppercase" 
+          <span
+            className="text-[18vw] font-black text-white/[0.012] tracking-widest leading-none uppercase"
             style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
           >
             BERAKIT SERIES
@@ -2780,7 +2985,7 @@ export default function StorefrontPage() {
                   ({cartItemCount})
                 </span>
               </div>
-              <button 
+              <button
                 className="text-zinc-400 hover:text-zinc-900 transition-colors p-1"
                 onClick={() => setIsCartOpen(false)}
               >
@@ -2816,7 +3021,7 @@ export default function StorefrontPage() {
                         <span className="text-[10px] font-extrabold text-[#bef264] uppercase tracking-widest block mt-0.5">
                           {item.product.category}
                         </span>
-                        
+
                         {/* Qty controls */}
                         <div className="flex items-center justify-between mt-2">
                           <span className="font-bold text-xs text-zinc-700">Rp {item.product.price.toLocaleString("id-ID")}</span>
@@ -2860,7 +3065,7 @@ export default function StorefrontPage() {
                 <p className="text-[10px] text-zinc-400 text-left leading-relaxed">
                   Pajak dan biaya pengiriman akan dihitung pada saat checkout. Semua produk dikirim langsung dari Desa Berakit.
                 </p>
-                {currentUser?.role === "admin" && (
+                {checkIsAdmin() && (
                   <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2 text-left">
                     <AlertTriangle className="size-4 text-amber-500 shrink-0 mt-0.5" />
                     <div className="space-y-0.5">
@@ -2884,7 +3089,7 @@ export default function StorefrontPage() {
                   <Button
                     className="flex-1 h-12 bg-[#bef264] hover:bg-[#b2e658] text-black font-extrabold uppercase text-xs tracking-widest rounded-full flex items-center justify-center gap-2 shadow-md shadow-[#bef264]/10 hover:shadow-[#bef264]/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer border-none"
                     onClick={() => {
-                      if (currentUser?.role === "admin") {
+                      if (checkIsAdmin()) {
                         toast.error("Mode Admin Terdeteksi", {
                           description: "Akun Admin BUMDes tidak diizinkan melakukan transaksi pembelian.",
                           duration: 4000,
@@ -2944,7 +3149,7 @@ export default function StorefrontPage() {
                     Pesanan Anda telah dimasukkan ke database dengan ID: <span className="font-mono text-[#aa8ef9]">{lastCreatedOrderId}</span>.
                   </p>
                 </div>
-                
+
                 {/* Transfer Bank Instructions */}
                 {paymentMethod === "Transfer Bank" && (
                   <div className="w-full bg-black/80 border border-white/5 rounded-xl p-3.5 text-left space-y-1">
@@ -2958,9 +3163,17 @@ export default function StorefrontPage() {
                   </div>
                 )}
 
-                <div className="w-full mt-2">
+                <div className="w-full mt-2 space-y-2">
                   <Button
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-4.5 rounded-lg flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20"
+                    variant="outline"
+                    type="button"
+                    className="w-full border-white/20 text-white hover:bg-white/10 text-xs font-semibold py-4 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer"
+                    onClick={handlePrintUserReceipt}
+                  >
+                    <Printer className="size-3.5" /> Unduh Bukti Resi & Retur (PDF)
+                  </Button>
+                  <Button
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-4 rounded-lg flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer"
                     onClick={handleWhatsAppNotify}
                   >
                     <Phone className="size-3.5 fill-current" /> Hubungi WhatsApp Pengelola &rarr;
@@ -2970,7 +3183,7 @@ export default function StorefrontPage() {
             ) : (
               /* Checkout Form */
               <form onSubmit={handleCheckout} className="p-4 space-y-4">
-                
+
                 {/* Product Summary list */}
                 <div className="max-h-[100px] overflow-y-auto space-y-1.5 p-2 rounded-lg bg-black/30 border border-white/5">
                   {cart.map((item) => (

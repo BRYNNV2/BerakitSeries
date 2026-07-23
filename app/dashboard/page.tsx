@@ -50,6 +50,7 @@ import {
   Home,
   Briefcase,
   Camera,
+  Printer,
 } from "lucide-react";
 import {
   Dialog,
@@ -762,6 +763,138 @@ export default function UserDashboard() {
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handlePrintUserReceipt = (order: any) => {
+    let itemsList: any[] = [];
+    if (typeof order.items === "string") {
+      try { itemsList = JSON.parse(order.items); } catch (e) {}
+    } else if (Array.isArray(order.items)) {
+      itemsList = order.items;
+    }
+
+    let courier = "Ekspedisi";
+    let resi = `RES-${order.id.replace(/\D/g, "").slice(-6) || "001"}`;
+    if (order.status && order.status.startsWith("Dikirim")) {
+      const parts = order.status.split(":");
+      const trackingParts = parts[1]?.split("|") || [];
+      courier = trackingParts[0]?.trim() || "Ekspedisi";
+      resi = trackingParts[1]?.trim() || resi;
+    }
+
+    const itemsHtml = itemsList.map((item: any, idx: number) => `
+      <tr>
+        <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px;">${idx + 1}. ${item.name} ${item.selected_size ? `(${item.selected_size})` : ''}</td>
+        <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px; text-align: center;">${item.quantity || 1}</td>
+        <td style="padding: 6px; border: 1px solid #e5e7eb; font-size: 11px; text-align: right;">Rp ${(item.price || 0).toLocaleString("id-ID")}</td>
+      </tr>
+    `).join("");
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Bukti Resi & Pembelian #${order.id} - BERAKIT SERIES</title>
+          <style>
+            @page { size: auto; margin: 10mm; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; color: #111827; background: #fff; margin: 0; }
+            .label-card { border: 2px solid #111827; border-radius: 12px; padding: 20px; max-width: 600px; margin: 0 auto; box-shadow: none; }
+            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #111827; padding-bottom: 12px; margin-bottom: 16px; }
+            .brand { font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #166534; }
+            .sub-brand { font-size: 9px; text-transform: uppercase; color: #4b5563; font-weight: 700; }
+            .barcode-box { text-align: right; }
+            .barcode-text { font-family: monospace; font-size: 13px; font-weight: bold; letter-spacing: 2px; background: #f3f4f6; padding: 4px 10px; border-radius: 6px; display: inline-block; border: 1px solid #d1d5db; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+            .box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; font-size: 11px; }
+            .box-title { font-weight: 800; text-transform: uppercase; font-size: 9.5px; color: #6b7280; margin-bottom: 4px; letter-spacing: 0.5px; }
+            .info-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+            .info-table th { background: #f3f4f6; font-size: 10px; text-transform: uppercase; padding: 6px; text-align: left; border: 1px solid #e5e7eb; }
+            .footer-note { background: #fefce8; border: 1px solid #fef08a; padding: 10px; border-radius: 8px; font-size: 9.5px; color: #854d0e; text-align: center; font-weight: 600; }
+          </style>
+        </head>
+        <body>
+          <div class="label-card">
+            <div class="header">
+              <div>
+                <div class="brand">BUMDES BERAKIT MAJU</div>
+                <div class="sub-brand">BERAKIT SERIES // BUKTI PESANAN & KARTU RETUR PEMBELI</div>
+              </div>
+              <div class="barcode-box">
+                <div class="barcode-text">${resi}</div>
+                <div style="font-size: 9px; color: #6b7280; margin-top: 4px; font-weight: bold;">KURIR: ${courier.toUpperCase()}</div>
+              </div>
+            </div>
+
+            <div class="grid">
+              <div class="box">
+                <div class="box-title">📍 PENGIRIM (SENDER)</div>
+                <strong>BUMDes Berakit Maju (BUMDes Official)</strong><br />
+                Jl. Wisata Pengudang-Berakit, Teluk Sebong<br />
+                Kabupaten Bintan, Kepulauan Riau (29153)<br />
+                Telp: 0812-3456-7890
+              </div>
+              <div class="box">
+                <div class="box-title">👤 PEMBELI (BUYER)</div>
+                <strong style="font-size: 12px; color: #111827;">${order.customer_name || "Pelanggan BUMDes"}</strong><br />
+                Telp: <strong>${order.customer_phone || "-"}</strong><br />
+                ${order.address || "-"}
+              </div>
+            </div>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 10.5px; display: flex; justify-content: space-between;">
+              <div><strong>ORDER ID:</strong> ${order.id}</div>
+              <div><strong>PEMBAYARAN:</strong> ${order.payment_method}</div>
+              <div><strong>TOTAL:</strong> Rp ${(order.total_amount || 0).toLocaleString("id-ID")}</div>
+            </div>
+
+            <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; color: #374151;">Rincian Barang Dipesan:</div>
+            <table class="info-table">
+              <thead>
+                <tr>
+                  <th>Nama Produk</th>
+                  <th style="text-align: center;">Qty</th>
+                  <th style="text-align: right;">Harga</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <div class="footer-note">
+              🛡️ BUKTI RESMI PEMBELIAN & KARTU RETUR GARANSI BUMDES BERAKIT<br />
+              <span style="font-weight: normal; font-size: 9px;">Simpan bukti resi/nota ini sebagai dokumen klaim retur atau garansi barang jika terjadi kendala pengiriman.</span>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    let iframe = document.getElementById("buyer-dashboard-print-iframe") as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement("iframe");
+      iframe.id = "buyer-dashboard-print-iframe";
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      document.body.appendChild(iframe);
+    }
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (!doc) return;
+
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      toast.success(`Dokumen Bukti Resi #${order.id} siap dicetak / disimpan PDF.`);
+    }, 250);
   };
 
   const getOrderStep = (statusStr: string) => {
@@ -1493,6 +1626,16 @@ export default function UserDashboard() {
                                 </div>
                                 
                                 <div className="flex flex-wrap gap-2 justify-end w-full">
+                                  {/* Unduh Resi PDF */}
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => handlePrintUserReceipt(order)}
+                                    className="h-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-[10px] rounded-full px-3.5 font-black uppercase tracking-wider flex items-center gap-1 cursor-pointer dark:border-emerald-900 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+                                  >
+                                    <Printer className="size-3.5" />
+                                    <span>Unduh Resi PDF</span>
+                                  </Button>
+
                                   {/* Quick Actions (Aksi Cepat) */}
                                   {order.status && order.status.startsWith("Dikirim") && (
                                     <>
