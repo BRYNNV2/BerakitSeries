@@ -26,6 +26,11 @@ const oswald = Oswald({
 export const metadata: Metadata = {
   title: "BERAKIT SERIES",
   description: "BUMDES Desa Berakit - Elevate Your Style in Every Reality.",
+  icons: {
+    icon: "/LogoBerakit.png",
+    shortcut: "/LogoBerakit.png",
+    apple: "/LogoBerakit.png",
+  },
 };
 
 export default function RootLayout({
@@ -35,7 +40,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
+      <head>
+        <link rel="icon" href="/LogoBerakit.png" type="image/png" sizes="any" />
+        <link rel="apple-touch-icon" href="/LogoBerakit.png" />
+      </head>
       <body
         className={`${inter.variable} ${geistMono.variable} ${oswald.variable} antialiased`}
         suppressHydrationWarning
