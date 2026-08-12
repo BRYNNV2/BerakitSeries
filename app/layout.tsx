@@ -33,6 +33,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { LanguageProvider } from "@/lib/i18n";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -49,16 +51,18 @@ export default function RootLayout({
         className={`${inter.variable} ${geistMono.variable} ${oswald.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <DomSafetyPatch />
-          {children}
-          <Toaster position="top-center" richColors />
-        </ThemeProvider>
+        <LanguageProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <DomSafetyPatch />
+            {children}
+            <Toaster position="top-center" richColors />
+          </ThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

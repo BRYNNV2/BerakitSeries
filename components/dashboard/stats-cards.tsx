@@ -15,7 +15,10 @@ interface Transaction {
   status: string;
 }
 
+import { useLanguage } from "@/lib/i18n";
+
 export function StatsCards() {
+  const { lang, t } = useLanguage();
   const [loading, setLoading] = React.useState(true);
   const [stats, setStats] = React.useState({
     revenue: 0,
@@ -79,33 +82,33 @@ export function StatsCards() {
 
   const cards = [
     {
-      title: "Pendapatan Sukses",
+      title: lang === "en" ? "Successful Revenue" : "Pendapatan Sukses",
       value: `Rp ${stats.revenue.toLocaleString("id-ID")}`,
-      subtitle: "Dari transaksi 'Selesai'",
+      subtitle: lang === "en" ? "From 'Completed' orders" : "Dari transaksi 'Selesai'",
       isPositive: true,
       icon: Coins,
       color: "text-emerald-500",
     },
     {
-      title: "Produk Terdaftar",
+      title: lang === "en" ? "Registered Products" : "Produk Terdaftar",
       value: stats.totalProducts.toString(),
-      subtitle: "Total produk khas desa",
+      subtitle: lang === "en" ? "Total village products" : "Total produk khas desa",
       isPositive: true,
       icon: Package,
       color: "text-blue-500",
     },
     {
-      title: "Total Transaksi",
+      title: lang === "en" ? "Total Transactions" : "Total Transaksi",
       value: stats.totalOrders.toString(),
-      subtitle: "Pesanan masuk keseluruhan",
+      subtitle: lang === "en" ? "All incoming orders" : "Pesanan masuk keseluruhan",
       isPositive: true,
       icon: ClipboardList,
       color: "text-purple-500",
     },
     {
-      title: "Stok Hampir Habis",
+      title: lang === "en" ? "Low Stock Items" : "Stok Hampir Habis",
       value: stats.lowStock.toString(),
-      subtitle: "Stok produk <= 5 pcs",
+      subtitle: lang === "en" ? "Items with stock <= 5 pcs" : "Stok produk <= 5 pcs",
       isPositive: stats.lowStock === 0,
       icon: AlertTriangle,
       color: stats.lowStock > 0 ? "text-rose-500 animate-pulse" : "text-muted-foreground",

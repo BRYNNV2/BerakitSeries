@@ -24,7 +24,11 @@ import {
 import { useDashboardStore } from "@/store/dashboard-store";
 import { supabase } from "@/lib/supabase";
 
+import { LanguageToggle } from "@/components/language-toggle";
+import { useLanguage } from "@/lib/i18n";
+
 export function DashboardHeader() {
+  const { t } = useLanguage();
   const searchQuery = useDashboardStore((state) => state.searchQuery);
   const setSearchQuery = useDashboardStore((state) => state.setSearchQuery);
   const setActiveTab = useDashboardStore((state) => state.setActiveTab);
@@ -106,12 +110,14 @@ export function DashboardHeader() {
   return (
     <header className="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3 sm:py-4 border-b bg-card sticky top-0 z-10 w-full">
       <SidebarTrigger className="-ml-1 sm:-ml-2" />
-      <h1 className="text-base sm:text-lg font-medium flex-1 truncate">Dashboard</h1>
+      <h1 className="text-base sm:text-lg font-medium flex-1 truncate">
+        {t("dashboard.title", "Dashboard BUMDes Berakit")}
+      </h1>
 
       <div className="hidden md:block relative" ref={dropdownRef}>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
         <Input
-          placeholder="Cari produk / galeri..."
+          placeholder={t("dashboard.searchPlaceholder", "Cari produk / galeri...")}
           className="pl-10 pr-14 w-[200px] lg:w-[260px] h-9 bg-card border"
           value={searchQuery}
           onChange={(e) => {
@@ -135,7 +141,7 @@ export function DashboardHeader() {
             {filteredProducts.length > 0 && (
               <div className="space-y-2">
                 <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
-                  Produk Desa ({filteredProducts.length})
+                  {t("dashboard.products", "Produk Desa")} ({filteredProducts.length})
                 </span>
                 <div className="space-y-1">
                   {filteredProducts.map((p) => (
@@ -171,7 +177,7 @@ export function DashboardHeader() {
             {filteredGallery.length > 0 && (
               <div className="space-y-2">
                 <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
-                  Galeri Dokumentasi ({filteredGallery.length})
+                  {t("dashboard.gallery", "Galeri Dokumentasi")} ({filteredGallery.length})
                 </span>
                 <div className="space-y-1">
                   {filteredGallery.map((g) => (
@@ -206,6 +212,7 @@ export function DashboardHeader() {
         )}
       </div>
 
+      <LanguageToggle />
       <ThemeToggle />
 
       <DropdownMenu>

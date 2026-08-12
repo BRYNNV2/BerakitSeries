@@ -29,6 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LanguageToggle } from "@/components/language-toggle";
 
 interface AboutSlide {
   id: string;
@@ -62,8 +63,11 @@ const DEFAULT_SLIDES: AboutSlide[] = [
   }
 ];
 
+import { useLanguage } from "@/lib/i18n";
+
 export default function AboutPage() {
   const router = useRouter();
+  const { t, lang } = useLanguage();
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [cartItemCount, setCartItemCount] = React.useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -268,7 +272,7 @@ export default function AboutPage() {
                 color: "lab(2.75381 0 0)",
               }}
             >
-              Home
+              {t("nav.home", "Home")}
             </a>
             <a
               href="/product"
@@ -281,7 +285,7 @@ export default function AboutPage() {
                 color: "lab(2.75381 0 0)",
               }}
             >
-              Collections
+              {t("nav.products", "Collections")}
             </a>
             <a
               href="/gallery"
@@ -294,7 +298,7 @@ export default function AboutPage() {
                 color: "lab(2.75381 0 0)",
               }}
             >
-              Gallery
+              {t("nav.gallery", "Gallery")}
             </a>
 
             {/* Dropdown Menu for Company */}
@@ -385,7 +389,8 @@ export default function AboutPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <LanguageToggle variant="outline" size="sm" />
             {currentUser ? (
               <button
                 className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"

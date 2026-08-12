@@ -23,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { gsap } from "gsap";
+import { LanguageToggle } from "@/components/language-toggle";
 
 export default function SizeGuidePage() {
   const router = useRouter();
@@ -222,7 +223,8 @@ export default function SizeGuidePage() {
             </DropdownMenu>
           </nav>
 
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <LanguageToggle variant="outline" size="sm" />
             {currentUser ? (
               <button
                 className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"

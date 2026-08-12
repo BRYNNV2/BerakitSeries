@@ -39,52 +39,12 @@ import { useDashboardStore } from "@/store/dashboard-store";
 import { useRouter } from "next/navigation";
 import { supabase, withTimeout } from "@/lib/supabase";
 
-const menuItems = [
-  {
-    title: "Dashboard",
-    icon: LayoutGrid,
-    tab: "dashboard" as const,
-  },
-  {
-    title: "Produk Desa",
-    icon: ShoppingBag,
-    tab: "products" as const,
-  },
-  {
-    title: "Galeri Desa",
-    icon: ImageIcon,
-    tab: "gallery" as const,
-  },
-  {
-    title: "Slide About Us",
-    icon: Sliders,
-    tab: "about-slides" as const,
-  },
-  {
-    title: "Transaksi",
-    icon: CreditCard,
-    tab: "transactions" as const,
-  },
-  {
-    title: "Pengaduan",
-    icon: MessageSquare,
-    tab: "complaints" as const,
-  },
-  {
-    title: "Riwayat Aktivitas",
-    icon: History,
-    tab: "logs" as const,
-  },
-  {
-    title: "Pengaturan",
-    icon: Settings,
-    tab: "settings" as const,
-  },
-];
+import { useLanguage } from "@/lib/i18n";
 
 export function DashboardSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
+  const { t } = useLanguage();
   const router = useRouter();
   const activeTab = useDashboardStore((state) => state.activeTab);
   const setActiveTab = useDashboardStore((state) => state.setActiveTab);
@@ -92,6 +52,49 @@ export function DashboardSidebar({
   const adminEmail = useDashboardStore((state) => state.adminEmail);
   const adminAvatar = useDashboardStore((state) => state.adminAvatar);
   const setAdminProfile = useDashboardStore((state) => state.setAdminProfile);
+
+  const menuItems = [
+    {
+      title: t("dashboard.overview", "Dashboard"),
+      icon: LayoutGrid,
+      tab: "dashboard" as const,
+    },
+    {
+      title: t("dashboard.products", "Produk Desa"),
+      icon: ShoppingBag,
+      tab: "products" as const,
+    },
+    {
+      title: t("dashboard.gallery", "Galeri Desa"),
+      icon: ImageIcon,
+      tab: "gallery" as const,
+    },
+    {
+      title: t("dashboard.aboutSlides", "Slide Tentang Kami"),
+      icon: Sliders,
+      tab: "about-slides" as const,
+    },
+    {
+      title: t("dashboard.transactions", "Transaksi"),
+      icon: CreditCard,
+      tab: "transactions" as const,
+    },
+    {
+      title: t("dashboard.complaints", "Pengaduan"),
+      icon: MessageSquare,
+      tab: "complaints" as const,
+    },
+    {
+      title: t("dashboard.logs", "Riwayat Aktivitas"),
+      icon: History,
+      tab: "logs" as const,
+    },
+    {
+      title: t("dashboard.settings", "Pengaturan"),
+      icon: Settings,
+      tab: "settings" as const,
+    },
+  ];
 
   React.useEffect(() => {
     const fetchUser = async () => {

@@ -30,6 +30,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { OccludedWrapper } from "@/components/ui/occluded-wrapper";
+import { LanguageToggle } from "@/components/language-toggle";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -105,8 +106,11 @@ const DEFAULT_GALLERY: GalleryItem[] = [
 
 const categories = ["Semua", "Proses Pembuatan", "Produk", "Acara", "Komunitas"];
 
+import { useLanguage } from "@/lib/i18n";
+
 export default function GalleryPage() {
   const router = useRouter();
+  const { t, lang } = useLanguage();
   const [gallery, setGallery] = React.useState<GalleryItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [selectedCategory, setSelectedCategory] = React.useState("Semua");
@@ -393,7 +397,7 @@ export default function GalleryPage() {
                 color: "lab(2.75381 0 0)",
               }}
             >
-              Home
+              {t("nav.home", "Home")}
             </a>
             <a
               href="/product"
@@ -406,7 +410,7 @@ export default function GalleryPage() {
                 color: "lab(2.75381 0 0)",
               }}
             >
-              Collections
+              {t("nav.products", "Collections")}
             </a>
             <a
               href="/gallery"
@@ -419,7 +423,7 @@ export default function GalleryPage() {
                 color: "lab(2.75381 0 0)",
               }}
             >
-              Gallery
+              {t("nav.gallery", "Gallery")}
             </a>
 
             {/* Dropdown Menu for Company */}
@@ -510,7 +514,8 @@ export default function GalleryPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <LanguageToggle variant="outline" size="sm" />
             {/* Expandable Search */}
             <div className="hidden sm:flex items-center relative">
               <div className={`flex items-center overflow-hidden transition-all duration-400 ease-out rounded-full border bg-white ${

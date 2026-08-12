@@ -59,7 +59,10 @@ interface Product {
   image_url?: string;
 }
 
+import { useLanguage } from "@/lib/i18n";
+
 export function WelcomeSection() {
+  const { lang } = useLanguage();
   const [pendingCount, setPendingCount] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
 
@@ -659,20 +662,32 @@ export function WelcomeSection() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">
         <div className="space-y-1">
           <h2 className="text-lg sm:text-[22px] font-bold leading-tight tracking-tight">
-            Selamat Datang, Admin BUMDes Berakit!
+            {lang === "en" ? "Welcome back, BUMDes Berakit Admin!" : "Selamat Datang, Admin BUMDes Berakit!"}
           </h2>
           {loading ? (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Loader2 className="size-3 animate-spin" />
-              <span>Memeriksa status pesanan...</span>
+              <span>{lang === "en" ? "Checking order status..." : "Memeriksa status pesanan..."}</span>
             </div>
           ) : (
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Hari ini ada{" "}
-              <span className="text-[#6e3ff3] font-semibold underline decoration-[#6e3ff3] decoration-2 underline-offset-2">
-                {pendingCount} pesanan baru
-              </span>{" "}
-              yang memerlukan konfirmasi Anda.
+              {lang === "en" ? (
+                <>
+                  Today you have{" "}
+                  <span className="text-[#6e3ff3] font-semibold underline decoration-[#6e3ff3] decoration-2 underline-offset-2">
+                    {pendingCount} new order(s)
+                  </span>{" "}
+                  requiring your confirmation.
+                </>
+              ) : (
+                <>
+                  Hari ini ada{" "}
+                  <span className="text-[#6e3ff3] font-semibold underline decoration-[#6e3ff3] decoration-2 underline-offset-2">
+                    {pendingCount} pesanan baru
+                  </span>{" "}
+                  yang memerlukan konfirmasi Anda.
+                </>
+              )}
             </p>
           )}
         </div>
