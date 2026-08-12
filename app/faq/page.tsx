@@ -101,8 +101,11 @@ const FAQ_ITEMS: FAQItem[] = [
   },
 ];
 
+import { useLanguage } from "@/lib/i18n";
+
 export default function FAQPage() {
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [cartItemCount, setCartItemCount] = React.useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -507,7 +510,7 @@ export default function FAQPage() {
         {/* Title / Hero */}
         <section className="text-left mb-12 md:mb-16">
           <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] block mb-2 font-mono">
-            Pusat Bantuan
+            {lang === "en" ? "Help Center" : "Pusat Bantuan"}
           </span>
           <h1
             className="text-5xl md:text-7xl font-black tracking-tighter uppercase text-zinc-950 select-none relative"
@@ -515,21 +518,24 @@ export default function FAQPage() {
           >
             FAQS<span className="text-[#bef264]">.</span>
           </h1>
-          <p className="text-sm text-zinc-500 font-semibold mt-4 max-w-xl leading-relaxed">
-            Temukan jawaban atas pertanyaan-pertanyaan yang paling sering diajukan seputar produk batik tulis kami, pemesanan, metode pembayaran, serta kebijakan pengiriman.
+          <p
+            className="mt-4 text-zinc-500 max-w-2xl text-sm md:text-base leading-relaxed"
+            style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+          >
+            {lang === "en"
+              ? "Find answers to frequently asked questions regarding authentic handwoven Batik products, payment options, and delivery from Berakit Village."
+              : "Temukan jawaban atas pertanyaan yang sering diajukan seputar produk batik tulis asli Desa Berakit, metode pembayaran, dan proses pengiriman."}
           </p>
-        </section>
 
-        {/* Search & Category Filter Section */}
-        <section className="mb-12 space-y-6">
-          <div className="relative max-w-lg">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4.5 text-zinc-400" />
+          {/* Search Box */}
+          <div className="mt-8 relative max-w-xl">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-zinc-400" />
             <Input
               type="text"
-              placeholder="Cari pertanyaan atau jawaban..."
+              placeholder={lang === "en" ? "Search questions or topics..." : "Cari pertanyaan atau topik..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 bg-white border border-zinc-200 focus:ring-1 focus:ring-zinc-400 h-12 rounded-2xl text-sm font-medium shadow-sm transition-all"
+              className="pl-12 pr-4 h-12 bg-white border-zinc-200 rounded-2xl shadow-xs text-sm focus-visible:ring-[#bef264]"
             />
             {searchQuery && (
               <button

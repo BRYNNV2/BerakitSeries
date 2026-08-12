@@ -78,7 +78,10 @@ const DEFAULT_SLIDES: AboutSlide[] = [
   }
 ];
 
+import { useLanguage } from "@/lib/i18n";
+
 export function AboutSlidesCrud() {
+  const { lang, t } = useLanguage();
   const [slides, setSlides] = React.useState<AboutSlide[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(!!supabase);
@@ -431,17 +434,19 @@ export function AboutSlidesCrud() {
           <div className="space-y-1">
             <h2 className="text-lg font-bold sm:text-xl flex items-center gap-2">
               <Sliders className="size-5 text-primary" />
-              Kelola Slide Halaman About Us
+              {lang === "en" ? "Manage About Us Page Slides" : "Kelola Slide Halaman About Us"}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Unggah dan atur rangkaian gambar besar/slide presentasi yang ditampilkan di bagian atas halaman About Us.
+              {lang === "en"
+                ? "Upload and organize large hero slideshow images featured at the top of the About Us page."
+                : "Unggah dan atur rangkaian gambar besar/slide presentasi yang ditampilkan di bagian atas halaman About Us."}
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <Button size="sm" onClick={handleAddClick} className="h-8 sm:h-9 gap-1 shrink-0">
               <Plus className="size-4" />
-              Tambah Slide
+              {lang === "en" ? "Add Slide" : "Tambah Slide"}
             </Button>
           </div>
         </div>

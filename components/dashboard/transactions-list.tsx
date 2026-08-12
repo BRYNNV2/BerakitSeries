@@ -56,6 +56,7 @@ import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
 import { LoadingLottie } from "@/components/ui/loading-lottie";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n";
 
 interface Transaction {
   id: string;
@@ -73,6 +74,7 @@ interface Transaction {
 import { useDashboardStore } from "@/store/dashboard-store";
 
 export function TransactionsList() {
+  const { lang, t } = useLanguage();
   const [transactions, setTransactions] = React.useState<Transaction[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isUsingSupabase, setIsUsingSupabase] = React.useState(!!supabase);
@@ -535,7 +537,9 @@ export function TransactionsList() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="rounded-xl border bg-card p-4 flex items-center justify-between shadow-xs">
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground font-medium">Pendapatan Berhasil</span>
+            <span className="text-xs text-muted-foreground font-medium">
+              {lang === "en" ? "Successful Revenue" : "Pendapatan Berhasil"}
+            </span>
             <p className="text-xl sm:text-2xl font-bold text-emerald-500 tabular-nums">
               Rp {totalRevenue.toLocaleString("id-ID")}
             </p>
@@ -546,7 +550,9 @@ export function TransactionsList() {
         </div>
         <div className="rounded-xl border bg-card p-4 flex items-center justify-between shadow-xs">
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground font-medium">Total Transaksi</span>
+            <span className="text-xs text-muted-foreground font-medium">
+              {lang === "en" ? "Total Transactions" : "Total Transaksi"}
+            </span>
             <p className="text-xl sm:text-2xl font-bold tabular-nums">{transactions.length}</p>
           </div>
           <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -563,8 +569,12 @@ export function TransactionsList() {
               <ClipboardList className="size-4" />
             </div>
             <div>
-              <h2 className="text-base font-semibold">Transaksi Jualan Desa</h2>
-              <p className="text-[11px] text-muted-foreground">Kelola pesanan masuk dari pembeli</p>
+              <h2 className="text-base font-semibold">
+                {lang === "en" ? "Village Sales Transactions" : "Transaksi Jualan Desa"}
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                {lang === "en" ? "Manage incoming customer orders" : "Kelola pesanan masuk dari pembeli"}
+              </p>
             </div>
           </div>
 
@@ -573,7 +583,7 @@ export function TransactionsList() {
             <div className="relative w-full sm:w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Cari nama/metode..."
+                placeholder={lang === "en" ? "Search name/method..." : "Cari nama/metode..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-8 sm:h-9 text-sm"
@@ -583,10 +593,10 @@ export function TransactionsList() {
             {/* Status Filter */}
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="h-8 sm:h-9 w-[130px] text-sm">
-                <SelectValue placeholder="Semua Status" />
+                <SelectValue placeholder={lang === "en" ? "All Status" : "Semua Status"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="all">{lang === "en" ? "All Status" : "Semua Status"}</SelectItem>
                 <SelectItem value="Pending">Pending</SelectItem>
                 <SelectItem value="Diproses">Diproses</SelectItem>
                 <SelectItem value="Dikirim">Dikirim</SelectItem>

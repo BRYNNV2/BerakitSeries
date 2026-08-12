@@ -43,6 +43,7 @@ import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
 import { LoadingLottie } from "@/components/ui/loading-lottie";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n";
 
 interface Product {
   id: string;
@@ -78,6 +79,7 @@ const DEFAULT_PRODUCTS: Product[] = [];
 import { useDashboardStore } from "@/store/dashboard-store";
 
 export function ProductsCrud() {
+  const { lang, t } = useLanguage();
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [showSpinner, setShowSpinner] = React.useState(false);
@@ -583,8 +585,12 @@ export function ProductsCrud() {
               <ShoppingBag className="size-4" />
             </div>
             <div>
-              <h2 className="text-base font-semibold">Daftar Produk Desa</h2>
-              <p className="text-[11px] text-muted-foreground">Total produk terdaftar: {filteredProducts.length}</p>
+              <h2 className="text-base font-semibold">
+                {lang === "en" ? "Village Products List" : "Daftar Produk Desa"}
+              </h2>
+              <p className="text-[11px] text-muted-foreground">
+                {lang === "en" ? "Total registered products:" : "Total produk terdaftar:"} {filteredProducts.length}
+              </p>
             </div>
           </div>
 
@@ -593,7 +599,7 @@ export function ProductsCrud() {
             <div className="relative w-full sm:w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Cari produk..."
+                placeholder={lang === "en" ? "Search products..." : "Cari produk..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-8 sm:h-9 text-sm"
@@ -603,10 +609,10 @@ export function ProductsCrud() {
             {/* Category Filter */}
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="h-8 sm:h-9 w-[130px] text-sm">
-                <SelectValue placeholder="Semua Kategori" />
+                <SelectValue placeholder={lang === "en" ? "All Categories" : "Semua Kategori"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Kategori</SelectItem>
+                <SelectItem value="all">{lang === "en" ? "All Categories" : "Semua Kategori"}</SelectItem>
                 {categories.map((c) => (
                   <SelectItem key={c} value={c}>
                     {c}
@@ -618,7 +624,7 @@ export function ProductsCrud() {
             {/* Add Product Button */}
             <Button size="sm" onClick={handleAddClick} className="h-8 sm:h-9 gap-1">
               <Plus className="size-4" />
-              Tambah Produk
+              {lang === "en" ? "Add Product" : "Tambah Produk"}
             </Button>
           </div>
         </div>
@@ -626,15 +632,17 @@ export function ProductsCrud() {
         {/* Table Content */}
         <div className="overflow-x-auto p-2 sm:p-4">
           {showSpinner ? (
-            <LoadingLottie size={100} label="Memuat data produk..." />
+            <LoadingLottie size={100} label={lang === "en" ? "Loading product data..." : "Memuat data produk..."} />
           ) : loading ? (
             <div className="h-[200px]" />
           ) : filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3 text-center animate-in fade-in duration-300">
               <PackageX className="size-12 text-muted-foreground/60" />
               <div>
-                <h3 className="font-semibold text-sm">Tidak ada produk ditemukan</h3>
-                <p className="text-xs text-muted-foreground mt-1">Coba sesuaikan pencarian atau tambahkan produk baru.</p>
+                <h3 className="font-semibold text-sm">{lang === "en" ? "No products found" : "Tidak ada produk ditemukan"}</h3>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {lang === "en" ? "Try adjusting your search or add a new product." : "Coba sesuaikan pencarian atau tambahkan produk baru."}
+                </p>
               </div>
             </div>
           ) : (
@@ -642,12 +650,12 @@ export function ProductsCrud() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="w-[80px]">Foto</TableHead>
-                    <TableHead>Nama Produk</TableHead>
-                    <TableHead className="hidden md:table-cell">Kategori</TableHead>
-                    <TableHead>Harga</TableHead>
-                    <TableHead>Stok</TableHead>
-                    <TableHead className="w-[100px] text-right">Aksi</TableHead>
+                    <TableHead className="w-[80px]">{lang === "en" ? "Photo" : "Foto"}</TableHead>
+                    <TableHead>{lang === "en" ? "Product Name" : "Nama Produk"}</TableHead>
+                    <TableHead className="hidden md:table-cell">{lang === "en" ? "Category" : "Kategori"}</TableHead>
+                    <TableHead>{lang === "en" ? "Price" : "Harga"}</TableHead>
+                    <TableHead>{lang === "en" ? "Stock" : "Stok"}</TableHead>
+                    <TableHead className="w-[100px] text-right">{lang === "en" ? "Actions" : "Aksi"}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

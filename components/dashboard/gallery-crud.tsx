@@ -43,6 +43,7 @@ import { supabase, withTimeout, handleSupabaseError } from "@/lib/supabase";
 import { addActivityLog } from "@/lib/logger";
 import { LoadingLottie } from "@/components/ui/loading-lottie";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n";
 
 interface GalleryItem {
   id: string;
@@ -98,6 +99,7 @@ const categories = ["Proses Pembuatan", "Produk", "Acara", "Komunitas"];
 import { useDashboardStore } from "@/store/dashboard-store";
 
 export function GalleryCrud() {
+  const { lang, t } = useLanguage();
   const [gallery, setGallery] = React.useState<GalleryItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [showSpinner, setShowSpinner] = React.useState(false);
@@ -475,10 +477,12 @@ export function GalleryCrud() {
           <div className="space-y-1">
             <h2 className="text-lg font-bold sm:text-xl flex items-center gap-2">
               <ImageIcon className="size-5 text-primary" />
-              Galeri Kegiatan Desa
+              {lang === "en" ? "Village Activity Gallery" : "Galeri Kegiatan Desa"}
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground">
-              Kelola arsip dokumentasi penjualan, kegiatan perajin, dan acara kebudayaan Desa Berakit.
+              {lang === "en"
+                ? "Manage documentation archives of sales, artisan activities, and cultural events in Berakit Village."
+                : "Kelola arsip dokumentasi penjualan, kegiatan perajin, dan acara kebudayaan Desa Berakit."}
             </p>
           </div>
 
@@ -487,7 +491,7 @@ export function GalleryCrud() {
             <div className="relative flex-1 sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
-                placeholder="Cari foto..."
+                placeholder={lang === "en" ? "Search photo..." : "Cari foto..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 h-8 sm:h-9"
@@ -497,10 +501,10 @@ export function GalleryCrud() {
             {/* Filter Category */}
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="h-8 sm:h-9 w-full sm:w-44">
-                <SelectValue placeholder="Semua Kategori" />
+                <SelectValue placeholder={lang === "en" ? "All Categories" : "Semua Kategori"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Kategori</SelectItem>
+                <SelectItem value="all">{lang === "en" ? "All Categories" : "Semua Kategori"}</SelectItem>
                 {categories.map((c) => (
                   <SelectItem key={c} value={c}>
                     {c}
@@ -512,7 +516,7 @@ export function GalleryCrud() {
             {/* Add Gallery Button */}
             <Button size="sm" onClick={handleAddClick} className="h-8 sm:h-9 gap-1 shrink-0">
               <Plus className="size-4" />
-              Tambah Foto
+              {lang === "en" ? "Add Photo" : "Tambah Foto"}
             </Button>
           </div>
         </div>
