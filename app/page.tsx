@@ -77,7 +77,7 @@ interface CartItem {
 
 export default function StorefrontPage() {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   // Initialize Lenis Smooth Scroll and sync with GSAP ScrollTrigger
   React.useEffect(() => {
@@ -1964,7 +1964,7 @@ export default function StorefrontPage() {
                   lineHeight: "20px"
                 }}
               >
-                Why Choose Us
+                {lang === "en" ? "Why Choose Us" : "Mengapa Memilih Kami"}
               </span>
               <h2
                 className="uppercase tracking-tight text-black"
@@ -1976,8 +1976,8 @@ export default function StorefrontPage() {
                   lineHeight: "clamp(44px, 8vw, 79px)"
                 }}
               >
-                <span className="text-black">The Berakit</span><br />
-                <span style={{ color: "lab(48.496 0 0)" }}>Difference</span>
+                <span className="text-black">{lang === "en" ? "The Berakit" : "Keunggulan"}</span><br />
+                <span style={{ color: "lab(48.496 0 0)" }}>{lang === "en" ? "Difference" : "Batik Berakit"}</span>
                 <span className="text-[#bef264]">.</span>
               </h2>
             </div>
@@ -1992,7 +1992,9 @@ export default function StorefrontPage() {
                   lineHeight: "29px"
                 }}
               >
-                We don't just sell local products; we deliver an authentic coastal heritage. Every interaction is designed to support the local fishermen, craft artisans, and families of Desa Berakit.
+                {lang === "en"
+                  ? "We don't just sell local products; we deliver an authentic coastal heritage. Every interaction is designed to support the local fishermen, craft artisans, and families of Desa Berakit."
+                  : "Kami tidak sekadar menjual produk; kami menghadirkan warisan budaya pesisir yang otentik. Setiap transaksi mendukung kesejahteraan perajin dan keluarga Desa Berakit."}
               </p>
             </div>
           </div>
@@ -2019,13 +2021,15 @@ export default function StorefrontPage() {
                       className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
                       style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
                     >
-                      Free Worldwide Shipping
+                      {lang === "en" ? "Free Worldwide Shipping" : "Pengiriman Cepat & Gratis"}
                     </h3>
                     <p
                       className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
                       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     >
-                      Free shipping on all orders over $150. Delivered to your doorstep within 5-7 business days.
+                      {lang === "en"
+                        ? "Free shipping on all orders over $150. Delivered to your doorstep within 5-7 business days."
+                        : "Gratis ongkir untuk pembelian di atas Rp 150.000 ke seluruh wilayah Indonesia."}
                     </p>
                   </div>
                   <div className="size-8 rounded-full border border-zinc-200 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:border-[#bef264] transition-all duration-300 transform group-hover:translate-x-1">
@@ -2055,13 +2059,15 @@ export default function StorefrontPage() {
                       className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
                       style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
                     >
-                      30-Day Free Returns
+                      {lang === "en" ? "100% Handwoven Guarantee" : "Batik Tulis 100% Asli"}
                     </h3>
                     <p
                       className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
                       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     >
-                      Not satisfied? Return within 30 days for a full refund. No questions asked.
+                      {lang === "en"
+                        ? "Crafted with authentic wax canting by local artisans of Berakit Village with natural dyes."
+                        : "Dibuat menggunakan canting lilin malam asli oleh perajin Desa Berakit dengan bahan berkualitas."}
                     </p>
                   </div>
                   <div className="size-8 rounded-full border border-zinc-200 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:border-[#bef264] transition-all duration-300 transform group-hover:translate-x-1">
@@ -2091,13 +2097,15 @@ export default function StorefrontPage() {
                       className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
                       style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
                     >
-                      Secure Checkout
+                      {lang === "en" ? "Secure Checkout" : "Pembayaran Aman"}
                     </h3>
                     <p
                       className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
                       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     >
-                      Your payment information is encrypted and secure. Shop with confidence.
+                      {lang === "en"
+                        ? "Your payment information is encrypted and secure. Support Transfer Bank, QRIS & COD."
+                        : "Sistem transaksi terenkripsi aman. Mendukung Transfer Bank, QRIS, dan COD (Bayar di Tempat)."}
                     </p>
                   </div>
                   <div className="size-8 rounded-full border border-zinc-200 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:border-[#bef264] transition-all duration-300 transform group-hover:translate-x-1">
@@ -2127,13 +2135,15 @@ export default function StorefrontPage() {
                       className="text-lg uppercase tracking-wide text-black group-hover:text-[#bef264] transition-colors duration-300"
                       style={{ fontFamily: "'Oswald', Impact, sans-serif", fontWeight: 700 }}
                     >
-                      24/7 Customer Support
+                      {lang === "en" ? "Customer Support" : "Layanan WhatsApp 24/7"}
                     </h3>
                     <p
                       className="text-xs text-zinc-500 font-medium leading-relaxed max-w-[240px]"
                       style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     >
-                      Our dedicated team is here to help you anytime, anywhere.
+                      {lang === "en"
+                        ? "Our dedicated BUMDes team is here to assist your purchase and inquiries anytime."
+                        : "Tim BUMDes Berakit siap melayani pertanyaan dan konsultasi pembelian secara langsung."}
                     </p>
                   </div>
                   <div className="size-8 rounded-full border border-zinc-200 flex items-center justify-center opacity-0 group-hover:opacity-100 group-hover:border-[#bef264] transition-all duration-300 transform group-hover:translate-x-1">
@@ -2159,7 +2169,7 @@ export default function StorefrontPage() {
           <div id="voices-left-col" className="w-full lg:w-[420px] shrink-0 text-left space-y-6">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#bef264] uppercase tracking-wider">
-                <span className="animate-pulse">⚡</span> LIVE TRANSMISSIONS
+                <span className="animate-pulse">⚡</span> {lang === "en" ? "LIVE TRANSMISSIONS" : "ULASAN PELANGGAN"}
               </div>
               <h2
                 className="uppercase tracking-tight text-black flex flex-col"
@@ -2171,8 +2181,8 @@ export default function StorefrontPage() {
                   lineHeight: "clamp(44px, 8vw, 79px)"
                 }}
               >
-                <span>VOICES FROM</span>
-                <span>THE GRID<span className="text-[#bef264]">.</span></span>
+                <span>{lang === "en" ? "VOICES FROM" : "TESTIMONI"}</span>
+                <span>{lang === "en" ? "THE GRID" : "PELANGGAN"}<span className="text-[#bef264]">.</span></span>
               </h2>
               <p
                 className="text-zinc-500 font-normal max-w-[420px]"
@@ -2184,7 +2194,9 @@ export default function StorefrontPage() {
                   lineHeight: "29px"
                 }}
               >
-                Decrypting user logs to reveal the unparalleled luxury experience in the digital-physical frontier.
+                {lang === "en"
+                  ? "Decrypting user logs to reveal the unparalleled luxury experience of authentic coastal batik."
+                  : "Pengalaman dan testimoni nyata dari pembeli batik tulis asli warisan budaya pesisir Desa Berakit."}
               </p>
             </div>
 
@@ -2469,7 +2481,7 @@ export default function StorefrontPage() {
           <div id="hub-left-col" className="w-full lg:w-[480px] shrink-0 text-left space-y-8">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#bef264] uppercase tracking-wider">
-                <span className="size-2 rounded-full bg-[#bef264] animate-pulse" /> SATELLITE UPLINK
+                <span className="size-2 rounded-full bg-[#bef264] animate-pulse" /> {lang === "en" ? "SATELLITE UPLINK" : "LOKASI KANTOR PUSAT"}
               </div>
               <h2
                 className="uppercase tracking-tight text-black"
@@ -2481,8 +2493,8 @@ export default function StorefrontPage() {
                   lineHeight: "clamp(44px, 8vw, 79px)"
                 }}
               >
-                PHYSICAL<br />
-                <span className="text-zinc-400">HUB</span>
+                {lang === "en" ? "PHYSICAL" : "KANTOR"}<br />
+                <span className="text-zinc-400">{lang === "en" ? "HUB" : "BUMDES"}</span>
                 <span className="text-[#bef264]">.</span>
               </h2>
               <p
@@ -2495,7 +2507,9 @@ export default function StorefrontPage() {
                   lineHeight: "29px"
                 }}
               >
-                Drop by our operational headquarters. Experience the seamless fusion of high-end infrastructure and digital realities.
+                {lang === "en"
+                  ? "Visit our operational headquarters at Berakit Village. Experience authentic coastal handicraft creation in person."
+                  : "Kunjungi kantor operasional BUMDes Berakit. Rasakan dan lihat langsung proses pembuatan batik tulis pesisir."}
               </p>
             </div>
 
