@@ -657,9 +657,9 @@ export default function StorefrontPage() {
             pin: true,
             pinSpacing: true,
             anticipatePin: 1,
-            scrub: 1,
+            scrub: 1.2,
             start: "top top",
-            end: () => `+=${Math.max(1000, container.scrollWidth - wrapper.clientWidth)}`,
+            end: () => `+=${Math.max(2800, (container.scrollWidth - wrapper.clientWidth) * 2.8)}`,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
               if (syncProgressBarRef.current) {
@@ -2629,12 +2629,12 @@ export default function StorefrontPage() {
       {/* Section 3.5: 4 Langkah Proses Pembuatan Batik Pesisir (Artisan Crafting Process) */}
       <section
         id="process-section"
-        className="w-full bg-white py-16 sm:py-24 border-b border-zinc-200/60 relative overflow-hidden"
+        className="w-full bg-white py-20 sm:py-32 border-b border-zinc-200/60 relative overflow-hidden"
       >
         {/* Background Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-30" />
 
-        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10 space-y-16">
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10 space-y-20">
           {/* Header Row */}
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
             <div className="space-y-3 text-left max-w-[850px]">
