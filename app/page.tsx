@@ -55,6 +55,10 @@ import {
   Coins,
   Users,
   CheckCircle2,
+  PenTool,
+  Droplets,
+  Sun,
+  Flame,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -2606,6 +2610,185 @@ export default function StorefrontPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 3.5: 4 Langkah Proses Pembuatan Batik Pesisir (Artisan Crafting Process) */}
+      <section
+        id="process-section"
+        className="w-full bg-white py-16 sm:py-24 border-b border-zinc-200/60 relative overflow-hidden"
+      >
+        {/* Background Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-30" />
+
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10 space-y-16">
+          {/* Header Row */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div className="space-y-3 text-left max-w-[850px]">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#bef264]/20 border border-[#bef264]/50 text-black text-xs font-bold uppercase tracking-wider">
+                <Sparkles className="size-3.5 text-zinc-900" />
+                <span>
+                  {lang === "en" ? "Artisan Handcraft Journey" : "Tahapan Karya Seni Pesisir"}
+                </span>
+              </div>
+              <h2
+                className="uppercase tracking-tight text-black"
+                style={{
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontStyle: "normal",
+                  fontWeight: 900,
+                  fontSize: "clamp(42px, 7.5vw, 84px)",
+                  lineHeight: "clamp(40px, 7.5vw, 78px)",
+                }}
+              >
+                <span>{lang === "en" ? "4 STAGES OF" : "4 TAHAPAN PROSES"}</span><br />
+                <span style={{ color: "lab(48.496 0 0)" }}>
+                  {lang === "en" ? "CANTING CRAFTSMANSHIP" : "PEMBUATAN BATIK BERAKIT"}
+                </span>
+                <span className="text-[#bef264]">.</span>
+              </h2>
+            </div>
+            <div className="max-w-[540px] text-left">
+              <p
+                className="text-zinc-600 font-normal leading-relaxed text-base sm:text-lg"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                {lang === "en"
+                  ? "Every textile in the Berakit Series undergoes a patient 4-step ritual of devotion—from freehand pencil sketches to natural mangrove dyeing—created with precision by local artisan mothers."
+                  : "Setiap lembar kain Berakit Series melewati 4 tahapan pembuatan yang sarat ketelitian dan kesabaran—mulai dari goresan sketsa pensil, canting lilin malam, hingga perendaman pewarna alami mangrove oleh para ibu perajin."}
+              </p>
+            </div>
+          </div>
+
+          {/* 4 Process Steps (Horizontal Editorial Stack with fine dividers - Bukan Box Card) */}
+          <div className="border-t border-zinc-200 divide-y divide-zinc-200">
+            {/* Step 1: Pemolaan & Canting Malam */}
+            <div className="group py-8 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start hover:bg-[#bef264]/5 transition-colors px-2 sm:px-4 rounded-2xl text-left">
+              <div className="lg:col-span-4 flex items-start gap-4">
+                <span className="text-4xl sm:text-5xl font-black text-zinc-300 group-hover:text-black font-mono leading-none transition-colors">
+                  01
+                </span>
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-100 group-hover:bg-[#bef264] text-zinc-900 text-[10px] font-bold uppercase tracking-wider transition-colors">
+                    <PenTool className="size-3 text-zinc-900" />
+                    <span>{lang === "en" ? "Stage 01 / Sketching & Waxing" : "Tahap 01 / Pola & Canting Malam"}</span>
+                  </div>
+                  <h3
+                    className="text-xl sm:text-2xl font-bold uppercase tracking-wide text-zinc-900"
+                    style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                  >
+                    {lang === "en" ? "Freehand Sketch & Hot Wax Canting" : "Pemolaan Sketsa & Canting Lilin Malam"}
+                  </h3>
+                </div>
+              </div>
+              <div className="lg:col-span-8">
+                <p className="text-sm sm:text-base text-zinc-600 leading-relaxed">
+                  {lang === "en"
+                    ? "Motifs of Gonggong sea snails, ocean waves, and mangrove foliage are drawn freehand onto premium primissima cotton or silk. Artisans then apply molten beeswax using traditional copper canting to preserve the design lines and resist dye penetration."
+                    : "Sketsa motif bahari (Kerang Gonggong, Ombak Samudra, Daun Bakau) digambar manual di atas kain mori primissima atau sutra halus. Dilanjutkan penorehan lilin malam panas menggunakan canting tembaga secara teliti untuk mengunci pola agar tidak terkena rembesan warna."}
+                </p>
+              </div>
+            </div>
+
+            {/* Step 2: Pewarnaan Alami Mangrove */}
+            <div className="group py-8 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start hover:bg-[#bef264]/5 transition-colors px-2 sm:px-4 rounded-2xl text-left">
+              <div className="lg:col-span-4 flex items-start gap-4">
+                <span className="text-4xl sm:text-5xl font-black text-zinc-300 group-hover:text-black font-mono leading-none transition-colors">
+                  02
+                </span>
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-100 group-hover:bg-[#bef264] text-zinc-900 text-[10px] font-bold uppercase tracking-wider transition-colors">
+                    <Droplets className="size-3 text-zinc-900" />
+                    <span>{lang === "en" ? "Stage 02 / Botanical Dyeing" : "Tahap 02 / Pewarnaan Alami Pesisir"}</span>
+                  </div>
+                  <h3
+                    className="text-xl sm:text-2xl font-bold uppercase tracking-wide text-zinc-900"
+                    style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                  >
+                    {lang === "en" ? "Mangrove & Botanical Dye Infusion" : "Ekstraksi & Pewarnaan Alami Mangrove"}
+                  </h3>
+                </div>
+              </div>
+              <div className="lg:col-span-8">
+                <p className="text-sm sm:text-base text-zinc-600 leading-relaxed">
+                  {lang === "en"
+                    ? "The fabric is repeatedly submerged into natural dye baths brewed from mangrove bark extract, secang wood, and native island plants. This non-toxic organic process produces warm, earthy coastal tones while safeguarding the ocean ecosystem."
+                    : "Kain dicelup berulang kali ke dalam cairan rebusan getah pohon bakau mangrove, kulit kayu secang, dan dedaunan pesisir. Proses alami ramah lingkungan ini menghasilkan gradasi warna bahari yang hangat, khas, dan aman bagi ekosistem perairan laut."}
+                </p>
+              </div>
+            </div>
+
+            {/* Step 3: Fiksasi Warna Alami */}
+            <div className="group py-8 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start hover:bg-[#bef264]/5 transition-colors px-2 sm:px-4 rounded-2xl text-left">
+              <div className="lg:col-span-4 flex items-start gap-4">
+                <span className="text-4xl sm:text-5xl font-black text-zinc-300 group-hover:text-black font-mono leading-none transition-colors">
+                  03
+                </span>
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-100 group-hover:bg-[#bef264] text-zinc-900 text-[10px] font-bold uppercase tracking-wider transition-colors">
+                    <Flame className="size-3 text-zinc-900" />
+                    <span>{lang === "en" ? "Stage 03 / Color Fixation" : "Tahap 03 / Fiksasi & Penguncian Warna"}</span>
+                  </div>
+                  <h3
+                    className="text-xl sm:text-2xl font-bold uppercase tracking-wide text-zinc-900"
+                    style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                  >
+                    {lang === "en" ? "Natural Fixation & Pigment Lock" : "Fiksasi Mineral Alami Tahan Luntur"}
+                  </h3>
+                </div>
+              </div>
+              <div className="lg:col-span-8">
+                <p className="text-sm sm:text-base text-zinc-600 leading-relaxed">
+                  {lang === "en"
+                    ? "To ensure permanent colorfastness, dyed fabrics are treated with natural mineral solutions like alum or slaked lime. This binds the organic botanical pigments deeply into the textile fibers, ensuring the colors remain rich through years of wear."
+                    : "Kain yang telah diwarnai direndam dalam larutan fiksasi alami seperti tawas atau kapur sirih. Tahapan ini mengunci molekul warna alami ke dalam serat kain terdalam, memastikan warna batik tetap cerah, awet, dan tidak mudah luntur saat dicuci."}
+                </p>
+              </div>
+            </div>
+
+            {/* Step 4: Pelorodan Malam & Finishing */}
+            <div className="group py-8 sm:py-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start hover:bg-[#bef264]/5 transition-colors px-2 sm:px-4 rounded-2xl text-left">
+              <div className="lg:col-span-4 flex items-start gap-4">
+                <span className="text-4xl sm:text-5xl font-black text-zinc-300 group-hover:text-black font-mono leading-none transition-colors">
+                  04
+                </span>
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-100 group-hover:bg-[#bef264] text-zinc-900 text-[10px] font-bold uppercase tracking-wider transition-colors">
+                    <Sun className="size-3 text-zinc-900" />
+                    <span>{lang === "en" ? "Stage 04 / Wax Removal & Drying" : "Tahap 04 / Pelorodan & Finishing"}</span>
+                  </div>
+                  <h3
+                    className="text-xl sm:text-2xl font-bold uppercase tracking-wide text-zinc-900"
+                    style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                  >
+                    {lang === "en" ? "Wax Boiling & Coastal Breeze Drying" : "Pelorodan Lilin Malam & Angin Pesisir"}
+                  </h3>
+                </div>
+              </div>
+              <div className="lg:col-span-8">
+                <p className="text-sm sm:text-base text-zinc-600 leading-relaxed">
+                  {lang === "en"
+                    ? "The textile is immersed in boiling water to melt and wash away all wax residue (nglorod), revealing the crisp contrasting motifs. Finally, the batik is thoroughly rinsed and air-dried under the natural coastal breezes of Berakit."
+                    : "Kain dimasukkan ke dalam air mendidih untuk meluruhkan seluruh lapisan lilin malam (proses nglorod), menyingkap keindahan motif batik yang kontras dan bersih. Kain kemudian dibilas air bersih dan diangin-anginkan di bawah semilir angin pantai Desa Berakit."}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bridge Transition to Testimonials */}
+          <div className="pt-6 border-t border-zinc-200/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+            <div className="flex items-center gap-3">
+              <div className="size-3 rounded-full bg-[#bef264] animate-ping" />
+              <span className="text-xs sm:text-sm font-semibold text-zinc-700">
+                {lang === "en"
+                  ? "Authentic artisanal process trusted by customers nationwide."
+                  : "Karya tulus 4 tahapan inilah yang melahirkan kepuasan dan testimoni nyata pelanggan kami di bawah ini."}
+              </span>
+            </div>
+            <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest font-mono">
+              ↓ {lang === "en" ? "SCROLL FOR REVIEWS" : "LIHAT TESTIMONI PELANGGAN"}
+            </span>
           </div>
         </div>
       </section>
