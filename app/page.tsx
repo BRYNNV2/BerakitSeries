@@ -116,13 +116,13 @@ export default function StorefrontPage() {
       }
 
       lenisInstance = new Lenis({
-        duration: 0.9,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        duration: 1.1,
+        easing: (t) => 1 - Math.pow(1 - t, 3),
         orientation: "vertical",
         gestureOrientation: "vertical",
         smoothWheel: true,
-        wheelMultiplier: 0.85,
-        touchMultiplier: 1.1,
+        wheelMultiplier: 0.55,
+        touchMultiplier: 1.0,
       });
 
       lenisInstance.on("scroll", () => {
