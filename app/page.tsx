@@ -1287,7 +1287,7 @@ export default function StorefrontPage() {
                 lineHeight: "20px",
                 color: "lab(2.75381 0 0)",
               }}>
-                {t("nav.about", "Tentang Kami")} <ChevronDown className="size-3.5 opacity-60" />
+                {t("nav.company", "Company")} <ChevronDown className="size-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
                 <DropdownMenuItem
@@ -1314,7 +1314,7 @@ export default function StorefrontPage() {
                 lineHeight: "20px",
                 color: "lab(2.75381 0 0)",
               }}>
-                {t("nav.contact", "Bantuan")} <ChevronDown className="size-3.5 opacity-60" />
+                {t("nav.support", "Support")} <ChevronDown className="size-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
                 <DropdownMenuItem
@@ -1370,7 +1370,7 @@ export default function StorefrontPage() {
                 }}
                 onClick={() => router.push("/login")}
               >
-                {t("nav.login", "Masuk")}
+                {t("nav.login", "Sign In")}
               </button>
             )}
             <button
@@ -1432,7 +1432,7 @@ export default function StorefrontPage() {
                 style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Home
+                {t("nav.home", "Home")}
               </a>
               <a
                 href="/product"
@@ -1440,7 +1440,7 @@ export default function StorefrontPage() {
                 style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Collections
+                {t("nav.products", "Collections")}
               </a>
               <a
                 href="/gallery"
@@ -1448,7 +1448,7 @@ export default function StorefrontPage() {
                 style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Gallery
+                {t("nav.gallery", "Gallery")}
               </a>
 
               {/* Company Accordion / Nested Items */}
@@ -1457,7 +1457,7 @@ export default function StorefrontPage() {
                   className="text-lg font-bold"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 >
-                  Company
+                  {t("nav.company", "Company")}
                 </span>
                 <div className="pl-4 flex flex-col gap-2 border-l border-zinc-200">
                   <a
@@ -1466,7 +1466,7 @@ export default function StorefrontPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    About Us
+                    {t("nav.about", "About Us")}
                   </a>
                   <a
                     href="/careers"
@@ -1474,20 +1474,20 @@ export default function StorefrontPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Careers
+                    {t("nav.careers", "Careers")}
                   </a>
                   <div
                     className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
-                    <span>Press</span>
+                    <span>{t("nav.press", "Press")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
                   <div
                     className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
-                    <span>Sustainability</span>
+                    <span>{t("nav.sustainability", "Sustainability")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
                 </div>
@@ -1499,7 +1499,7 @@ export default function StorefrontPage() {
                   className="text-lg font-bold"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 >
-                  Support
+                  {t("nav.support", "Support")}
                 </span>
                 <div className="pl-4 flex flex-col gap-2 border-l border-zinc-200">
                   <a
@@ -1508,7 +1508,7 @@ export default function StorefrontPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Contact Us
+                    {t("nav.contact", "Contact Us")}
                   </a>
                   <a
                     href="/faq"
@@ -1516,20 +1516,20 @@ export default function StorefrontPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    FAQs
+                    {t("nav.faq", "FAQs")}
                   </a>
                   <div
                     className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
-                    <span>Shipping</span>
+                    <span>{t("nav.shipping", "Shipping")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
                   <div
                     className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
-                    <span>Returns</span>
+                    <span>{t("nav.returns", "Returns")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
                   <a
@@ -1538,7 +1538,7 @@ export default function StorefrontPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Size Guide
+                    {t("nav.sizeGuide", "Size Guide")}
                   </a>
                 </div>
               </div>
@@ -1554,7 +1554,7 @@ export default function StorefrontPage() {
                   router.push(currentUser.role === "admin" ? "/admin" : "/dashboard");
                 }}
               >
-                Dashboard
+                {t("nav.dashboard", "Dashboard")}
               </button>
             ) : (
               <button
@@ -1564,7 +1564,7 @@ export default function StorefrontPage() {
                   router.push("/login");
                 }}
               >
-                Sign In
+                {t("nav.login", "Sign In")}
               </button>
             )}
           </div>

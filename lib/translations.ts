@@ -13,6 +13,12 @@ export interface TranslationDict {
     dashboard: string;
     login: string;
     register: string;
+    company: string;
+    support: string;
+    press: string;
+    sustainability: string;
+    shipping: string;
+    returns: string;
   };
   hero: {
     tagline: string;
@@ -93,16 +99,22 @@ export const translations: Record<Language, TranslationDict> = {
     // Navigation & Common Header
     nav: {
       home: "Beranda",
-      products: "Katalog Produk",
-      gallery: "Galeri Desa",
+      products: "Koleksi",
+      gallery: "Galeri",
       about: "Tentang Kami",
-      contact: "Kontak",
+      contact: "Kontak Kami",
       careers: "Karir",
-      faq: "FAQ",
+      faq: "Tanya Jawab (FAQ)",
       sizeGuide: "Panduan Ukuran",
-      dashboard: "Dashboard Admin",
+      dashboard: "Dashboard",
       login: "Masuk",
       register: "Daftar",
+      company: "Profil",
+      support: "Bantuan",
+      press: "Siaran Pers",
+      sustainability: "Keberlanjutan",
+      shipping: "Pengiriman",
+      returns: "Garansi & Retur",
     },
 
     // Hero & Public Sections
@@ -190,16 +202,22 @@ export const translations: Record<Language, TranslationDict> = {
     // Navigation & Common Header
     nav: {
       home: "Home",
-      products: "Product Catalog",
-      gallery: "Village Gallery",
+      products: "Collections",
+      gallery: "Gallery",
       about: "About Us",
       contact: "Contact Us",
       careers: "Careers",
-      faq: "FAQ",
+      faq: "FAQs",
       sizeGuide: "Size Guide",
-      dashboard: "Admin Dashboard",
-      login: "Login",
-      register: "Register",
+      dashboard: "Dashboard",
+      login: "Sign In",
+      register: "Sign Up",
+      company: "Company",
+      support: "Support",
+      press: "Press",
+      sustainability: "Sustainability",
+      shipping: "Shipping",
+      returns: "Returns",
     },
 
     // Hero & Public Sections

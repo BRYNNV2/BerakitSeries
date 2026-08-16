@@ -319,33 +319,33 @@ export default function AboutPage() {
                 lineHeight: "20px",
                 color: "lab(2.75381 0 0)",
               }}>
-                Company <ChevronDown className="size-3.5 opacity-60" />
+                {t("nav.company", "Company")} <ChevronDown className="size-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
                 <DropdownMenuItem 
                   onClick={() => router.push("/about")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  About Us
+                  {t("nav.about", "About Us")}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => router.push("/careers")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  Careers
+                  {t("nav.careers", "Careers")}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
-                  <span>Press</span>
+                  <span>{t("nav.press", "Press")}</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
-                  <span>Sustainability</span>
+                  <span>{t("nav.sustainability", "Sustainability")}</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -360,40 +360,40 @@ export default function AboutPage() {
                 lineHeight: "20px",
                 color: "lab(2.75381 0 0)",
               }}>
-                Support <ChevronDown className="size-3.5 opacity-60" />
+                {t("nav.support", "Support")} <ChevronDown className="size-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
                 <DropdownMenuItem 
                   onClick={() => router.push("/contact")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  Contact Us
+                  {t("nav.contact", "Contact Us")}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => router.push("/faq")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  FAQs
+                  {t("nav.faq", "FAQs")}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
-                  <span>Shipping</span>
+                  <span>{t("nav.shipping", "Shipping")}</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
-                  <span>Returns</span>
+                  <span>{t("nav.returns", "Returns")}</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => router.push("/size-guide")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  Size Guide
+                  {t("nav.sizeGuide", "Size Guide")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -414,7 +414,7 @@ export default function AboutPage() {
                   router.push(currentUser.role === "admin" ? "/admin" : "/dashboard")
                 }
               >
-                Dashboard
+                {t("nav.dashboard", "Dashboard")}
               </button>
             ) : (
               <button
@@ -428,7 +428,7 @@ export default function AboutPage() {
                 }}
                 onClick={() => router.push("/login")}
               >
-                Sign In
+                {t("nav.login", "Sign In")}
               </button>
             )}
             <button
@@ -487,7 +487,7 @@ export default function AboutPage() {
                 style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Home
+                {t("nav.home", "Home")}
               </a>
               <a
                 href="/product"
@@ -495,7 +495,7 @@ export default function AboutPage() {
                 style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Collections
+                {t("nav.products", "Collections")}
               </a>
               <a
                 href="/gallery"
@@ -503,7 +503,7 @@ export default function AboutPage() {
                 style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Gallery
+                {t("nav.gallery", "Gallery")}
               </a>
 
               {/* Company Accordion / Nested Items */}
@@ -512,7 +512,7 @@ export default function AboutPage() {
                   className="text-lg font-bold"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 >
-                  Company
+                  {t("nav.company", "Company")}
                 </span>
                 <div className="pl-4 flex flex-col gap-2 border-l border-zinc-200">
                   <a
@@ -521,7 +521,7 @@ export default function AboutPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    About Us
+                    {t("nav.about", "About Us")}
                   </a>
                   <a
                     href="/careers"
@@ -529,20 +529,20 @@ export default function AboutPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Careers
+                    {t("nav.careers", "Careers")}
                   </a>
                   <div
                     className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
-                    <span>Press</span>
+                    <span>{t("nav.press", "Press")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
                   <div
                     className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
-                    <span>Sustainability</span>
+                    <span>{t("nav.sustainability", "Sustainability")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
                 </div>
@@ -554,7 +554,7 @@ export default function AboutPage() {
                   className="text-lg font-bold"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 >
-                  Support
+                  {t("nav.support", "Support")}
                 </span>
                 <div className="pl-4 flex flex-col gap-2 border-l border-zinc-200">
                   <a
@@ -563,7 +563,7 @@ export default function AboutPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Contact Us
+                    {t("nav.contact", "Contact Us")}
                   </a>
                   <a
                     href="/faq"
@@ -571,20 +571,20 @@ export default function AboutPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    FAQs
+                    {t("nav.faq", "FAQs")}
                   </a>
                   <div
                     className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
-                    <span>Shipping</span>
+                    <span>{t("nav.shipping", "Shipping")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
                   <div
                     className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                   >
-                    <span>Returns</span>
+                    <span>{t("nav.returns", "Returns")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
                   <a
@@ -593,7 +593,7 @@ export default function AboutPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Size Guide
+                    {t("nav.sizeGuide", "Size Guide")}
                   </a>
                 </div>
               </div>
@@ -608,7 +608,7 @@ export default function AboutPage() {
                   router.push(currentUser.role === "admin" ? "/admin" : "/dashboard");
                 }}
               >
-                Dashboard
+                {t("nav.dashboard", "Dashboard")}
               </button>
             ) : (
               <button
@@ -618,7 +618,7 @@ export default function AboutPage() {
                   router.push("/login");
                 }}
               >
-                Sign In
+                {t("nav.login", "Sign In")}
               </button>
             )}
           </div>

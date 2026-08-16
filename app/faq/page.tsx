@@ -109,6 +109,8 @@ export default function FAQPage() {
   const [currentUser, setCurrentUser] = React.useState<any>(null);
   const [cartItemCount, setCartItemCount] = React.useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isSearchOpen, setIsSearchOpen] = React.useState(false);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [activeCategory, setActiveCategory] = React.useState<"all" | "produk" | "pembayaran" | "pengiriman">("all");
   const [openItems, setOpenItems] = React.useState<Record<string, boolean>>({});
@@ -223,33 +225,33 @@ export default function FAQPage() {
                 lineHeight: "20px",
                 color: "lab(2.75381 0 0)",
               }}>
-                Company <ChevronDown className="size-3.5 opacity-60" />
+                {t("nav.company", "Company")} <ChevronDown className="size-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
                 <DropdownMenuItem 
                   onClick={() => router.push("/about")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  About Us
+                  {t("nav.about", "About Us")}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => router.push("/careers")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  Careers
+                  {t("nav.careers", "Careers")}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
-                  <span>Press</span>
+                  <span>{t("nav.press", "Press")}</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
-                  <span>Sustainability</span>
+                  <span>{t("nav.sustainability", "Sustainability")}</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -264,97 +266,88 @@ export default function FAQPage() {
                 lineHeight: "20px",
                 color: "lab(2.75381 0 0)",
               }}>
-                Support <ChevronDown className="size-3.5 opacity-60" />
+                {t("nav.support", "Support")} <ChevronDown className="size-3.5 opacity-60" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-48 bg-white border border-zinc-200 shadow-xl rounded-2xl p-1.5 mt-2 animate-in fade-in-50 slide-in-from-top-1 duration-200 z-[99]">
                 <DropdownMenuItem 
                   onClick={() => router.push("/contact")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  Contact Us
+                  {t("nav.contact", "Contact Us")}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => router.push("/faq")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#bef264] bg-black rounded-xl cursor-pointer outline-none"
                 >
-                  FAQs
+                  {t("nav.faq", "FAQs")}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
-                  <span>Shipping</span>
+                  <span>{t("nav.shipping", "Shipping")}</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   disabled
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-zinc-400 rounded-xl cursor-not-allowed opacity-50 outline-none"
                 >
-                  <span>Returns</span>
+                  <span>{t("nav.returns", "Returns")}</span>
                   <span className="text-[9px] lowercase font-mono bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-sm">soon</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => router.push("/size-guide")}
                   className="w-full flex items-center justify-between px-3 py-2 text-xs font-bold uppercase tracking-wider text-black rounded-xl hover:bg-zinc-100 transition-colors cursor-pointer outline-none"
                 >
-                  Size Guide
+                  {t("nav.sizeGuide", "Size Guide")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
           <div className="flex items-center gap-3 sm:gap-5">
             <LanguageToggle variant="outline" size="sm" />
+            {/* Expandable Search */}
+            <div className="hidden sm:flex items-center relative">
+              <div className={`flex items-center overflow-hidden transition-all duration-400 ease-out rounded-full border bg-white ${
+                isSearchOpen ? "w-52 border-zinc-300 shadow-sm" : "w-0 border-transparent"
+              }`}>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder={lang === "en" ? "Search..." : "Cari..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full h-8 px-3 text-xs bg-transparent outline-none placeholder:text-zinc-400"
+                />
+              </div>
+              <button
+                className="text-black hover:opacity-80 transition-opacity ml-1"
+                onClick={() => {
+                  setIsSearchOpen(!isSearchOpen);
+                  if (!isSearchOpen) setTimeout(() => searchInputRef.current?.focus(), 300);
+                  else setSearchQuery("");
+                }}
+              >
+                {isSearchOpen ? <X className="size-[18px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} /> : <Search className="size-[18px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />}
+              </button>
+            </div>
             {currentUser ? (
-              <button
-                className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"
-                style={{
-                  fontFamily: "'Inter', system-ui, sans-serif",
-                  fontWeight: 700,
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                  color: "lab(7.78201 -0.0000149012 0)",
-                }}
-                onClick={() => router.push("/dashboard")}
-              >
-                Dashboard
-              </button>
+              <button className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 700, color: "lab(7.78201 -0.0000149012 0)", fontSize: "12px", lineHeight: "16px" }} onClick={() => router.push(currentUser.role === "admin" ? "/admin" : "/dashboard")}>{t("nav.dashboard", "Dashboard")}</button>
             ) : (
-              <button
-                className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80"
-                style={{
-                  fontFamily: "'Inter', system-ui, sans-serif",
-                  fontWeight: 700,
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                  color: "lab(7.78201 -0.0000149012 0)",
-                }}
-                onClick={() => router.push("/login")}
-              >
-                Login
-              </button>
+              <button className="hidden sm:block uppercase transition-colors duration-200 hover:opacity-80" style={{ fontFamily: "'Inter', system-ui, sans-serif", fontWeight: 700, color: "lab(7.78201 -0.0000149012 0)", fontSize: "12px", lineHeight: "16px" }} onClick={() => router.push("/login")}>{t("nav.login", "Sign In")}</button>
             )}
-            <button
-              onClick={() => router.push("/product?show_cart=true")}
-              className="relative p-2 hover:bg-zinc-100 rounded-full transition-colors"
-            >
-              <ShoppingBag className="size-5 text-zinc-900" />
-              {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-black text-[#bef264] text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-[#faf9f5]">
-                  {cartItemCount}
-                </span>
-              )}
+            <button className="relative text-black hover:opacity-80 transition-opacity" onClick={() => router.push("/product")}>
+              <ShoppingBag className="size-[20px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
+              {cartItemCount > 0 && (<span className="absolute -top-1.5 -right-1.5 bg-[#bef264] text-black text-[9px] font-bold h-3.5 w-3.5 rounded-full flex items-center justify-center animate-pulse">{cartItemCount}</span>)}
             </button>
-            <button
-              className="md:hidden p-2 hover:bg-zinc-100 rounded-full transition-colors"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            <button className="md:hidden text-black hover:opacity-80 transition-opacity" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+              <Menu className="size-[22px]" strokeWidth={2.75} style={{ color: "lab(2.75381 0 0)" }} />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Mobile Menu Drawer */}
+      {/* Mobile Drawer */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 top-16 z-30 bg-[#faf9f5] flex flex-col p-6 overflow-y-auto animate-in fade-in slide-in-from-top duration-300">
           <div className="flex flex-col gap-6">
@@ -365,7 +358,7 @@ export default function FAQPage() {
                 style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Home
+                {t("nav.home", "Home")}
               </a>
               <a
                 href="/product"
@@ -373,7 +366,7 @@ export default function FAQPage() {
                 style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Collections
+                {t("nav.products", "Collections")}
               </a>
               <a
                 href="/gallery"
@@ -381,16 +374,16 @@ export default function FAQPage() {
                 style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Gallery
+                {t("nav.gallery", "Gallery")}
               </a>
 
-              {/* Company Accordion / Nested Items */}
+              {/* Company Accordion */}
               <div className="py-2 border-b border-zinc-100 flex flex-col gap-2">
                 <span 
                   className="text-lg font-bold"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 >
-                  Company
+                  {t("nav.company", "Company")}
                 </span>
                 <div className="pl-4 flex flex-col gap-2 border-l border-zinc-200">
                   <a
@@ -399,7 +392,7 @@ export default function FAQPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    About Us
+                    {t("nav.about", "About Us")}
                   </a>
                   <a
                     href="/careers"
@@ -407,32 +400,26 @@ export default function FAQPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Careers
+                    {t("nav.careers", "Careers")}
                   </a>
-                  <div
-                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
-                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                  >
-                    <span>Press</span>
+                  <div className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    <span>{t("nav.press", "Press")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
-                  <div
-                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
-                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                  >
-                    <span>Sustainability</span>
+                  <div className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    <span>{t("nav.sustainability", "Sustainability")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
                 </div>
               </div>
 
-              {/* Support Accordion / Nested Items */}
+              {/* Support Accordion */}
               <div className="py-2 border-b border-zinc-100 flex flex-col gap-2">
                 <span 
                   className="text-lg font-bold"
                   style={{ fontFamily: "'Inter', system-ui, sans-serif", color: "lab(2.75381 0 0)" }}
                 >
-                  Support
+                  {t("nav.support", "Support")}
                 </span>
                 <div className="pl-4 flex flex-col gap-2 border-l border-zinc-200">
                   <a
@@ -441,7 +428,7 @@ export default function FAQPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Contact Us
+                    {t("nav.contact", "Contact Us")}
                   </a>
                   <a
                     href="/faq"
@@ -449,20 +436,14 @@ export default function FAQPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    FAQs
+                    {t("nav.faq", "FAQs")}
                   </a>
-                  <div
-                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
-                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                  >
-                    <span>Shipping</span>
+                  <div className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    <span>{t("nav.shipping", "Shipping")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
-                  <div
-                    className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60"
-                    style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-                  >
-                    <span>Returns</span>
+                  <div className="text-sm font-semibold text-zinc-400 py-1 flex items-center justify-between opacity-60" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
+                    <span>{t("nav.returns", "Returns")}</span>
                     <span className="text-[8px] lowercase font-mono bg-zinc-100 text-zinc-500 px-1 rounded-sm">soon</span>
                   </div>
                   <a
@@ -471,7 +452,7 @@ export default function FAQPage() {
                     style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Size Guide
+                    {t("nav.sizeGuide", "Size Guide")}
                   </a>
                 </div>
               </div>
