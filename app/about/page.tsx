@@ -19,6 +19,15 @@ import {
   Twitter,
   Instagram,
   Youtube,
+  ShieldCheck,
+  Truck,
+  CreditCard,
+  Sparkles,
+  BookOpen,
+  HeartHandshake,
+  Coins,
+  CheckCircle2,
+  Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -620,19 +629,26 @@ export default function AboutPage() {
       <main className="flex-grow pt-24 pb-20">
         {/* Hero Section */}
         <section className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-10" ref={heroTextRef}>
-          <div className="space-y-2 mb-10 text-left">
-            <span
-              className="text-[11px] font-bold tracking-widest text-[#94a3b8] uppercase block"
-              style={{ fontFamily: "var(--font-sans), system-ui, sans-serif" }}
-            >
-              ABOUT US
-            </span>
+          <div className="space-y-3 mb-10 text-left max-w-4xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#bef264]/20 border border-[#bef264]/50 text-black text-xs font-bold uppercase tracking-wider">
+              <Sparkles className="size-3.5 text-zinc-900" />
+              <span>{lang === "en" ? "Official Enterprise Profile & Heritage" : "Profil Resmi BUMDes & Warisan Budaya"}</span>
+            </div>
             <h1
-              className="uppercase tracking-tight text-black text-4xl sm:text-5xl lg:text-7xl font-black leading-none"
+              className="uppercase tracking-tight text-black text-4xl sm:text-6xl lg:text-7xl font-black leading-none"
               style={{ fontFamily: "var(--font-oswald), sans-serif" }}
             >
-              CRAFTED BY NATURE,<br />CURATED FOR MODERNITY<span className="text-[#bef264]">.</span>
+              {lang === "en" ? "CRAFTED BY NATURE," : "KARYA ALAMI PESISIR,"}<br />
+              <span style={{ color: "lab(48.496 0 0)" }}>
+                {lang === "en" ? "CURATED FOR MODERNITY" : "DIKURASI UNTUK GAYA HIDUP MODERN"}
+              </span>
+              <span className="text-[#bef264]">.</span>
             </h1>
+            <p className="text-zinc-600 text-base sm:text-lg leading-relaxed pt-2">
+              {lang === "en"
+                ? "Berakit Series is an official cultural and creative commerce initiative by BUMDes Desa Berakit, Teluk Sebong District, Bintan Regency. Supported by national higher-education PKM partnerships, we transform authentic coastal mangrove-dyed batik into fine, world-class textiles directly from artisan hands."
+                : "Berakit Series adalah inisiatif ekonomi kreatif dan pelestarian budaya resmi oleh Badan Usaha Milik Desa (BUMDes) Desa Berakit, Kecamatan Teluk Sebong, Kabupaten Bintan. Didukung kemitraan Program Kreativitas Mahasiswa (PKM) perguruan tinggi, kami menghadirkan mahakarya batik tulis pesisir berbahan pewarna alami mangrove langsung dari tangan perajin desa."}
+            </p>
           </div>
 
           {/* Banner Image Slideshow */}
@@ -651,9 +667,9 @@ export default function AboutPage() {
                     alt={slide.title}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent flex items-end p-8 sm:p-12">
-                    <div className={`text-left text-white max-w-xl transition-all duration-700 delay-200 transform ${isActive ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
-                      <span className="text-xs font-bold uppercase tracking-widest text-[#bef264] block mb-2 font-mono">ESTABLISHED 2026</span>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-end p-8 sm:p-12">
+                    <div className={`text-left text-white max-w-2xl transition-all duration-700 delay-200 transform ${isActive ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
+                      <span className="text-xs font-bold uppercase tracking-widest text-[#bef264] block mb-2 font-mono">BUMDES BERAKIT • PKM 2026</span>
                       <p className="text-2xl sm:text-4xl font-extrabold leading-tight uppercase tracking-tight" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
                         {slide.title}
                       </p>
@@ -710,87 +726,137 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* Brand Mission & Story */}
-        <section className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-start" ref={storyRef}>
-          <div className="lg:col-span-5 space-y-6 text-left">
-            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block font-mono">OUR MISSION</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-900 uppercase leading-none" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
-              Empowering local artisans & preserving marine heritage.
-            </h2>
-            <div className="w-20 h-1 bg-[#bef264]" />
-            <p className="text-zinc-600 text-sm leading-relaxed font-normal">
-              Batik Berakit bukan sekadar kain, melainkan media narasi tentang keindahan alam pesisir Kepulauan Riau. Diinisiasi oleh Badan Usaha Milik Desa (BUMDes) Desa Berakit, kami melestarikan tradisi seni canting kuno sekaligus membuka gerbang ekonomi kreatif digital bagi masyarakat lokal.
-            </p>
-          </div>
-
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-8 text-left">
-            <div className="bg-white border border-zinc-200/80 p-8 rounded-3xl space-y-4 hover:shadow-xl hover:shadow-zinc-200/30 transition-all duration-300">
-              <div className="size-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-800 border border-zinc-200/50">
-                <Leaf className="size-5" />
+        {/* Latar Belakang & Sejarah Berakit Series */}
+        <section className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-12 border-b border-zinc-200/70">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start text-left">
+            <div className="lg:col-span-5 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-zinc-100 text-zinc-800 text-xs font-bold uppercase tracking-wider font-mono">
+                <BookOpen className="size-3.5 text-zinc-900" />
+                <span>{lang === "en" ? "Origin & Geographical Roots" : "Sejarah & Letak Geografis"}</span>
               </div>
-              <h3 className="font-extrabold uppercase text-lg text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
-                100% Pewarnaan Alami
-              </h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">
-                Kami berkomitmen menjaga kelestarian lingkungan dengan memanfaatkan ekstrak tumbuhan pesisir alami sebagai bahan pewarna dasar kain batik kami.
+              <h2
+                className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-zinc-900 leading-tight"
+                style={{ fontFamily: "var(--font-oswald), sans-serif" }}
+              >
+                {lang === "en" ? "BORN ON THE SHORES OF NORTH BINTAN." : "LAHIR DARI PESISIR UTARA PULAU BINTAN."}
+              </h2>
+              <div className="w-24 h-1.5 bg-[#bef264] rounded-full" />
+              <p className="text-zinc-600 text-sm sm:text-base leading-relaxed">
+                {lang === "en"
+                  ? "Desa Berakit is located at the northern tip of Bintan Island, directly fronting the Malacca Strait and the South China Sea. For generations, the village lived rhythmically by the ocean tides, where fishing was the sole primary livelihood."
+                  : "Desa Berakit terletak di ujung paling utara Pulau Bintan, berhadapan langsung dengan perairan Selat Malaka dan Laut Natuna. Selama berabad-abad, denyut kehidupan warga desa berakar erat pada hasil laut dan tradisi kemaritiman Melayu."}
               </p>
             </div>
 
-            <div className="bg-white border border-zinc-200/80 p-8 rounded-3xl space-y-4 hover:shadow-xl hover:shadow-zinc-200/30 transition-all duration-300">
-              <div className="size-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-800 border border-zinc-200/50">
-                <Users className="size-5" />
-              </div>
-              <h3 className="font-extrabold uppercase text-lg text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
-                Komunitas Berdaya
+            <div className="lg:col-span-7 space-y-6 text-zinc-600 text-sm sm:text-base leading-relaxed bg-white border border-zinc-200/80 p-8 sm:p-10 rounded-[28px] shadow-sm">
+              <h3 className="text-xl font-bold uppercase text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "The Story Behind Berakit Series" : "Kisah di Balik Pendirian Berakit Series"}
               </h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">
-                Setiap lembar kain merupakan kontribusi nyata dalam menyejahterakan kelompok perajin batik lokal, yang sebagian besar adalah perempuan pesisir Berakit.
+              <p>
+                {lang === "en"
+                  ? "During the annual monsoon season (Musim Angin Utara), heavy sea swells prevent fishermen from venturing far into the sea, creating seasonal economic uncertainty. Recognizing this challenge, the Village Government through BUMDes Desa Berakit established the Berakit Series initiative to provide local women with sustainable, home-based artisanal careers in traditional canting batik."
+                  : "Setiap tahun saat musim angin utara tiba, gelombang laut yang tinggi menyulitkan para nelayan untuk melaut, menyebabkan ketidakpastian ekonomi keluarga pesisir. Menjawab tantangan tersebut, Pemerintah Desa bersama BUMDes Desa Berakit menginisiasi program Berakit Series untuk membuka lapangan kerja kreatif berbasis rumahan bagi para ibu rumah tangga melalui seni batik tulis."}
               </p>
-            </div>
-
-            <div className="bg-white border border-zinc-200/80 p-8 rounded-3xl space-y-4 hover:shadow-xl hover:shadow-zinc-200/30 transition-all duration-300">
-              <div className="size-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-800 border border-zinc-200/50">
-                <Heart className="size-5" />
-              </div>
-              <h3 className="font-extrabold uppercase text-lg text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
-                Motif Khas Biota Laut
-              </h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">
-                Terinspirasi langsung dari biota samudra sekitar Bintan Utara: motif mangrove, cangkang gonggong, terumbu karang, dan garis pantai berpasir putih.
-              </p>
-            </div>
-
-            <div className="bg-white border border-zinc-200/80 p-8 rounded-3xl space-y-4 hover:shadow-xl hover:shadow-zinc-200/30 transition-all duration-300">
-              <div className="size-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-800 border border-zinc-200/50">
-                <Award className="size-5" />
-              </div>
-              <h3 className="font-extrabold uppercase text-lg text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
-                Kualitas Premium
-              </h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">
-                Menggunakan bahan katun premium dan sutra terbaik untuk memastikan kenyamanan bernapas pada kain serta ketahanan warna yang luar biasa.
+              <p>
+                {lang === "en"
+                  ? "Through intensive workshops supported by the national PKM university development program, artisans mastered chemical-free mangrove dye extraction, pattern design of native marine life (Gonggong sea snails, mangrove leaves, and ocean waves), and digital e-commerce distribution—turning raw fabric into highly valued cultural treasures."
+                  : "Melalui pelatihan intensif yang didampingi program PKM perguruan tinggi, para ibu perajin berhasil menguasai teknik ekstraksi getah bakau ramah lingkungan, penciptaan motif khas biota pesisir (Kerang Gonggong, Daun Bakau, Ombak), serta pemanfaatan katalog digital untuk menjangkau pasar nasional secara mandiri."}
               </p>
             </div>
           </div>
         </section>
 
-        {/* Our Techniques & Process */}
-        <section className="w-full bg-zinc-950 text-white py-20 mt-16">
+        {/* 4 Core Pillars */}
+        <section className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-16" ref={storyRef}>
+          <div className="space-y-4 text-left max-w-3xl mb-12">
+            <span className="text-[11px] font-black text-zinc-400 uppercase tracking-widest block font-mono">
+              {lang === "en" ? "OUR VALUES & PRINCIPLES" : "NILAI & PRINSIP UTAMA"}
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-zinc-900 uppercase leading-none" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+              {lang === "en" ? "STANDARDS OF AUTHENTIC EXCELLENCE." : "STANDAR MUTU & KEASLIAN KARYA."}
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
+            <div className="bg-white border border-zinc-200/80 p-8 rounded-3xl space-y-4 hover:shadow-xl hover:shadow-zinc-200/30 transition-all duration-300">
+              <div className="size-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-800 border border-zinc-200/50">
+                <Leaf className="size-5 text-zinc-900" />
+              </div>
+              <h3 className="font-extrabold uppercase text-lg text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "100% Botanical Dyeing" : "100% Pewarna Alami"}
+              </h3>
+              <p className="text-zinc-500 text-xs leading-relaxed">
+                {lang === "en"
+                  ? "We utilize organic mangrove bark extracts, secang wood, and native coastal plants, ensuring non-toxic and skin-safe colors without ocean chemical runoff."
+                  : "Memanfaatkan rebusan getah kulit bakau mangrove, kayu secang, dan tumbuhan pesisir. 100% bebas zat pewarna sintetis berbahaya dan ramah terumbu karang."}
+              </p>
+            </div>
+
+            <div className="bg-white border border-zinc-200/80 p-8 rounded-3xl space-y-4 hover:shadow-xl hover:shadow-zinc-200/30 transition-all duration-300">
+              <div className="size-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-800 border border-zinc-200/50">
+                <Users className="size-5 text-zinc-900" />
+              </div>
+              <h3 className="font-extrabold uppercase text-lg text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "Women Empowerment" : "Pemberdayaan Ibu Perajin"}
+              </h3>
+              <p className="text-zinc-500 text-xs leading-relaxed">
+                {lang === "en"
+                  ? "Every purchase directly supports over 15 women artisans in Desa Berakit with fair livable wages and flexible family-friendly work hours."
+                  : "Setiap pembelian memberikan upah layak dan kemandirian finansial bagi 15+ perajin perempuan desa tanpa harus meninggalkan kewajiban keluarga."}
+              </p>
+            </div>
+
+            <div className="bg-white border border-zinc-200/80 p-8 rounded-3xl space-y-4 hover:shadow-xl hover:shadow-zinc-200/30 transition-all duration-300">
+              <div className="size-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-800 border border-zinc-200/50">
+                <Heart className="size-5 text-zinc-900" />
+              </div>
+              <h3 className="font-extrabold uppercase text-lg text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "Marine Maritime Motifs" : "Motif Khas Bahari Melayu"}
+              </h3>
+              <p className="text-zinc-500 text-xs leading-relaxed">
+                {lang === "en"
+                  ? "Authentic designs drawn from Riau coastal heritage: Gonggong sea shells, mangrove root patterns, coral reefs, and rolling ocean surf."
+                  : "Koleksi motif otentik warisan maritim Kepulauan Riau: Kerang Gonggong yang ikonik, daun bakau mangrove penahan abrasi, dan ombak samudra."}
+              </p>
+            </div>
+
+            <div className="bg-white border border-zinc-200/80 p-8 rounded-3xl space-y-4 hover:shadow-xl hover:shadow-zinc-200/30 transition-all duration-300">
+              <div className="size-12 rounded-2xl bg-zinc-50 flex items-center justify-center text-zinc-800 border border-zinc-200/50">
+                <Award className="size-5 text-zinc-900" />
+              </div>
+              <h3 className="font-extrabold uppercase text-lg text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "Premium Fabrics" : "Kain Katun Mori & Sutra"}
+              </h3>
+              <p className="text-zinc-500 text-xs leading-relaxed">
+                {lang === "en"
+                  ? "Crafted exclusively on high-grade Primissima cotton and genuine woven silk for supreme tropical breathability and long-lasting color retention."
+                  : "Menggunakan kain mori primissima mutu tinggi dan sutra halus yang sejuk dipakai seharian di iklim tropis serta memiliki ketahanan warna prima."}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Detail 3 Kategori Produk */}
+        <section className="w-full bg-zinc-950 text-white py-24">
           <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 text-left space-y-16">
             <div className="space-y-3">
-              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block font-mono">OUR TECHNIQUES</span>
+              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block font-mono">
+                {lang === "en" ? "OUR 3 MAIN PRODUCT LINES" : "3 LINI PRODUK UTAMA BERAKIT SERIES"}
+              </span>
               <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tight text-white leading-none" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
-                Handcrafted With Devotion<span className="text-[#bef264]">.</span>
+                {lang === "en" ? "CRAFTED WITH PRECISION & PURPOSE." : "DIBUAT DENGAN KETELITIAN & KETULUSAN."}
               </h2>
-              <p className="text-zinc-400 text-sm max-w-xl font-medium leading-relaxed">
-                Kami melestarikan tiga metode pembatikan tradisional Indonesia untuk memberikan variasi karakteristik tekstur dan visual kain yang khas.
+              <p className="text-zinc-400 text-sm sm:text-base max-w-2xl font-normal leading-relaxed">
+                {lang === "en"
+                  ? "Explore our diverse textile collections tailored for formal governance, corporate attire, luxury events, and contemporary daily fashion."
+                  : "Pilihan kain batik tulis pesisir yang dirancang khusus untuk busana resmi kedinasan, pakaian kerja instansi/korporat, acara adat, hingga fashion modern harian."}
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12">
-              {/* Card 1 */}
+              {/* Card 1: Batik Tulis */}
               <div 
-                className="space-y-4 group cursor-pointer"
+                className="space-y-4 group cursor-pointer bg-zinc-900/60 p-6 rounded-3xl border border-zinc-800 hover:border-[#bef264]/60 transition-all duration-300"
                 onClick={() => router.push("/product?category=Batik%20Tulis")}
               >
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 relative">
@@ -799,24 +865,28 @@ export default function AboutPage() {
                     alt="Batik Tulis"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-4 left-4 bg-black/60 border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest z-10">
-                    HAND-DRAWN
-                  </div>
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <span className="bg-[#bef264] text-black font-bold text-xs uppercase px-4 py-2 rounded-full tracking-wider flex items-center gap-1 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-                      Lihat Koleksi <ArrowUpRight className="size-3.5" />
-                    </span>
+                  <div className="absolute top-4 left-4 bg-black/70 border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest z-10 text-[#bef264]">
+                    100% HAND-DRAWN
                   </div>
                 </div>
-                <h3 className="text-xl font-extrabold uppercase pt-2 group-hover:text-[#bef264] transition-colors" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>Batik Tulis</h3>
-                <p className="text-zinc-400 text-xs leading-relaxed">
-                  Mahakarya eksklusif yang dilukis secara manual titik demi titik menggunakan lilin malam cair dan alat canting tradisional. Setiap kain membutuhkan waktu berminggu-minggu dan menghasilkan karya unik yang tiada duanya di dunia.
-                </p>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-extrabold uppercase group-hover:text-[#bef264] transition-colors" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                    Batik Tulis Eksklusif
+                  </h3>
+                  <div className="text-xs text-[#bef264] font-mono font-bold">
+                    {lang === "en" ? "Est. Production: 2-4 Weeks • 1-of-1 Piece" : "Estimasi Pengerjaan: 2-4 Minggu • Edisi Terbatas"}
+                  </div>
+                  <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
+                    {lang === "en"
+                      ? "Masterpiece textiles drawn freehand with hot beeswax copper canting. Ideal for state ceremonies, formal galas, VIP corporate gifts, and discerning collectors."
+                      : "Mahakarya seni lukis manual menggunakan canting tembaga dan lilin malam panas. Cocok untuk busana resmi kenegaraan, cinderamata VIP, dan koleksi adiluhung."}
+                  </p>
+                </div>
               </div>
 
-              {/* Card 2 */}
+              {/* Card 2: Batik Cap */}
               <div 
-                className="space-y-4 group cursor-pointer"
+                className="space-y-4 group cursor-pointer bg-zinc-900/60 p-6 rounded-3xl border border-zinc-800 hover:border-[#bef264]/60 transition-all duration-300"
                 onClick={() => router.push("/product?category=Batik%20Cap")}
               >
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 relative">
@@ -825,24 +895,28 @@ export default function AboutPage() {
                     alt="Batik Cap"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-4 left-4 bg-black/60 border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest z-10">
+                  <div className="absolute top-4 left-4 bg-black/70 border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest z-10 text-[#bef264]">
                     HAND-STAMPED
                   </div>
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <span className="bg-[#bef264] text-black font-bold text-xs uppercase px-4 py-2 rounded-full tracking-wider flex items-center gap-1 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-                      Lihat Koleksi <ArrowUpRight className="size-3.5" />
-                    </span>
-                  </div>
                 </div>
-                <h3 className="text-xl font-extrabold uppercase pt-2 group-hover:text-[#bef264] transition-colors" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>Batik Cap</h3>
-                <p className="text-zinc-400 text-xs leading-relaxed">
-                  Menggunakan blok tembaga khusus bermotif rapi yang ditekan manual ke atas kain. Teknik ini menghasilkan presisi pola geometris biota laut yang cantik dengan waktu pengerjaan yang lebih efisien bagi perajin.
-                </p>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-extrabold uppercase group-hover:text-[#bef264] transition-colors" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                    Batik Cap Modern
+                  </h3>
+                  <div className="text-xs text-[#bef264] font-mono font-bold">
+                    {lang === "en" ? "Est. Production: 3-5 Days • High Precision" : "Estimasi Pengerjaan: 3-5 Hari • Presisi Pola Rapi"}
+                  </div>
+                  <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
+                    {lang === "en"
+                      ? "Crafted with precision copper stamp blocks with marine geometric motifs. The premier choice for institutional uniforms, office wear, and corporate hospitality."
+                      : "Dibuat dengan cap tembaga bermotif geometris biota laut yang rapi dan presisi. Pilihan utama untuk seragam kantor, instansi kedinasan, dan perhotelan."}
+                  </p>
+                </div>
               </div>
 
-              {/* Card 3 */}
+              {/* Card 3: Batik Kombinasi */}
               <div 
-                className="space-y-4 group cursor-pointer"
+                className="space-y-4 group cursor-pointer bg-zinc-900/60 p-6 rounded-3xl border border-zinc-800 hover:border-[#bef264]/60 transition-all duration-300"
                 onClick={() => router.push("/product?category=Batik%20Kombinasi")}
               >
                 <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 relative">
@@ -851,42 +925,226 @@ export default function AboutPage() {
                     alt="Batik Kombinasi"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-4 left-4 bg-black/60 border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest z-10">
-                    HYBRID TECHNIQUE
-                  </div>
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <span className="bg-[#bef264] text-black font-bold text-xs uppercase px-4 py-2 rounded-full tracking-wider flex items-center gap-1 shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-                      Lihat Koleksi <ArrowUpRight className="size-3.5" />
-                    </span>
+                  <div className="absolute top-4 left-4 bg-black/70 border border-white/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest z-10 text-[#bef264]">
+                    HYBRID ARTISTRY
                   </div>
                 </div>
-                <h3 className="text-xl font-extrabold uppercase pt-2 group-hover:text-[#bef264] transition-colors" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>Batik Kombinasi</h3>
-                <p className="text-zinc-400 text-xs leading-relaxed">
-                  Gabungan harmonis antara keindahan ekspresif coretan batik tulis dan keteraturan motif batik cap. Memberikan kedalaman tekstur visual yang kaya dan tampilan kain kontemporer yang sangat berkarakter.
-                </p>
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-extrabold uppercase group-hover:text-[#bef264] transition-colors" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                    Batik Kombinasi
+                  </h3>
+                  <div className="text-xs text-[#bef264] font-mono font-bold">
+                    {lang === "en" ? "Est. Production: 1-2 Weeks • Dynamic Texture" : "Estimasi Pengerjaan: 1-2 Minggu • Tekstur Dinamis"}
+                  </div>
+                  <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">
+                    {lang === "en"
+                      ? "A contemporary fusion of stamped background geometry with hand-drawn canting accents, delivering high aesthetic value at an accessible price point."
+                      : "Perpaduan harmonis antara motif cap latar dan sentuhan canting tulis manual, menghasilkan busana semi-formal modern dengan aksen mewah berkelas."}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Statistics or Community Highlights */}
-        <section className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-20 text-center" ref={statsRef}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 bg-white border border-zinc-200/80 rounded-[32px] p-8 sm:p-12 shadow-sm">
+        {/* Detail Sistem Penjualan, Distribusi, & Standar Transaksi */}
+        <section className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-20 border-b border-zinc-200/70">
+          <div className="space-y-4 text-left max-w-3xl mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#bef264]/20 border border-[#bef264]/50 text-black text-xs font-bold uppercase tracking-wider font-mono">
+              <ShieldCheck className="size-3.5 text-zinc-900" />
+              <span>{lang === "en" ? "DIRECT FAIR-TRADE COMMERCE" : "SISTEM PENJUALAN & DISTRIBUSI RESMI"}</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-zinc-900 uppercase leading-none" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+              {lang === "en" ? "TRANSPARENT, DIRECT, & GUARANTEED." : "TRANSPARAN, LANGSUNG DARI DESA, & BERGARANSI."}
+            </h2>
+            <p className="text-zinc-600 text-sm sm:text-base leading-relaxed">
+              {lang === "en"
+                ? "As an official village-owned enterprise, BUMDes Berakit operates with transparent commerce, direct-from-artisan pricing, and trusted customer guarantees."
+                : "Sebagai badan usaha resmi milik desa, BUMDes Berakit menerapkan sistem perdagangan yang jujur, harga langsung tangan pertama dari perajin, serta jaminan perlindungan bagi setiap pembeli."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-left">
+            {/* Sales Point 1 */}
+            <div className="space-y-3 bg-white p-8 rounded-3xl border border-zinc-200/80 shadow-xs">
+              <div className="size-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900 font-bold">
+                <Coins className="size-5" />
+              </div>
+              <h3 className="font-bold text-lg uppercase text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "Direct Village Pricing" : "Harga Tangan Pertama"}
+              </h3>
+              <p className="text-zinc-600 text-xs sm:text-sm leading-relaxed">
+                {lang === "en"
+                  ? "Zero middlemen markups. Every purchase goes directly to artisan compensation and local community funds."
+                  : "Tanpa perantara distributor yang mahal. Harga resmi langsung dari BUMDes dengan manfaat penuh bagi para perajin."}
+              </p>
+            </div>
+
+            {/* Sales Point 2 */}
+            <div className="space-y-3 bg-white p-8 rounded-3xl border border-zinc-200/80 shadow-xs">
+              <div className="size-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900 font-bold">
+                <CreditCard className="size-5" />
+              </div>
+              <h3 className="font-bold text-lg uppercase text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "Flexible Payment Options" : "Metode Bayar Fleksibel"}
+              </h3>
+              <p className="text-zinc-600 text-xs sm:text-sm leading-relaxed">
+                {lang === "en"
+                  ? "Support for Cash On Delivery (COD) and official Bank Riau Kepri Syariah transfers with immediate WhatsApp confirmation."
+                  : "Mendukung pembayaran Cash On Delivery (COD) dan transfer rekening resmi BUMDes (Bank Riau Kepri Syariah) dengan konfirmasi WhatsApp cepat."}
+              </p>
+            </div>
+
+            {/* Sales Point 3 */}
+            <div className="space-y-3 bg-white p-8 rounded-3xl border border-zinc-200/80 shadow-xs">
+              <div className="size-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900 font-bold">
+                <Truck className="size-5" />
+              </div>
+              <h3 className="font-bold text-lg uppercase text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "Nationwide Insured Delivery" : "Pengiriman Seluruh Nusantara"}
+              </h3>
+              <p className="text-zinc-600 text-xs sm:text-sm leading-relaxed">
+                {lang === "en"
+                  ? "Packaged in premium eco-friendly presentation boxes ready for corporate gifting, delivered safely with tracking."
+                  : "Dikemas dalam kotak eksklusif premium ramah lingkungan siap kado dinas/souvenir, dikirim berasuransi ke seluruh Indonesia."}
+              </p>
+            </div>
+
+            {/* Sales Point 4 */}
+            <div className="space-y-3 bg-white p-8 rounded-3xl border border-zinc-200/80 shadow-xs">
+              <div className="size-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-900 font-bold">
+                <Building2 className="size-5" />
+              </div>
+              <h3 className="font-bold text-lg uppercase text-zinc-900" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "Corporate & Custom Orders" : "Pesanan Seragam & Custom"}
+              </h3>
+              <p className="text-zinc-600 text-xs sm:text-sm leading-relaxed">
+                {lang === "en"
+                  ? "We supply custom institutional uniforms, hotel/resort guest amenities, and governmental cultural souvenirs."
+                  : "Menerima pesanan seragam instansi kedinasan, cinderamata hotel/resort di Bintan, dan suvenir acara dengan diskon volume resmi BUMDes."}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Transparansi Alokasi Penjualan & Dampak Sosial */}
+        <section className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-20 border-b border-zinc-200/70 text-left">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-5 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-zinc-100 text-zinc-800 text-xs font-bold uppercase tracking-wider font-mono">
+                <HeartHandshake className="size-3.5 text-zinc-900" />
+                <span>{lang === "en" ? "COMMUNITY IMPACT ALLOCATION" : "TRANSPARANSI ALOKASI HASIL PENJUALAN"}</span>
+              </div>
+              <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-zinc-900 leading-tight" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "WHERE EVERY RUPIAH GOES." : "KEMANAKAH HASIL PENJUALAN KAMI MENGALIR?"}
+              </h2>
+              <p className="text-zinc-600 text-sm sm:text-base leading-relaxed">
+                {lang === "en"
+                  ? "Every transaction on Berakit Series directly fuels village economic autonomy and preserves ancient maritime canting art for future generations."
+                  : "Setiap transaksi pembelian kain Berakit Series dikelola secara transparan oleh BUMDes Desa Berakit untuk menggerakkan roda ekonomi desa dan regenerasi perajin muda."}
+              </p>
+            </div>
+
+            <div className="lg:col-span-7 space-y-5 bg-white border border-zinc-200/80 p-8 sm:p-10 rounded-[32px] shadow-sm">
+              {/* Alloc 1 */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
+                  <span className="text-zinc-900">{lang === "en" ? "60% Direct Artisan Compensation & Wages" : "60% Upah Langsung & Kesejahteraan Ibu Perajin"}</span>
+                  <span className="text-black font-mono">60%</span>
+                </div>
+                <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#bef264] rounded-full w-[60%]" />
+                </div>
+              </div>
+
+              {/* Alloc 2 */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
+                  <span className="text-zinc-900">{lang === "en" ? "20% Sustainable Fabric & Mangrove Botanical Dyes" : "20% Pembelian Bahan Baku Katun Mori & Pewarna Alami"}</span>
+                  <span className="text-black font-mono">20%</span>
+                </div>
+                <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-zinc-800 rounded-full w-[20%]" />
+                </div>
+              </div>
+
+              {/* Alloc 3 */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
+                  <span className="text-zinc-900">{lang === "en" ? "10% Youth Artisan Training & Equipment Fund" : "10% Kas Pelatihan Membatik Generasi Muda Desa"}</span>
+                  <span className="text-black font-mono">10%</span>
+                </div>
+                <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-zinc-500 rounded-full w-[10%]" />
+                </div>
+              </div>
+
+              {/* Alloc 4 */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
+                  <span className="text-zinc-900">{lang === "en" ? "10% Village Development Fund (PADes BUMDes)" : "10% Pendapatan Asli Desa (PADes BUMDes Berakit)"}</span>
+                  <span className="text-black font-mono">10%</span>
+                </div>
+                <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-zinc-300 rounded-full w-[10%]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Statistics and Official BUMDes Consultation Bar */}
+        <section className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 py-16 text-center" ref={statsRef}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 bg-white border border-zinc-200/80 rounded-[32px] p-8 sm:p-12 shadow-sm mb-12">
             <div className="space-y-1">
-              <span className="text-4xl sm:text-5xl font-black text-black block" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>30+</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block font-mono">Local Artisans</span>
+              <span className="text-4xl sm:text-5xl font-black text-black block" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>15+</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block font-mono">
+                {lang === "en" ? "Women Artisans" : "Ibu Perajin Mandiri"}
+              </span>
             </div>
             <div className="space-y-1">
               <span className="text-4xl sm:text-5xl font-black text-black block" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>100%</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block font-mono">Organic Colors</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block font-mono">
+                {lang === "en" ? "Organic Colors" : "Pewarna Alami"}
+              </span>
             </div>
             <div className="space-y-1">
               <span className="text-4xl sm:text-5xl font-black text-black block" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>500+</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block font-mono">Masterpieces Sold</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block font-mono">
+                {lang === "en" ? "Masterpieces Sold" : "Helai Karya Terjual"}
+              </span>
             </div>
             <div className="space-y-1">
               <span className="text-4xl sm:text-5xl font-black text-[#bef264] block" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>1</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block font-mono">Berakit Heritage</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 block font-mono">
+                {lang === "en" ? "BUMDes Ecosystem" : "Ekosistem BUMDes"}
+              </span>
+            </div>
+          </div>
+
+          {/* Official Call to Action */}
+          <div className="p-8 sm:p-12 rounded-[32px] bg-[#111111] text-white flex flex-col lg:flex-row items-center justify-between gap-8 text-left shadow-2xl">
+            <div className="space-y-3 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#bef264] text-xs font-bold font-mono">
+                <CheckCircle2 className="size-4 text-[#bef264]" />
+                <span>{lang === "en" ? "OFFICIALLY VERIFIED VILLAGE TEXTILES" : "KARYA BATIK RESMI BUMDES DESA BERAKIT"}</span>
+              </div>
+              <h3 className="text-2xl sm:text-4xl font-extrabold uppercase" style={{ fontFamily: "var(--font-oswald), sans-serif" }}>
+                {lang === "en" ? "Ready to Wear Authentic Coastal Heritage?" : "Tertarik Mengoleksi atau Memesan Batik Berakit?"}
+              </h3>
+              <p className="text-sm text-zinc-300 leading-relaxed">
+                {lang === "en"
+                  ? "Browse our active collections or connect directly with our village administrator for custom sizing and institutional wholesale."
+                  : "Jelajahi katalog produk kami atau hubungi langsung admin BUMDes untuk pemesanan seragam dinas, suvenir instansi, dan ukuran custom."}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 shrink-0">
+              <Button
+                onClick={() => router.push("/product")}
+                className="bg-[#bef264] hover:bg-[#aee64e] text-black font-bold uppercase tracking-wider text-xs px-8 py-6 rounded-2xl shadow-xl transition-all hover:scale-105"
+              >
+                {lang === "en" ? "Explore Collections >" : "Lihat Koleksi Produk >"}
+              </Button>
             </div>
           </div>
         </section>
