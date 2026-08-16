@@ -457,21 +457,6 @@ export function GalleryCrud() {
 
   return (
     <div className="space-y-4">
-      {/* Supabase Status Banner */}
-      <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 text-xs sm:text-sm">
-        <div className="flex items-center gap-2">
-          <div className={`size-2 rounded-full ${isUsingSupabase ? "bg-emerald-500 animate-pulse" : "bg-rose-500 animate-bounce"}`} />
-          <span className="font-medium">
-            {isUsingSupabase ? "Koneksi Database: Tersambung ke Supabase Cloud (Live)" : "Koneksi Database: Terputus / Belum Dikonfigurasi"}
-          </span>
-        </div>
-        {!isUsingSupabase && (
-          <span className="text-[10px] text-rose-600 font-semibold hidden sm:inline">
-            Wajib mengkonfigurasi berkas .env untuk mengaktifkan CRUD Galeri
-          </span>
-        )}
-      </div>
-
       <div className="rounded-xl border bg-card text-card-foreground shadow-xs">
         <div className="p-4 sm:p-6 border-b flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="space-y-1">

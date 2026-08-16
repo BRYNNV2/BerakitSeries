@@ -417,18 +417,6 @@ export function AboutSlidesCrud() {
 
   return (
     <div className="space-y-4">
-      {/* Supabase Status Banner */}
-      <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 text-xs sm:text-sm">
-        <div className="flex items-center gap-2">
-          <div className={`size-2 rounded-full ${isUsingSupabase ? "bg-emerald-500 animate-pulse" : "bg-orange-500 animate-pulse"}`} />
-          <span className="font-medium">
-            {isUsingSupabase
-              ? "Koneksi Database: Tersambung ke Supabase Cloud (Live)"
-              : "Koneksi Database: Menggunakan Penyimpanan Lokal (Fallback)"}
-          </span>
-        </div>
-      </div>
-
       <div className="rounded-xl border bg-card text-card-foreground shadow-xs">
         <div className="p-4 sm:p-6 border-b flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="space-y-1">

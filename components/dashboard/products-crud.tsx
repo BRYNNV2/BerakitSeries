@@ -562,21 +562,6 @@ export function ProductsCrud() {
 
   return (
     <div className="space-y-4">
-      {/* Supabase Status Banner */}
-      <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30 text-xs sm:text-sm">
-        <div className="flex items-center gap-2">
-          <div className={`size-2 rounded-full ${isUsingSupabase ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
-          <span className="font-medium">
-            Status Database: {isUsingSupabase ? "Tersambung ke Supabase Cloud" : "Penyimpanan Lokal Sementara (Demo)"}
-          </span>
-        </div>
-        {!isUsingSupabase && (
-          <span className="text-[10px] text-muted-foreground hidden sm:inline">
-            Isi file <code>.env.local</code> untuk menyambungkan ke Supabase.
-          </span>
-        )}
-      </div>
-
       <div className="rounded-xl border bg-card">
         {/* Table Header Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b">
