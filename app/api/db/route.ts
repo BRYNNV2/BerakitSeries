@@ -149,69 +149,88 @@ export async function POST(req: NextRequest) {
 
     // IF USING REAL SUPABASE SERVER-SIDE PROXY
     if (!useLocalJsonDb && supabaseServer) {
-      if (action === "select") {
-        let query = supabaseServer.from(table).select("*");
-        if (filters) {
-          Object.entries(filters).forEach(([key, val]) => {
-            query = query.eq(key, val);
-          });
+      try {
+        if (action === "select") {
+          let query = supabaseServer.from(table).select("*");
+          if (filters) {
+            Object.entries(filters).forEach(([key, val]) => {
+              query = query.eq(key, val);
+            });
+          }
+          if (order) {
+            query = query.order(order.column, { ascending: order.ascending });
+          }
+          if (limit) {
+            query = query.limit(limit);
+          }
+          const { data: resData, error } = await query;
+          if (!error) {
+            return NextResponse.json({ data: resData, error: null });
+          }
+          console.warn("Supabase query returned error, falling back to local DB:", error.message);
         }
-        if (order) {
-          query = query.order(order.column, { ascending: order.ascending });
-        }
-        if (limit) {
-          query = query.limit(limit);
-        }
-        const { data: resData, error } = await query;
-        return NextResponse.json({ data: resData, error });
-      }
 
-      if (action === "insert") {
-        if (table === "orders") {
-          const itemsToInsert = Array.isArray(data) ? data : [data];
-          for (const item of itemsToInsert) {
-            if (item.user_id && supabaseServer) {
-              try {
-                const { data: prof } = await supabaseServer.from("profiles").select("role, email").eq("id", item.user_id).single();
-                if (prof?.role === "admin" || prof?.email === "admin@berakit.desa.id") {
-                  return NextResponse.json(
-                    { data: null, error: { message: "Akun Admin BUMDes tidak diizinkan membuat pesanan transaksi." } },
-                    { status: 403 }
-                  );
-                }
-              } catch (e) {}
+        if (action === "insert") {
+          if (table === "orders") {
+            const itemsToInsert = Array.isArray(data) ? data : [data];
+            for (const item of itemsToInsert) {
+              if (item.user_id && supabaseServer) {
+                try {
+                  const { data: prof } = await supabaseServer.from("profiles").select("role, email").eq("id", item.user_id).single();
+                  if (prof?.role === "admin" || prof?.email === "admin@berakit.desa.id") {
+                    return NextResponse.json(
+                      { data: null, error: { message: "Akun Admin BUMDes tidak diizinkan membuat pesanan transaksi." } },
+                      { status: 403 }
+                    );
+                  }
+                } catch (e) {}
+              }
             }
           }
+          const { data: resData, error } = await supabaseServer.from(table).insert(data).select();
+          if (!error) {
+            return NextResponse.json({ data: resData, error: null });
+          }
+          console.warn("Supabase insert returned error, falling back to local DB:", error.message);
         }
-        const { data: resData, error } = await supabaseServer.from(table).insert(data).select();
-        return NextResponse.json({ data: resData, error });
-      }
 
-      if (action === "upsert") {
-        const { data: resData, error } = await supabaseServer.from(table).upsert(data).select();
-        return NextResponse.json({ data: resData, error });
-      }
-
-      if (action === "update") {
-        let query = supabaseServer.from(table).update(data);
-        if (filters) {
-          Object.entries(filters).forEach(([key, val]) => {
-            query = query.eq(key, val);
-          });
+        if (action === "upsert") {
+          const { data: resData, error } = await supabaseServer.from(table).upsert(data).select();
+          if (!error) {
+            return NextResponse.json({ data: resData, error: null });
+          }
+          console.warn("Supabase upsert returned error, falling back to local DB:", error.message);
         }
-        const { data: resData, error } = await query.select();
-        return NextResponse.json({ data: resData, error });
-      }
 
-      if (action === "delete") {
-        let query = supabaseServer.from(table).delete();
-        if (filters) {
-          Object.entries(filters).forEach(([key, val]) => {
-            query = query.eq(key, val);
-          });
+        if (action === "update") {
+          let query = supabaseServer.from(table).update(data);
+          if (filters) {
+            Object.entries(filters).forEach(([key, val]) => {
+              query = query.eq(key, val);
+            });
+          }
+          const { data: resData, error } = await query.select();
+          if (!error) {
+            return NextResponse.json({ data: resData, error: null });
+          }
+          console.warn("Supabase update returned error, falling back to local DB:", error.message);
         }
-        const { data: resData, error } = await query.select();
-        return NextResponse.json({ data: resData, error });
+
+        if (action === "delete") {
+          let query = supabaseServer.from(table).delete();
+          if (filters) {
+            Object.entries(filters).forEach(([key, val]) => {
+              query = query.eq(key, val);
+            });
+          }
+          const { data: resData, error } = await query.select();
+          if (!error) {
+            return NextResponse.json({ data: resData, error: null });
+          }
+          console.warn("Supabase delete returned error, falling back to local DB:", error.message);
+        }
+      } catch (networkErr: any) {
+        console.warn("Supabase network error (e.g. DNS / offline / ENOTFOUND), falling back to local DB:", networkErr?.message || networkErr);
       }
     }
 
