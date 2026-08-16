@@ -73,6 +73,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/lib/i18n";
+import { getWhatsAppOrderUrl } from "@/lib/whatsapp";
 
 interface Product {
   id: string;
@@ -1052,19 +1053,20 @@ export default function StorefrontPage() {
   };
 
   const handleWhatsAppNotify = () => {
-    // Generate text message for seller WhatsApp checkout confirmation
-    let sellerPhone = bumdesInfo.phone.replace(/\D/g, "");
-    if (sellerPhone.startsWith("0")) {
-      sellerPhone = "62" + sellerPhone.slice(1);
-    }
-
-    const itemsSummary = cart
-      .map((item) => `- ${item.product.name} (x${item.quantity}) : Rp ${(item.product.price * item.quantity).toLocaleString("id-ID")}`)
-      .join("\n");
-
-    const message = `Halo BERAKIT SERIES,\nSaya ingin mengonfirmasi pesanan baru dari website:\n\n*Rincian Pembeli:*\n- Nama: ${customerName}\n- HP: ${customerPhone}\n- Alamat: ${customerAddress}\n\n*Pesanan:*\n${itemsSummary}\n- Ongkos Kirim: Rp ${(paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate).toLocaleString("id-ID")}\n- Total Belanja: *Rp ${(totalCartPrice + (paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate)).toLocaleString("id-ID")}*\n- Metode Bayar: *${paymentMethod}*\n\nMohon untuk segera diproses ya. Terima kasih!`;
-
-    const url = `https://api.whatsapp.com/send?phone=${sellerPhone}&text=${encodeURIComponent(message)}`;
+    const url = getWhatsAppOrderUrl({
+      orderId: lastCreatedOrderId || `BRK-${Date.now().toString().slice(-6)}`,
+      customerName,
+      customerPhone,
+      customerAddress,
+      items: cart.map((item) => ({
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price,
+      })),
+      paymentMethod,
+      shippingRate: paymentMethod === "COD" ? 0 : bumdesInfo.shippingRate,
+      adminPhone: bumdesInfo.phone,
+    });
     window.open(url, "_blank");
 
     // Reset everything

@@ -35,10 +35,12 @@ import {
   AlertTriangle,
   Printer,
   Phone,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { getWhatsAppOrderUrl, WhatsAppOrderPayload } from "@/lib/whatsapp";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -291,6 +293,7 @@ export default function ProductListingPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = React.useState(false);
   const [lastCreatedOrderId, setLastCreatedOrderId] = React.useState("");
+  const [lastCreatedOrderPayload, setLastCreatedOrderPayload] = React.useState<WhatsAppOrderPayload | null>(null);
 
   // Address Book state for checkout
   const [addressBook, setAddressBook] = React.useState<any[]>([]);
@@ -837,6 +840,24 @@ const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
         const insertedId = data && data[0] ? data[0].id : orderId;
         setLastCreatedOrderId(insertedId);
+
+        const waPayload: WhatsAppOrderPayload = {
+          orderId: insertedId,
+          customerName,
+          customerPhone,
+          customerAddress,
+          items: checkoutItems.map((ci) => ({
+            name: ci.product.name,
+            quantity: ci.quantity,
+            price: ci.product.price,
+            size: ci.product.selectedSize,
+            customLength: ci.product.customLength,
+          })),
+          paymentMethod,
+          shippingRate: 0,
+          totalAmount: checkoutSubtotal,
+        };
+        setLastCreatedOrderPayload(waPayload);
         setCheckoutSuccess(true);
 
         if (isDirectCheckout) {
@@ -2115,7 +2136,19 @@ const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
                   Terima kasih telah memesan di BERAKIT SERIES. Admin kami akan segera menghubungi Anda melalui nomor telepon untuk konfirmasi pengiriman.
                 </DialogDescription>
               </div>
-              <div className="space-y-2 w-full pt-2">
+              <div className="space-y-2.5 w-full pt-2">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (lastCreatedOrderPayload) {
+                      const waUrl = getWhatsAppOrderUrl(lastCreatedOrderPayload);
+                      window.open(waUrl, "_blank");
+                    }
+                  }}
+                  className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold uppercase text-xs tracking-wider py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-md shadow-[#25D366]/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <MessageCircle className="size-4" /> Konfirmasi Pesanan ke WhatsApp Admin
+                </Button>
                 <Button
                   type="button"
                   onClick={handlePrintUserReceipt}

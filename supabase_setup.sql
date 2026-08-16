@@ -165,3 +165,37 @@ CREATE TABLE IF NOT EXISTS public.about_slides (
 -- Disable Row-Level Security on about_slides for easy public access
 ALTER TABLE public.about_slides DISABLE ROW LEVEL SECURITY;
 
+-- =========================================================================
+-- COMPLAINTS & RESOLUTION TABLE
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS public.complaints (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT,
+    order_id TEXT,
+    type TEXT NOT NULL,
+    description TEXT NOT NULL,
+    proof_url TEXT,
+    status TEXT DEFAULT 'Menunggu' NOT NULL,
+    admin_response TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.complaints DISABLE ROW LEVEL SECURITY;
+
+-- =========================================================================
+-- ADDRESS BOOK TABLE
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS public.addresses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT NOT NULL,
+    label TEXT DEFAULT 'Rumah',
+    recipient_name TEXT NOT NULL,
+    recipient_phone TEXT NOT NULL,
+    address_line TEXT NOT NULL,
+    is_primary BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.addresses DISABLE ROW LEVEL SECURITY;
+
+

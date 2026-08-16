@@ -51,6 +51,7 @@ import {
   Briefcase,
   Camera,
   Printer,
+  MessageCircle,
 } from "lucide-react";
 import {
   Dialog,
@@ -1362,6 +1363,18 @@ export default function UserDashboard() {
                                         )}
                                       </div>
                                     )}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const msg = `Halo Admin BUMDes Berakit, saya ingin menanyakan status pesanan saya dengan Nomor Pesanan #${order.id} (Status: ${order.status}, Total: Rp ${Number(order.total_amount).toLocaleString("id-ID")}). Terima kasih!`;
+                                        window.open(`https://api.whatsapp.com/send?phone=6281234567890&text=${encodeURIComponent(msg)}`, "_blank");
+                                      }}
+                                      className="h-8 text-[10px] font-bold text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white rounded-lg px-2.5 flex items-center gap-1 border-zinc-200 dark:border-zinc-700 cursor-pointer shrink-0"
+                                    >
+                                      <MessageCircle className="size-3 text-emerald-600 dark:text-emerald-400" />
+                                      <span className="hidden sm:inline">Tanya</span> Admin
+                                    </Button>
                                   </div>
                                 </div>
                               );

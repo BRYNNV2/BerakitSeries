@@ -57,6 +57,7 @@ import { addActivityLog } from "@/lib/logger";
 import { LoadingLottie } from "@/components/ui/loading-lottie";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n";
+import { formatPhoneNumber, createAdminDispatchWhatsAppMessage } from "@/lib/whatsapp";
 
 interface Transaction {
   id: string;
@@ -69,6 +70,8 @@ interface Transaction {
   receipt_url?: string | null;
   created_at: string;
   items?: any;
+  tracking_number?: string | null;
+  courier_name?: string | null;
 }
 
 import { useDashboardStore } from "@/store/dashboard-store";
@@ -388,18 +391,46 @@ export function TransactionsList() {
   };
 
   const handleWhatsAppContact = (order: Transaction) => {
-    let phone = (order.customer_phone || "").replace(/\D/g, "");
-    if (!phone) {
+    const rawPhone = order.customer_phone || "";
+    const phone = formatPhoneNumber(rawPhone);
+    if (!rawPhone || phone === "6281234567890" && !rawPhone) {
       toast.error("Nomor telepon tidak valid.");
       return;
     }
-    if (phone.startsWith("0")) {
-      phone = "62" + phone.slice(1);
-    } else if (!phone.startsWith("62")) {
-      phone = "62" + phone;
+
+    let message = "";
+    if (order.status === "Shipped" && order.tracking_number) {
+      message = createAdminDispatchWhatsAppMessage({
+        buyerName: order.customer_name,
+        orderId: order.id,
+        trackingNumber: order.tracking_number,
+        courierName: order.courier_name || "J&T Express",
+        totalAmount: order.total_amount,
+      });
+    } else {
+      const itemsList = Array.isArray(order.items) && order.items.length > 0
+        ? order.items.map((it: any, idx: number) => `   ${idx + 1}. ${it.name || it.product_name} (x${it.quantity || 1})`).join("\n")
+        : "";
+
+      message = `Halo Kak *${order.customer_name}*,
+
+Salam hangat dari *BUMDes Berakit Maju (Berakit Series)*! 🌴✨
+
+Kami ingin mengonfirmasi pesanan Anda dengan rincian berikut:
+━━━━━━━━━━━━━━━━━━━━━
+📋 *STATUS PESANAN*
+• *No. Pesanan* : #${order.id}
+• *Status*      : *${order.status}*
+• *Total Belanja*: Rp ${order.total_amount.toLocaleString("id-ID")}
+• *Metode Bayar*: ${order.payment_method}
+• *Alamat Kirim*: ${order.address}
+${itemsList ? `\n🛍️ *Rincian Barang*:\n${itemsList}\n` : ""}━━━━━━━━━━━━━━━━━━━━━
+
+Pesanan Anda saat ini sedang kami tangani dengan penuh ketelitian. Jika ada pertanyaan atau permintaan khusus, silakan balas pesan ini ya.
+
+Terima kasih atas kepercayaannya mendukung karya perajin lokal Desa Berakit! 🙏`;
     }
 
-    const message = `Halo ${order.customer_name},\n\nKami dari *BUMDes Berakit Maju*. Mengonfirmasi pesanan Anda:\n- Status: *${order.status}*\n- Total Belanja: *Rp ${order.total_amount.toLocaleString("id-ID")}*\n- Alamat: ${order.address}\n\nTerima kasih telah berbelanja produk desa kami!`;
     const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
     addActivityLog(
       "Hubungi Pelanggan",
