@@ -40,7 +40,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { getWhatsAppOrderUrl, WhatsAppOrderPayload } from "@/lib/whatsapp";
+import { getWhatsAppOrderUrl, getAdminPhoneNumber, WhatsAppOrderPayload } from "@/lib/whatsapp";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -856,6 +856,7 @@ const cartItemCount = cart.reduce((acc, item) => acc + item.quantity, 0);
           paymentMethod,
           shippingRate: 0,
           totalAmount: checkoutSubtotal,
+          adminPhone: getAdminPhoneNumber(),
         };
         setLastCreatedOrderPayload(waPayload);
         setCheckoutSuccess(true);

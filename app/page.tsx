@@ -73,7 +73,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/lib/i18n";
-import { getWhatsAppOrderUrl } from "@/lib/whatsapp";
+import { getWhatsAppOrderUrl, getAdminPhoneNumber, formatPhoneNumber } from "@/lib/whatsapp";
 
 interface Product {
   id: string;
@@ -370,11 +370,11 @@ export default function StorefrontPage() {
   // BUMDes config (loaded from settings / fallbacks)
   const [bumdesInfo, setBumdesInfo] = React.useState({
     name: "BERAKIT SERIES",
-    phone: "081234567890",
-    address: "Desa Berakit, RT 02 / RW 01, Kecamatan Teluk Sebong, Bintan",
+    phone: "0895603567192",
+    address: "Desa Wisata Berakit, Bintan, Kepulauan Riau",
     bankName: "Bank Riau Kepri Syariah",
-    bankAccount: "102-09-08765",
-    bankHolder: "BERAKIT SERIES HQ",
+    bankAccount: "1092003841",
+    bankHolder: "BUMDES BERAKIT UTAMA",
     shippingRate: 15000,
   });
 
@@ -484,20 +484,41 @@ export default function StorefrontPage() {
 
     setProducts(dbProducts);
 
-    // Load BUMDes Profil info from settings localstorage if exists
-    const localProfile = localStorage.getItem("berakit_bumdes_profile");
-    if (localProfile) {
+    // Load BUMDes Profil / Store settings
+    let fetchedSettings: any = null;
+    if (supabase) {
       try {
-        const parsed = JSON.parse(localProfile);
-        setBumdesInfo((prev) => ({
-          ...prev,
-          name: parsed.name || prev.name,
-          phone: parsed.phone || prev.phone,
-          address: parsed.address || prev.address,
-        }));
+        const { data: sData } = await withTimeout(
+          supabase.from("settings").select("*").eq("id", "bumdes_config").single(),
+          3000
+        );
+        if (sData) fetchedSettings = sData;
+      } catch (err) {
+        console.warn("Could not fetch settings from Supabase in storefront:", err);
+      }
+    }
+
+    const localSettings = localStorage.getItem("berakit_settings") || localStorage.getItem("berakit_bumdes_profile");
+    if (localSettings) {
+      try {
+        const parsed = JSON.parse(localSettings);
+        fetchedSettings = { ...(fetchedSettings || {}), ...parsed };
       } catch (e) {
         console.error(e);
       }
+    }
+
+    if (fetchedSettings) {
+      setBumdesInfo((prev) => ({
+        ...prev,
+        name: fetchedSettings.name || prev.name,
+        phone: fetchedSettings.phone || prev.phone,
+        address: fetchedSettings.address || prev.address,
+        bankName: fetchedSettings.bank_name || fetchedSettings.bankName || prev.bankName,
+        bankAccount: fetchedSettings.account_number || fetchedSettings.bankAccount || prev.bankAccount,
+        bankHolder: fetchedSettings.account_holder || fetchedSettings.bankHolder || prev.bankHolder,
+        shippingRate: fetchedSettings.flat_shipping_rate ?? fetchedSettings.flatShippingRate ?? prev.shippingRate,
+      }));
     }
 
     setLoading(false);
@@ -3282,7 +3303,8 @@ export default function StorefrontPage() {
               <Button
                 onClick={() => {
                   const msg = encodeURIComponent("Halo Admin BUMDes Berakit, saya ingin konsultasi mengenai bahan dan pemesanan batik Berakit Series.");
-                  window.open(`https://wa.me/6281234567890?text=${msg}`, "_blank");
+                  const adminPhone = formatPhoneNumber(bumdesInfo.phone || getAdminPhoneNumber());
+                  window.open(`https://wa.me/${adminPhone}?text=${msg}`, "_blank");
                 }}
                 className="bg-[#bef264] hover:bg-[#aee64e] text-black font-bold uppercase tracking-wider text-xs px-6 py-6 rounded-2xl shadow-xl transition-all hover:scale-105"
               >

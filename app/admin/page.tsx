@@ -27,9 +27,9 @@ export default function DashboardPage() {
             const currentProfile = localStorage.getItem("berakit_admin_profile");
             const parsed = currentProfile ? JSON.parse(currentProfile) : {};
             useDashboardStore.getState().setAdminProfile({
-              name: parsed.name || "Admin BUMDes",
-              email: user.email,
-              avatar: parsed.avatar || "https://api.dicebear.com/9.x/glass/svg?seed=Berakit"
+              name: parsed.name || "Park Jihuu",
+              email: user.email || parsed.email || "kingrembo6@gmail.com",
+              avatar: parsed.avatar || "https://qbxsjrtmtebxqhzhdwza.supabase.co/storage/v1/object/public/gallery/avatars/admin-avatar-1784785683754.webp"
             });
           }
         } catch (e) {

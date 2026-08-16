@@ -121,12 +121,28 @@ export function DashboardSidebar({
 
           if (user || setRes) {
             const localProfile = localProfileStr ? JSON.parse(localProfileStr) : null;
-            const dbName = user?.user_metadata?.full_name || setRes?.admin_name;
-            const dbAvatar = user?.user_metadata?.avatar_url || setRes?.admin_avatar;
+            const dbName = setRes?.admin_name || user?.user_metadata?.full_name || localProfile?.name;
+            
+            // Prefer custom uploaded avatar URL over default dicebear avatars
+            let avatar = "https://qbxsjrtmtebxqhzhdwza.supabase.co/storage/v1/object/public/gallery/avatars/admin-avatar-1784785683754.webp";
+            const candidates = [
+              localProfile?.avatar,
+              setRes?.admin_avatar,
+              user?.user_metadata?.avatar_url,
+            ].filter(Boolean);
 
-            const name = dbName || localProfile?.name || "Admin BUMDes";
-            const avatar = dbAvatar || localProfile?.avatar || "https://api.dicebear.com/9.x/glass/svg?seed=Berakit";
-            const email = user?.email || localProfile?.email || "admin@berakit.desa.id";
+            const customCandidate = candidates.find(
+              (url) => typeof url === "string" && (url.includes("supabase.co") || !url.includes("dicebear"))
+            );
+
+            if (customCandidate) {
+              avatar = customCandidate;
+            } else if (candidates.length > 0) {
+              avatar = candidates[0];
+            }
+
+            const name = dbName || localProfile?.name || "Park Jihuu";
+            const email = user?.email || setRes?.admin_email || localProfile?.email || "kingrembo6@gmail.com";
 
             const finalProfile = { name, email, avatar };
             setAdminProfile(finalProfile);

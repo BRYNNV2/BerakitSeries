@@ -63,6 +63,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { getAdminPhoneNumber } from "@/lib/whatsapp";
 
 const PRESET_AVATARS = [
   "https://api.dicebear.com/9.x/glass/svg?seed=Batik",
@@ -1368,7 +1369,7 @@ export default function UserDashboard() {
                                       size="sm"
                                       onClick={() => {
                                         const msg = `Halo Admin BUMDes Berakit, saya ingin menanyakan status pesanan saya dengan Nomor Pesanan #${order.id} (Status: ${order.status}, Total: Rp ${Number(order.total_amount).toLocaleString("id-ID")}). Terima kasih!`;
-                                        window.open(`https://api.whatsapp.com/send?phone=6281234567890&text=${encodeURIComponent(msg)}`, "_blank");
+                                        window.open(`https://api.whatsapp.com/send?phone=${getAdminPhoneNumber()}&text=${encodeURIComponent(msg)}`, "_blank");
                                       }}
                                       className="h-8 text-[10px] font-bold text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white rounded-lg px-2.5 flex items-center gap-1 border-zinc-200 dark:border-zinc-700 cursor-pointer shrink-0"
                                     >
@@ -2335,7 +2336,7 @@ export default function UserDashboard() {
                     </div>
 
                     <a
-                      href="https://wa.me/6281234567890?text=Halo%20Admin%20BUMDes%20Berakit%20saya%20butuh%20bantuan%20dengan%20pesanan%20saya..."
+                      href={`https://wa.me/${getAdminPhoneNumber()}?text=${encodeURIComponent("Halo Admin BUMDes Berakit saya butuh bantuan dengan pesanan saya...")}`}
                       target="_blank"
                       rel="noreferrer"
                       className="w-full h-9 bg-white text-emerald-600 hover:bg-emerald-50 active:scale-98 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-xs"

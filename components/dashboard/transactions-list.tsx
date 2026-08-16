@@ -393,8 +393,8 @@ export function TransactionsList() {
   const handleWhatsAppContact = (order: Transaction) => {
     const rawPhone = order.customer_phone || "";
     const phone = formatPhoneNumber(rawPhone);
-    if (!rawPhone || phone === "6281234567890" && !rawPhone) {
-      toast.error("Nomor telepon tidak valid.");
+    if (!rawPhone || rawPhone.trim().length < 8) {
+      toast.error("Nomor telepon pelanggan tidak valid.");
       return;
     }
 

@@ -419,7 +419,7 @@ export function WelcomeSection() {
     // Default BUMDes details
     let bumdesName = "BUMDes Berakit Maju";
     let bumdesEmail = "bumdes@berakit.desa.id";
-    let bumdesPhone = "081234567890";
+    let bumdesPhone = "0895603567192";
     let bumdesAddress = "Desa Berakit, Kec. Teluk Sebong, Bintan, Kepulauan Riau";
 
     const localSettings = localStorage.getItem("berakit_settings");

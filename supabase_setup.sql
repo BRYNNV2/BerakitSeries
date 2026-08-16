@@ -64,8 +64,18 @@ CREATE TABLE IF NOT EXISTS public.settings (
     account_holder TEXT,
     flat_shipping_rate NUMERIC DEFAULT 0,
     min_free_shipping NUMERIC DEFAULT 0,
+    admin_name TEXT,
+    admin_email TEXT,
+    admin_avatar TEXT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- Ensure admin profile columns exist in case table was created with older schema
+ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS admin_name TEXT;
+ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS admin_email TEXT;
+ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS admin_avatar TEXT;
+ALTER TABLE public.settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now());
 
 -- 5. Create GALLERY Table
 CREATE TABLE IF NOT EXISTS public.gallery (

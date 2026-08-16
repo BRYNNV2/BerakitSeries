@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LanguageToggle } from "@/components/language-toggle";
+import { getAdminPhoneNumber } from "@/lib/whatsapp";
 
 interface FAQItem {
   id: string;
@@ -662,7 +663,7 @@ export default function FAQPage() {
                 </Button>
 
                 <a
-                  href="https://wa.me/6281234567890"
+                  href={`https://wa.me/${getAdminPhoneNumber()}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full border border-zinc-200 hover:border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-800 rounded-xl h-12 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all duration-200"

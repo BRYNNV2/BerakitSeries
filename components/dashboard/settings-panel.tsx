@@ -50,7 +50,7 @@ interface BumdesSettings {
 const DEFAULT_SETTINGS: BumdesSettings = {
   name: "BERAKIT SERIES",
   email: "mfyansah@student.umrah.ac.id",
-  phone: "081234567890",
+  phone: "0895603567192",
   address: "Jalan Bhatin Muhammad Ali, Gang Asiah No. 20, RT 06 / RW 03, Semelur Desa Berakit Kecamatan Teluk Sebong Kabupaten Bintan, Kepulauan Riau",
   enableCod: true,
   enableBankTransfer: true,
@@ -199,10 +199,28 @@ export function SettingsPanel() {
           } catch (e) {}
         }
 
+        // Prefer custom uploaded avatar URL over default dicebear avatars
+        let avatar = "https://qbxsjrtmtebxqhzhdwza.supabase.co/storage/v1/object/public/gallery/avatars/admin-avatar-1784785683754.webp";
+        const candidates = [
+          localProfile?.avatar,
+          data.admin_avatar,
+          userData?.user?.user_metadata?.avatar_url,
+        ].filter(Boolean);
+
+        const customCandidate = candidates.find(
+          (url) => typeof url === "string" && (url.includes("supabase.co") || !url.includes("dicebear"))
+        );
+
+        if (customCandidate) {
+          avatar = customCandidate;
+        } else if (candidates.length > 0) {
+          avatar = candidates[0];
+        }
+
         const loadedProfile = {
-          name: data.admin_name || userData?.user?.user_metadata?.full_name || localProfile?.name || adminName,
-          email: currentLoggedInEmail || data.admin_email || localProfile?.email || adminEmail,
-          avatar: data.admin_avatar || userData?.user?.user_metadata?.avatar_url || localProfile?.avatar || adminAvatar,
+          name: data.admin_name || userData?.user?.user_metadata?.full_name || localProfile?.name || adminName || "Park Jihuu",
+          email: currentLoggedInEmail || data.admin_email || localProfile?.email || adminEmail || "kingrembo6@gmail.com",
+          avatar,
         };
         setAdminProfile(loadedProfile);
         localStorage.setItem("berakit_admin_profile", JSON.stringify(loadedProfile));
@@ -241,15 +259,33 @@ export function SettingsPanel() {
     setLoading(true);
     setSaveSuccess(false);
 
+    // Read stored profile details to avoid overwriting custom avatar when saving general store settings
+    const localProfileStr = typeof window !== "undefined" ? localStorage.getItem("berakit_admin_profile") : null;
+    let currentAdminProfile = {
+      name: profileName || adminName || "Park Jihuu",
+      email: profileEmail || adminEmail || "kingrembo6@gmail.com",
+      avatar: profileAvatar || adminAvatar || "https://qbxsjrtmtebxqhzhdwza.supabase.co/storage/v1/object/public/gallery/avatars/admin-avatar-1784785683754.webp",
+    };
+
+    if (localProfileStr) {
+      try {
+        const parsed = JSON.parse(localProfileStr);
+        if (parsed.avatar && (parsed.avatar.includes("supabase.co") || !parsed.avatar.includes("dicebear"))) {
+          currentAdminProfile.avatar = parsed.avatar;
+        }
+        if (parsed.name) currentAdminProfile.name = parsed.name;
+        if (parsed.email) currentAdminProfile.email = parsed.email;
+      } catch (e) {}
+    }
+
     if (activeSubTab === "admin-profile") {
-      // Save Admin Profile to Zustand store and localStorage
-      const updatedProfile = {
+      currentAdminProfile = {
         name: profileName,
         email: profileEmail,
         avatar: profileAvatar,
       };
-      setAdminProfile(updatedProfile);
-      localStorage.setItem("berakit_admin_profile", JSON.stringify(updatedProfile));
+      setAdminProfile(currentAdminProfile);
+      localStorage.setItem("berakit_admin_profile", JSON.stringify(currentAdminProfile));
       addActivityLog(
         "Update Profil Admin",
         `Mengubah nama profil admin menjadi '${profileName}' dan email menjadi '${profileEmail}'`,
@@ -273,13 +309,15 @@ export function SettingsPanel() {
     // Persist all settings and profile details to Supabase settings table
     if (isUsingSupabase && supabase) {
       try {
-        // Also update the logged-in user metadata in Supabase Auth so it is permanently saved in Auth db
-        await supabase.auth.updateUser({
-          data: {
-            full_name: profileName,
-            avatar_url: profileAvatar,
-          }
-        });
+        if (activeSubTab === "admin-profile") {
+          // Update the logged-in user metadata in Supabase Auth when changing profile
+          await supabase.auth.updateUser({
+            data: {
+              full_name: profileName,
+              avatar_url: profileAvatar,
+            }
+          });
+        }
 
         const upsertPayload: any = {
           id: "bumdes_config",
@@ -294,9 +332,9 @@ export function SettingsPanel() {
           account_holder: settings.accountHolder,
           flat_shipping_rate: settings.flatShippingRate,
           min_free_shipping: settings.minFreeShipping,
-          admin_name: profileName,
-          admin_email: profileEmail,
-          admin_avatar: profileAvatar,
+          admin_name: currentAdminProfile.name,
+          admin_email: currentAdminProfile.email,
+          admin_avatar: currentAdminProfile.avatar,
           updated_at: new Date().toISOString(),
         };
 

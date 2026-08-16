@@ -23,7 +23,27 @@ export interface WhatsAppOrderPayload {
   adminPhone?: string;
 }
 
-const DEFAULT_ADMIN_PHONE = "6281234567890";
+const DEFAULT_ADMIN_PHONE = "62895603567192";
+
+/**
+ * Get active Admin WhatsApp Phone from localStorage settings, env variable, or default
+ */
+export function getAdminPhoneNumber(): string {
+  if (typeof window !== "undefined") {
+    try {
+      const local = localStorage.getItem("berakit_settings");
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (parsed.phone) {
+          return formatPhoneNumber(parsed.phone);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed reading phone from settings:", e);
+    }
+  }
+  return formatPhoneNumber(process.env.NEXT_PUBLIC_ADMIN_PHONE || DEFAULT_ADMIN_PHONE);
+}
 
 /**
  * Sanitize phone number to standard international format (e.g. 62812...)
@@ -98,7 +118,7 @@ Halo Admin BUMDes Berakit, saya baru saja melakukan checkout melalui website res
  * Generate direct WhatsApp URL for Order Confirmation
  */
 export function getWhatsAppOrderUrl(payload: WhatsAppOrderPayload): string {
-  const phone = formatPhoneNumber(payload.adminPhone || DEFAULT_ADMIN_PHONE);
+  const phone = payload.adminPhone ? formatPhoneNumber(payload.adminPhone) : getAdminPhoneNumber();
   const message = createOrderWhatsAppMessage(payload);
   return `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
 }

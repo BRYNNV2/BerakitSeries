@@ -32,6 +32,7 @@ import {
 import { toast } from "sonner";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useLanguage } from "@/lib/i18n";
+import { getAdminPhoneNumber, formatPhoneNumber } from "@/lib/whatsapp";
 
 export default function ContactPage() {
   const router = useRouter();
@@ -54,8 +55,48 @@ export default function ContactPage() {
     message: ""
   });
 
-  // Get current user and cart info
+  const [storeSettings, setStoreSettings] = React.useState({
+    phone: "0895603567192",
+    email: "bumdes@berakit.desa.id",
+    address: "Desa Wisata Berakit, Kec. Teluk Sebong, Kabupaten Bintan, Kepulauan Riau, Indonesia"
+  });
+
+  // Get current user, cart info, and store settings
   React.useEffect(() => {
+    const fetchSettings = async () => {
+      let currentPhone = getAdminPhoneNumber();
+      let currentEmail = "bumdes@berakit.desa.id";
+      let currentAddress = "Desa Wisata Berakit, Kec. Teluk Sebong, Kabupaten Bintan, Kepulauan Riau, Indonesia";
+
+      const local = localStorage.getItem("berakit_settings");
+      if (local) {
+        try {
+          const parsed = JSON.parse(local);
+          if (parsed.phone) currentPhone = parsed.phone;
+          if (parsed.email) currentEmail = parsed.email;
+          if (parsed.address) currentAddress = parsed.address;
+        } catch (e) {}
+      }
+
+      if (supabase) {
+        try {
+          const { data } = await supabase.from("settings").select("*").eq("id", "bumdes_config").single();
+          if (data) {
+            if (data.phone) currentPhone = data.phone;
+            if (data.email) currentEmail = data.email;
+            if (data.address) currentAddress = data.address;
+          }
+        } catch (err) {}
+      }
+
+      setStoreSettings({
+        phone: currentPhone,
+        email: currentEmail,
+        address: currentAddress
+      });
+    };
+    fetchSettings();
+
     const fetchUserData = async () => {
       const { data } = await supabase.auth.getSession();
       if (data?.session?.user) {
@@ -607,7 +648,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider font-mono">Lokasi Galeri & Kantor</h4>
-                    <p className="text-sm font-semibold text-zinc-800 mt-1">Desa Wisata Berakit, Kec. Teluk Sebong, Kabupaten Bintan, Kepulauan Riau, Indonesia</p>
+                    <p className="text-sm font-semibold text-zinc-800 mt-1">{storeSettings.address}</p>
                   </div>
                 </div>
 
@@ -618,7 +659,7 @@ export default function ContactPage() {
                   <div>
                     <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider font-mono">Alamat Email</h4>
                     <p className="text-sm font-semibold text-zinc-800 mt-1 hover:text-zinc-600 transition-colors">
-                      <a href="mailto:bumdes@berakit.desa.id">bumdes@berakit.desa.id</a>
+                      <a href={`mailto:${storeSettings.email}`}>{storeSettings.email}</a>
                     </p>
                   </div>
                 </div>
@@ -630,8 +671,8 @@ export default function ContactPage() {
                   <div>
                     <h4 className="text-xs font-black text-zinc-400 uppercase tracking-wider font-mono">No. Telepon & WhatsApp</h4>
                     <p className="text-sm font-semibold text-zinc-800 mt-1">
-                      <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-600 transition-colors">
-                        +62 812-3456-7890 (WhatsApp BUMDes)
+                      <a href={`https://wa.me/${formatPhoneNumber(storeSettings.phone)}`} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-600 transition-colors">
+                        {storeSettings.phone} (WhatsApp BUMDes)
                       </a>
                     </p>
                   </div>
