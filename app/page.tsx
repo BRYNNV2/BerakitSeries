@@ -116,7 +116,7 @@ export default function StorefrontPage() {
       }
 
       lenisInstance = new Lenis({
-        duration: 1.1,
+        duration: 1.0,
         easing: (t) => 1 - Math.pow(1 - t, 3),
         orientation: "vertical",
         gestureOrientation: "vertical",
@@ -136,7 +136,11 @@ export default function StorefrontPage() {
       };
 
       gsap.ticker.add(updateRaf);
-      gsap.ticker.lagSmoothing(0);
+      gsap.ticker.lagSmoothing(500, 33);
+
+      ScrollTrigger.addEventListener("refresh", () => {
+        lenisInstance?.resize();
+      });
     };
 
     initLenis();
@@ -657,9 +661,9 @@ export default function StorefrontPage() {
             pin: true,
             pinSpacing: true,
             anticipatePin: 1,
-            scrub: 0.8,
+            scrub: 1,
             start: "top top",
-            end: () => `+=${container.scrollWidth - wrapper.clientWidth + 100}`,
+            end: () => `+=${Math.max(1600, (container.scrollWidth - wrapper.clientWidth) * 1.5)}`,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
               if (syncProgressBarRef.current) {
@@ -2986,7 +2990,7 @@ export default function StorefrontPage() {
       {/* Section 5: Frequently Asked Questions (FAQ) Accordion */}
       <section
         id="faq-section"
-        className="relative w-full bg-white py-24 border-b border-zinc-200/50"
+        className="relative w-full bg-white py-28 sm:py-36 border-b border-zinc-200/50"
       >
         {/* Background Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-20" />
@@ -3120,7 +3124,7 @@ export default function StorefrontPage() {
       {/* Section 5.5: Komitmen BUMDes & Jaminan Bahan (Official BUMDes Guarantee & Quality Assurance) */}
       <section
         id="guarantee-section"
-        className="w-full bg-[#fbfcfb] py-16 sm:py-28 border-b border-zinc-200/60 relative overflow-hidden"
+        className="w-full bg-[#fbfcfb] py-24 sm:py-36 border-b border-zinc-200/60 relative overflow-hidden"
       >
         {/* Background Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-40" />
