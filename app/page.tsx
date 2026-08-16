@@ -116,13 +116,13 @@ export default function StorefrontPage() {
       }
 
       lenisInstance = new Lenis({
-        duration: 1.2,
+        duration: 0.9,
         easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         orientation: "vertical",
         gestureOrientation: "vertical",
         smoothWheel: true,
-        wheelMultiplier: 1.0,
-        touchMultiplier: 1.5,
+        wheelMultiplier: 0.85,
+        touchMultiplier: 1.1,
       });
 
       lenisInstance.on("scroll", () => {
@@ -650,16 +650,16 @@ export default function StorefrontPage() {
       const wrapper = horizontalWrapperRef.current;
       if (container && wrapper) {
         gsap.to(container, {
-          x: () => -(container.scrollWidth - wrapper.clientWidth + 64),
+          x: () => -(container.scrollWidth - wrapper.clientWidth + 48),
           ease: "none",
           scrollTrigger: {
             trigger: "#voices-section",
             pin: true,
             pinSpacing: true,
             anticipatePin: 1,
-            scrub: 1.2,
+            scrub: 0.8,
             start: "top top",
-            end: () => `+=${Math.max(2800, (container.scrollWidth - wrapper.clientWidth) * 2.8)}`,
+            end: () => `+=${container.scrollWidth - wrapper.clientWidth + 100}`,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
               if (syncProgressBarRef.current) {
