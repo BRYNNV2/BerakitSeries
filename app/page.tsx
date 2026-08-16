@@ -3117,6 +3117,176 @@ export default function StorefrontPage() {
         </div>
       </section>
 
+      {/* Section 5.5: Komitmen BUMDes & Jaminan Bahan (Official BUMDes Guarantee & Quality Assurance) */}
+      <section
+        id="guarantee-section"
+        className="w-full bg-[#fbfcfb] py-16 sm:py-28 border-b border-zinc-200/60 relative overflow-hidden"
+      >
+        {/* Background Grid Pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#f3f4f6_1px,transparent_1px),linear-gradient(to_bottom,#f3f4f6_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-40" />
+
+        <div className="w-full max-w-[1800px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10 space-y-16">
+          {/* Header Row */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div className="space-y-3 text-left max-w-[850px]">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#bef264]/20 border border-[#bef264]/50 text-black text-xs font-bold uppercase tracking-wider">
+                <ShieldCheck className="size-3.5 text-zinc-900" />
+                <span>
+                  {lang === "en" ? "Official Village Enterprise Guarantee" : "Garansi Mutu & Komitmen Resmi BUMDes"}
+                </span>
+              </div>
+              <h2
+                className="uppercase tracking-tight text-black"
+                style={{
+                  fontFamily: "'Oswald', Impact, sans-serif",
+                  fontStyle: "normal",
+                  fontWeight: 900,
+                  fontSize: "clamp(42px, 7.5vw, 84px)",
+                  lineHeight: "clamp(40px, 7.5vw, 78px)",
+                }}
+              >
+                <span>{lang === "en" ? "OFFICIAL BUMDES PLEDGE," : "KOMITMEN RESMI BUMDES,"}</span><br />
+                <span style={{ color: "lab(48.496 0 0)" }}>
+                  {lang === "en" ? "UNCOMPROMISING QUALITY" : "JAMINAN KUALITAS TANPA KOMPROMI"}
+                </span>
+                <span className="text-[#bef264]">.</span>
+              </h2>
+            </div>
+            <div className="max-w-[540px] text-left">
+              <p
+                className="text-zinc-600 font-normal leading-relaxed text-base sm:text-lg"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                {lang === "en"
+                  ? "As an official village enterprise, BUMDes Berakit guarantees authentic craftsmanship, certified non-toxic botanical dyes, honest direct-from-artisan pricing, and full buyer replacement protection."
+                  : "Sebagai badan usaha resmi desa, BUMDes Desa Berakit menjamin keaslian batik tulis tangan murni, bahan baku alami bersertifikasi aman, harga tangan pertama tanpa perantara, serta garansi kepuasan penuh bagi setiap pembeli."}
+              </p>
+            </div>
+          </div>
+
+          {/* 4 Pillars of Quality (Magazine Editorial Grid - Clean Dividers) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pt-4 border-t border-zinc-200/80 text-left">
+            {/* Pillar 1 */}
+            <div className="space-y-4">
+              <div className="size-12 rounded-2xl bg-white border border-zinc-200 shadow-xs flex items-center justify-center text-zinc-900">
+                <Award className="size-6 text-zinc-900" />
+              </div>
+              <div className="space-y-2">
+                <div className="inline-block px-2.5 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-[10px] font-bold uppercase tracking-wider font-mono">
+                  {lang === "en" ? "01 / Premium Fabrics" : "01 / Kain Mori & Sutra"}
+                </div>
+                <h3
+                  className="text-xl font-bold uppercase tracking-wide text-zinc-900"
+                  style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                >
+                  {lang === "en" ? "100% Primissima Cotton & Pure Silk" : "100% Katun Primissima & Sutra Pilihan"}
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  {lang === "en"
+                    ? "Carefully curated high-thread-count natural cotton and smooth woven silk that feels supremely breathable, cool in tropical climates, and retains vibrant natural dyes."
+                    : "Dipilih dari serat alami katun mori primissima mutu tinggi dan sutra halus yang adem, nyaman dipakai seharian, serta memiliki daya serap pigmen warna alami yang tahan lama."}
+                </p>
+              </div>
+            </div>
+
+            {/* Pillar 2 */}
+            <div className="space-y-4">
+              <div className="size-12 rounded-2xl bg-white border border-zinc-200 shadow-xs flex items-center justify-center text-zinc-900">
+                <Leaf className="size-6 text-zinc-900" />
+              </div>
+              <div className="space-y-2">
+                <div className="inline-block px-2.5 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-[10px] font-bold uppercase tracking-wider font-mono">
+                  {lang === "en" ? "02 / Skin & Eco Safe" : "02 / Bebas Kimia Beracun"}
+                </div>
+                <h3
+                  className="text-xl font-bold uppercase tracking-wide text-zinc-900"
+                  style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                >
+                  {lang === "en" ? "Certified Non-Toxic Botanical Dyes" : "Pewarna Alami Teruji & Aman di Kulit"}
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  {lang === "en"
+                    ? "Our mangrove bark, secang wood, and botanical plant dyes undergo natural mineral fixation free of hazardous synthetic azo chemicals, making it gentle for sensitive skin."
+                    : "Ekstrak alami getah mangrove dan dedaunan pesisir difiksasi dengan mineral alami tanpa zat pewarna sintetis beracun (bebas logam berat), sangat aman bagi kulit sensitif."}
+                </p>
+              </div>
+            </div>
+
+            {/* Pillar 3 */}
+            <div className="space-y-4">
+              <div className="size-12 rounded-2xl bg-white border border-zinc-200 shadow-xs flex items-center justify-center text-zinc-900">
+                <Coins className="size-6 text-zinc-900" />
+              </div>
+              <div className="space-y-2">
+                <div className="inline-block px-2.5 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-[10px] font-bold uppercase tracking-wider font-mono">
+                  {lang === "en" ? "03 / Direct Fair Price" : "03 / Tanpa Mark-up Perantara"}
+                </div>
+                <h3
+                  className="text-xl font-bold uppercase tracking-wide text-zinc-900"
+                  style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                >
+                  {lang === "en" ? "Direct Village Price, Zero Middlemen" : "Harga Tangan Pertama Langsung Dari Desa"}
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  {lang === "en"
+                    ? "No costly retailer markups. You receive direct village pricing, with 100% of proceeds supporting artisan families and sustainable local village development."
+                    : "Tanpa perantara distributor mahal. Anda mendapatkan harga resmi tangan pertama dari BUMDes, di mana seluruh transaksi langsung mengalir untuk kesejahteraan para ibu perajin."}
+                </p>
+              </div>
+            </div>
+
+            {/* Pillar 4 */}
+            <div className="space-y-4">
+              <div className="size-12 rounded-2xl bg-white border border-zinc-200 shadow-xs flex items-center justify-center text-zinc-900">
+                <RotateCcw className="size-6 text-zinc-900" />
+              </div>
+              <div className="space-y-2">
+                <div className="inline-block px-2.5 py-0.5 rounded-md bg-zinc-100 text-zinc-800 text-[10px] font-bold uppercase tracking-wider font-mono">
+                  {lang === "en" ? "04 / Buyer Protection" : "04 / Garansi Retur Penuh"}
+                </div>
+                <h3
+                  className="text-xl font-bold uppercase tracking-wide text-zinc-900"
+                  style={{ fontFamily: "'Oswald', Impact, sans-serif" }}
+                >
+                  {lang === "en" ? "100% Money-Back / Free Replacement" : "Garansi Ganti Baru / Uang Kembali"}
+                </h3>
+                <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+                  {lang === "en"
+                    ? "If your received batik arrives with defects or pattern mismatch, we provide hassle-free product replacement or a 100% refund with dedicated customer support."
+                    : "Jika kain yang diterima mengalami cacat tenun atau ketidaksesuaian pesanan, kami menyediakan layanan penggantian kain baru atau pengembalian dana 100% tanpa proses berbelit."}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Official Seal of Trust Strip */}
+          <div className="p-8 sm:p-10 rounded-[32px] bg-[#111111] text-white flex flex-col lg:flex-row lg:items-center justify-between gap-8 text-left shadow-2xl">
+            <div className="space-y-3 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#bef264] text-xs font-bold font-mono">
+                <ShieldCheck className="size-4 text-[#bef264]" />
+                <span>{lang === "en" ? "OFFICIALLY CERTIFIED VILLAGE ENTERPRISE" : "BADAN USAHA RESMI DESA BERAKIT"}</span>
+              </div>
+              <p className="text-sm sm:text-base text-zinc-300 font-medium leading-relaxed">
+                {lang === "en"
+                  ? "Every piece is an official cultural product of Desa Berakit, Teluk Sebong District, Bintan Regency, developed in partnership with the national PKM community development initiative."
+                  : "Setiap karya adalah produk resmi Desa Berakit, Kecamatan Teluk Sebong, Kabupaten Bintan, yang dikembangkan bersama program pengabdian masyarakat PKM perguruan tinggi."}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 shrink-0">
+              <Button
+                onClick={() => {
+                  const msg = encodeURIComponent("Halo Admin BUMDes Berakit, saya ingin konsultasi mengenai bahan dan pemesanan batik Berakit Series.");
+                  window.open(`https://wa.me/6281234567890?text=${msg}`, "_blank");
+                }}
+                className="bg-[#bef264] hover:bg-[#aee64e] text-black font-bold uppercase tracking-wider text-xs px-6 py-6 rounded-2xl shadow-xl transition-all hover:scale-105"
+              >
+                {lang === "en" ? "Consult on WhatsApp >" : "Konsultasi ke BUMDes >"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Section 6: Physical Hub / Satellite Uplink (Maps Section) */}
       <section
         id="hub-section"
