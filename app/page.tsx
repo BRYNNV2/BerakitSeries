@@ -643,28 +643,23 @@ export default function StorefrontPage() {
     );
 
     // 10. Voices Horizontal Pinning ScrollTrigger
-    const container = horizontalContainerRef.current;
-    const wrapper = horizontalWrapperRef.current;
-    if (container && wrapper) {
-      const getScrollAmount = () => {
-        return -(container.scrollWidth - wrapper.clientWidth);
-      };
+    const mm = gsap.matchMedia();
 
-      gsap.set(container, { x: 0 });
-
-      const mm = gsap.matchMedia();
-
-      mm.add("(min-width: 1024px)", () => {
+    mm.add("(min-width: 1024px)", () => {
+      const container = horizontalContainerRef.current;
+      const wrapper = horizontalWrapperRef.current;
+      if (container && wrapper) {
         gsap.to(container, {
-          x: getScrollAmount,
+          x: () => -(container.scrollWidth - wrapper.clientWidth + 64),
           ease: "none",
           scrollTrigger: {
             trigger: "#voices-section",
             pin: true,
             pinSpacing: true,
+            anticipatePin: 1,
             scrub: 1,
             start: "top top",
-            end: () => `+=${container.scrollWidth - wrapper.clientWidth}`,
+            end: () => `+=${Math.max(1000, container.scrollWidth - wrapper.clientWidth)}`,
             invalidateOnRefresh: true,
             onUpdate: (self) => {
               if (syncProgressBarRef.current) {
@@ -675,156 +670,173 @@ export default function StorefrontPage() {
             }
           }
         });
-      });
+      }
+    });
 
-      // Smooth entrance reveal for the left column
-      gsap.fromTo(
-        "#voices-left-col",
-        {
-          opacity: 0,
-          x: -50
-        },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 1,
-          ease: "power2.out",
-          clearProps: "all",
-          scrollTrigger: {
-            trigger: "#voices-section",
-            start: "top 80%",
-            toggleActions: "play none none none"
-          }
+    // Smooth entrance reveal for the left column
+    gsap.fromTo(
+      "#voices-left-col",
+      {
+        opacity: 0,
+        x: -50
+      },
+      {
+        opacity: 1,
+        x: 0,
+        duration: 1,
+        ease: "power2.out",
+        clearProps: "all",
+        scrollTrigger: {
+          trigger: "#voices-section",
+          start: "top 80%",
+          toggleActions: "play none none none"
         }
-      );
+      }
+    );
 
-      // Smooth entrance reveal for the cards
-      gsap.fromTo(
-        ".voices-card-animate",
-        {
-          y: 60,
-          opacity: 0,
-          scale: 0.95
-        },
-        {
-          y: 0,
-          opacity: 1,
-          scale: 1,
-          duration: 0.8,
-          stagger: 0.1,
-          ease: "power2.out",
-          clearProps: "all",
-          scrollTrigger: {
-            trigger: "#voices-section",
-            start: "top 80%",
-            toggleActions: "play none none none"
-          }
+    // Smooth entrance reveal for the cards
+    gsap.fromTo(
+      ".voices-card-animate",
+      {
+        y: 60,
+        opacity: 0,
+        scale: 0.95
+      },
+      {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        duration: 0.8,
+        stagger: 0.1,
+        ease: "power2.out",
+        clearProps: "all",
+        scrollTrigger: {
+          trigger: "#voices-section",
+          start: "top 80%",
+          toggleActions: "play none none none"
         }
-      );
-      // Smooth entrance reveal for the FAQ left column
-      gsap.fromTo(
-        "#faq-left-col",
-        {
-          opacity: 0,
-          y: 40
-        },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: "#faq-section",
-            start: "top 80%",
-            toggleActions: "play none none none"
-          }
-        }
-      );
+      }
+    );
 
-      // Smooth entrance reveal for the Map Hub section
-      gsap.fromTo(
-        "#hub-left-col",
-        {
-          opacity: 0,
-          x: -50
-        },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: "#hub-section",
-            start: "top 80%",
-            toggleActions: "play none none none"
-          }
+    // Smooth entrance reveal for the FAQ left column
+    gsap.fromTo(
+      "#faq-left-col",
+      {
+        opacity: 0,
+        y: 40
+      },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: "#faq-section",
+          start: "top 80%",
+          toggleActions: "play none none none"
         }
-      );
+      }
+    );
 
-      gsap.fromTo(
-        "#hub-map-container",
-        {
-          opacity: 0,
-          scale: 0.9,
-          clipPath: "inset(10% 10% 10% 10% round 32px)",
-        },
-        {
-          opacity: 1,
-          scale: 1,
-          clipPath: "inset(0% 0% 0% 0% round 32px)",
-          duration: 1.2,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: "#hub-section",
-            start: "top 80%",
-            toggleActions: "play none none none"
-          }
+    // Smooth entrance reveal for the Hub section
+    gsap.fromTo(
+      "#hub-left-col",
+      {
+        opacity: 0,
+        x: -50
+      },
+      {
+        opacity: 1,
+        x: 0,
+        duration: 1,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: "#hub-section",
+          start: "top 80%",
+          toggleActions: "play none none none"
         }
-      );
+      }
+    );
 
-      // Smooth entrance reveal for the Newsletter section
-      gsap.fromTo(
-        "#newsletter-card",
-        {
-          opacity: 0,
-          y: 60,
-          scale: 0.98
-        },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 1.2,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: "#newsletter-section",
-            start: "top 85%",
-            toggleActions: "play none none none"
-          }
+    gsap.fromTo(
+      "#hub-map-container",
+      {
+        opacity: 0,
+        scale: 0.9,
+        clipPath: "inset(10% 10% 10% 10% round 32px)",
+      },
+      {
+        opacity: 1,
+        scale: 1,
+        clipPath: "inset(0% 0% 0% 0% round 32px)",
+        duration: 1.2,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: "#hub-section",
+          start: "top 80%",
+          toggleActions: "play none none none"
         }
-      );
+      }
+    );
 
-      // Smooth entrance reveal for the Footer section
-      gsap.fromTo(
-        "#footer-section",
-        {
-          opacity: 0,
-          y: 40
-        },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: "#footer-section",
-            start: "top 95%",
-            toggleActions: "play none none none"
-          }
+    // Smooth entrance reveal for the Newsletter section
+    gsap.fromTo(
+      "#newsletter-card",
+      {
+        opacity: 0,
+        y: 60,
+        scale: 0.98
+      },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 1.2,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: "#newsletter-section",
+          start: "top 85%",
+          toggleActions: "play none none none"
         }
-      );
-    }
+      }
+    );
+
+    // Smooth entrance reveal for the Footer section
+    gsap.fromTo(
+      "#footer-section",
+      {
+        opacity: 0,
+        y: 40
+      },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: "#footer-section",
+          start: "top 95%",
+          toggleActions: "play none none none"
+        }
+      }
+    );
+
+    // Refresh ScrollTrigger after initial timeline calculation
+    requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+    });
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 400);
   }, []);
+
+  // Sync ScrollTrigger on dynamic state changes
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [products, loading, lang]);
 
   // Filter products
   const filteredProducts = React.useMemo(() => {
